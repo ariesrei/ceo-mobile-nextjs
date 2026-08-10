@@ -32,16 +32,21 @@ Open [http://localhost:3000](http://localhost:3000).
 - Additional Information (pets, vehicles, preferences, …)
 - History
 
-### Role provision (staff later)
+### Building Admin / Staff menus
 
-`GET /app/navigation` also returns staff menu stubs:
+Login is allowed for `staff_user` and `building_admin` (also `client_admin` / `administrator`).  
+`GET /app/navigation` returns only these items (gated by Staff Access + modules):
 
 | Menu | Path | Enabled when |
 |------|------|----------------|
-| Maintenance | `/account/maintenance` | staff + `maintenance_access` |
-| Warranty | `/account/warranty` | staff + `warranties_access` + warranty module |
+| Contacts | `/account/contacts` | `contacts_access` |
+| Guests | `/account/guests` | `guest_access` |
+| Parcels | `/account/parcels` | parcels module + Building/Client Admin **or** staff `parcel_access` (create/edit supported) |
+| Warranties | `/account/warranties` | `warranties_access` + warranty module |
+| Maintenance | `/account/maintenance` | `maintenance_access` |
+| Activities | `/account/activities` | `activities_access` |
 
-The Next.js UI only shows items with `enabled: true`. Adding a staff screen later is mostly WordPress access rules + a page under `app/account/`.
+Building Admin / Client Admin pass all access checks (same as desktop). Screens are placeholders until full workflows ship.
 
 ## WordPress REST (theme)
 
@@ -88,3 +93,7 @@ JWT secret is auto-generated into WP option `option_ceo_app_jwt_secret` (separat
 ## Deploy (Vercel demo)
 
 See **[DEPLOY.md](./DEPLOY.md)**. Summary: import the GitHub repo on Vercel, set **Root Directory** to `ceo-mobile-nextjs`, deploy, then Connect using a LocalWP **Live Link** (or staging) WordPress URL.
+
+## Android
+
+See **[ANDROID.md](./ANDROID.md)** and the Capacitor shell in `../ceo-mobile-nextjs-cap/`.

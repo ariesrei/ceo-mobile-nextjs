@@ -1,0 +1,1 @@
+Maintenance module UI added — list/create/edit/status/photos. Menu allowlist: parcels + maintenance.

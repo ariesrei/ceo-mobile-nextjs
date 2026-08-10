@@ -1,0 +1,5 @@
+Parcel camera attachments 2026-08-10
+
+- ParcelCameraPhotos: mobile camera capture, auto-add, multiple
+- ParcelForm / ParcelsList / lib/parcels updated
+- WP REST: /app/parcels/media + parcel_photo on save

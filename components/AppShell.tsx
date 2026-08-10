@@ -94,40 +94,54 @@ export function AppShell({
 
   return (
     <div className="mx-auto min-h-dvh w-full max-w-lg px-4 pb-10 pt-6">
-      <header className="mb-6 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          {backHref ? (
-            <Link
-              href={backHref}
-              className="mb-2 inline-block text-sm text-[var(--muted)] hover:text-[var(--ink)]"
-            >
-              ← Back
-            </Link>
-          ) : null}
+      <header className="mb-6">
+        {(backHref || showLogout) && (
+          <div className="mb-4 flex items-center justify-between gap-3">
+            {backHref ? (
+              <Link
+                href={backHref}
+                className="inline-flex min-h-12 items-center rounded-xl border border-[var(--border)] bg-white px-4 py-3 text-base font-semibold text-[var(--ink)] hover:bg-[var(--surface-2)]"
+              >
+                ← Back
+              </Link>
+            ) : (
+              <span />
+            )}
+            {showLogout ? (
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={logout}
+                className="min-h-12 shrink-0 border border-[var(--border)] bg-white px-5 py-3 text-base"
+              >
+                Log out
+              </Button>
+            ) : (
+              <span />
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-col items-center text-center">
           {clientLogo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={clientLogo}
               alt={clientName !== "Client" ? clientName : "Property logo"}
-              className="h-9 w-auto max-w-[160px] object-contain"
+              className="mx-auto h-12 w-auto max-w-[200px] object-contain"
             />
           ) : (
-            <p className="truncate text-xs font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">
+            <p className="truncate text-sm font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">
               {clientName}
             </p>
           )}
-          <h1 className="font-display mt-1 text-3xl tracking-tight text-[var(--ink)]">
+          <h1 className="font-display mt-3 text-3xl tracking-tight text-[var(--ink)]">
             {title}
           </h1>
           {subtitle ? (
             <p className="mt-1 text-sm text-[var(--muted)]">{subtitle}</p>
           ) : null}
         </div>
-        {showLogout ? (
-          <Button variant="ghost" type="button" onClick={logout} className="shrink-0 px-3 py-2">
-            Log out
-          </Button>
-        ) : null}
       </header>
       <main>{children}</main>
     </div>

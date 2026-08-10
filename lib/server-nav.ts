@@ -9,7 +9,7 @@ import {
   COOKIE_CLIENT_NAME,
   wpFetchServer,
 } from "./wp";
-import { isPathAllowed } from "./navigation";
+import { applyNavVisibility, isPathAllowed } from "./navigation";
 
 export type ClientBranding = {
   name: string;
@@ -69,7 +69,7 @@ export async function requireAuth() {
 
 export async function getNavigation(): Promise<NavigationResponse | null> {
   const result = await wpFetchServer<NavigationResponse>("/app/navigation");
-  return result.data || null;
+  return applyNavVisibility(result.data || null);
 }
 
 export async function requireMenuPath(path: string) {

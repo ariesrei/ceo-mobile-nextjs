@@ -14,7 +14,7 @@ export function AdditionalInfoLists({ sections }: { sections: AdditionalSections
             <h2 className="font-semibold">Pets</h2>
             <Link
               href="/account/additional-info/pets/new"
-              className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-white"
+              className="ceo-btn-accent rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-white"
             >
               Add pet
             </Link>
@@ -55,7 +55,7 @@ export function AdditionalInfoLists({ sections }: { sections: AdditionalSections
             <h2 className="font-semibold">Vehicles</h2>
             <Link
               href="/account/additional-info/vehicles/new"
-              className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-white"
+              className="ceo-btn-accent rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-white"
             >
               Add vehicle
             </Link>
@@ -98,7 +98,7 @@ export function AdditionalInfoLists({ sections }: { sections: AdditionalSections
             <h2 className="font-semibold">Preferences</h2>
             <Link
               href="/account/additional-info/preferences/new"
-              className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-white"
+              className="ceo-btn-accent rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-white"
             >
               Add preference
             </Link>

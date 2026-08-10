@@ -38,6 +38,11 @@ a {
   text-decoration: none;
 }
 
+/* Accent CTA links (New / Add) — override a { color: inherit } */
+a.ceo-btn-accent {
+  color: #ffffff !important;
+}
+
 /* react-day-picker — match app accent */
 .ceo-date-popover {
   --rdp-accent-color: var(--accent);

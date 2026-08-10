@@ -10,7 +10,7 @@ export default async function LoginPage() {
   return (
     <AppShell
       title="Sign in"
-      subtitle="Resident Portal access for your property."
+      subtitle="Resident, Building Admin, and Staff access for your property."
       clientName={branding.name}
       clientLogo={branding.logo}
     >
