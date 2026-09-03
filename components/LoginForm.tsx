@@ -79,7 +79,7 @@ export function LoginForm() {
         autoComplete="current-password"
       />
       {error ? (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <p className="rounded-xl bg-[#3a1c1c] px-3 py-2 text-sm text-[var(--danger)]">{error}</p>
       ) : null}
       <Button type="submit" className="w-full" disabled={loading || !baseUrl}>
         {loading ? "Signing in…" : "Sign in"}

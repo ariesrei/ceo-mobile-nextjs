@@ -11,7 +11,7 @@ export function Input({ label, className = "", id, ...props }: Props) {
       <span className="text-sm font-medium text-[var(--muted)]">{label}</span>
       <input
         id={inputId}
-        className={`w-full rounded-xl border border-[var(--border)] bg-white px-3.5 py-3 text-[var(--ink)] outline-none ring-[var(--accent)] focus:ring-2 ${className}`}
+        className={`w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 text-[var(--ink)] outline-none ring-[var(--accent)] focus:ring-2 ${className}`}
         {...props}
       />
     </label>

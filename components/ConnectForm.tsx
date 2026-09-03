@@ -48,7 +48,7 @@ export function ConnectForm() {
       <Input
         label="Property URL"
         name="baseUrl"
-        placeholder="https://property.example.com"
+        placeholder="http://ceonesource.local/starlink"
         value={baseUrl}
         onChange={(e) => setBaseUrl(e.target.value)}
         required
@@ -64,7 +64,7 @@ export function ConnectForm() {
         autoComplete="off"
       />
       {error ? (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <p className="rounded-xl bg-[#3a1c1c] px-3 py-2 text-sm text-[var(--danger)]">{error}</p>
       ) : null}
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Connecting…" : "Connect"}

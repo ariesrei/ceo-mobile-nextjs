@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { ParcelItem, ParcelListResponse, ParcelOptions } from "@/lib/parcels";
 import { Card } from "./ui/Card";
 import { PaginatedList } from "./ui/PaginatedList";
+import { StatusBadge } from "./ui/StatusBadge";
 
 /** Set true later to show Claimed history tab again. */
 const SHOW_CLAIMED_TAB = false;
@@ -105,55 +106,37 @@ export function ParcelsList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="ceo-toolbar">
         {SHOW_CLAIMED_TAB ? (
-          <div className="flex rounded-xl border border-[var(--border)] bg-white p-1">
+          <div className="ceo-tabs">
             <button
               type="button"
-              className={`rounded-lg px-3 py-2 text-sm font-semibold ${
-                status === "storage"
-                  ? "bg-[var(--accent)] text-white"
-                  : "text-[var(--muted)]"
-              }`}
+              className={status === "storage" ? "is-active" : ""}
               onClick={() => setStatus("storage")}
             >
               In storage
             </button>
             <button
               type="button"
-              className={`rounded-lg px-3 py-2 text-sm font-semibold ${
-                status === "claimed"
-                  ? "bg-[var(--accent)] text-white"
-                  : "text-[var(--muted)]"
-              }`}
+              className={status === "claimed" ? "is-active" : ""}
               onClick={() => setStatus("claimed")}
             >
               Claimed
             </button>
           </div>
-        ) : (
-          <p className="text-sm font-semibold text-[var(--muted)]">In storage</p>
-        )}
-        {canEdit ? (
-          <Link
-            href="/account/parcels/new"
-            className="ceo-btn-accent rounded-lg bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-white"
-          >
-            New parcel
-          </Link>
         ) : null}
-      </div>
 
-      <label className="block space-y-1.5">
-        <span className="sr-only">Search parcels</span>
-        <input
-          type="search"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search unit, resident, barcode…"
-          className="w-full rounded-xl border border-[var(--border)] bg-white px-3.5 py-3 text-sm text-[var(--ink)] outline-none ring-[var(--accent)] focus:ring-2"
-        />
-      </label>
+        <label className="block">
+          <span className="sr-only">Search parcels</span>
+          <input
+            type="search"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search unit, resident, barcode…"
+            className="ceo-search"
+          />
+        </label>
+      </div>
 
       {loading ? (
         <Card>
@@ -161,23 +144,22 @@ export function ParcelsList() {
         </Card>
       ) : error ? (
         <Card>
-          <p className="text-sm text-red-700">{error}</p>
+          <p className="text-sm text-[var(--danger)]">{error}</p>
         </Card>
       ) : (
-        <Card>
-          <PaginatedList
-            items={items}
-            pageSize={5}
-            emptyMessage={
-              search
-                ? "No parcels match your search."
-                : activeStatus === "storage"
-                  ? "No parcels in storage."
-                  : "No claimed parcels."
-            }
-            getKey={(p) => p.id}
+        <PaginatedList
+          items={items}
+          pageSize={5}
+          emptyMessage={
+            search
+              ? "No parcels match your search."
+              : activeStatus === "storage"
+                ? "No parcels in storage."
+                : "No claimed parcels."
+          }
+          getKey={(p) => p.id}
             renderItem={(p) => (
-              <div className="flex items-start justify-between gap-3 rounded-xl bg-[var(--surface-2)] p-3">
+              <div className="ceo-list-card">
                 <div className="flex min-w-0 flex-1 items-start gap-3">
                   {p.photos?.[0]?.url ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -188,54 +170,60 @@ export function ParcelsList() {
                     />
                   ) : null}
                   <div className="min-w-0">
-                    <p className="font-medium">
-                      {p.unit_title || "Unit"} · {p.resident_name || "Resident"}
+                    <p className="font-semibold">
+                      {p.resident_name || "Resident"}
                     </p>
-                    <p className="text-sm text-[var(--muted)]">
+                    <p className="mt-1 text-xs text-[var(--muted)]">
                       {[
+                        p.unit_title,
                         p.parcel_type_label || p.parcel_type_other,
                         p.parcel_delivered_on,
                         p.parcel_number > 1 ? `×${p.parcel_number}` : "",
-                        p.photos?.length
-                          ? `${p.photos.length} photo${p.photos.length > 1 ? "s" : ""}`
-                          : "",
                       ]
                         .filter(Boolean)
                         .join(" · ")}
                     </p>
                   </div>
                 </div>
-                {p.can_edit ? (
-                  <div className="flex shrink-0 flex-col items-end gap-2">
-                    {p.status === "in_storage" || !p.parcel_pickup_type ? (
-                      <button
-                        type="button"
-                        className="text-sm font-semibold text-[var(--accent)]"
-                        onClick={() => {
-                          setSignoutError("");
-                          setPickupType(
-                            pickupTypes.includes("Quick Signout")
-                              ? "Quick Signout"
-                              : pickupTypes[0] || "Quick Signout"
-                          );
-                          setSignoutId(p.id);
-                        }}
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <StatusBadge
+                    label={
+                      p.status === "in_storage" || !p.parcel_pickup_type
+                        ? "In storage"
+                        : "Claimed"
+                    }
+                  />
+                  {canEdit ? (
+                    <>
+                      {p.status === "in_storage" || !p.parcel_pickup_type ? (
+                        <button
+                          type="button"
+                          className="text-xs font-semibold text-[var(--accent)]"
+                          onClick={() => {
+                            setSignoutError("");
+                            setPickupType(
+                              pickupTypes.includes("Quick Signout")
+                                ? "Quick Signout"
+                                : pickupTypes[0] || "Quick Signout"
+                            );
+                            setSignoutId(p.id);
+                          }}
+                        >
+                          Sign out
+                        </button>
+                      ) : null}
+                      <Link
+                        href={`/account/parcels/${p.id}/edit`}
+                        className="text-xs font-semibold text-[var(--accent)]"
                       >
-                        Quick Signout
-                      </button>
-                    ) : null}
-                    <Link
-                      href={`/account/parcels/${p.id}/edit`}
-                      className="text-sm font-semibold text-[var(--accent)]"
-                    >
-                      Edit
-                    </Link>
-                  </div>
-                ) : null}
+                        Edit
+                      </Link>
+                    </>
+                  ) : null}
+                </div>
               </div>
             )}
-          />
-        </Card>
+        />
       )}
 
       {signoutId ? (
@@ -245,7 +233,7 @@ export function ParcelsList() {
           aria-modal="true"
           aria-labelledby="parcel-signout-title"
         >
-          <div className="w-full max-w-md space-y-4 rounded-2xl bg-white p-4 shadow-lg">
+          <div className="w-full max-w-md space-y-4 rounded-2xl bg-[var(--surface)] p-4">
             <h2
               id="parcel-signout-title"
               className="font-display text-lg font-semibold"
@@ -260,7 +248,7 @@ export function ParcelsList() {
                 Pickup type
               </span>
               <select
-                className="w-full rounded-xl border border-[var(--border)] bg-white px-3.5 py-3 text-sm outline-none ring-[var(--accent)] focus:ring-2"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 text-sm outline-none ring-[var(--accent)] focus:ring-2"
                 value={pickupType}
                 onChange={(e) => setPickupType(e.target.value)}
                 disabled={signingOut}
@@ -273,7 +261,7 @@ export function ParcelsList() {
               </select>
             </label>
             {signoutError ? (
-              <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="rounded-xl bg-[#3a1c1c] px-3 py-2 text-sm text-[var(--danger)]">
                 {signoutError}
               </p>
             ) : null}
@@ -288,7 +276,7 @@ export function ParcelsList() {
               </button>
               <button
                 type="button"
-                className="ceo-btn-accent flex-1 rounded-xl bg-[var(--accent)] px-3 py-3 text-sm font-semibold text-white disabled:opacity-60"
+                className="ceo-btn-accent flex-1 rounded-xl bg-[var(--accent)] px-3 py-3 text-sm font-semibold text-[#081014] disabled:opacity-60"
                 disabled={signingOut}
                 onClick={confirmSignout}
               >
@@ -297,6 +285,12 @@ export function ParcelsList() {
             </div>
           </div>
         </div>
+      ) : null}
+
+      {canEdit ? (
+        <Link href="/account/parcels/new" className="ceo-fab">
+          + New parcel
+        </Link>
       ) : null}
     </div>
   );

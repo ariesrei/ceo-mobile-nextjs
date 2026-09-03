@@ -218,51 +218,55 @@ export function MaintenanceForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <Select
-        label="Type"
-        required
-        options={toSelectOptions(types)}
-        value={form.maintenance_type}
-        onChange={(e) =>
-          setForm({ ...form, maintenance_type: e.target.value })
-        }
-      />
-      <Select
-        label="Priority"
-        required
-        options={[
-          { id: "High", label: "High" },
-          { id: "Medium", label: "Medium" },
-          { id: "Low", label: "Low" },
-        ]}
-        value={form.maintenance_priority}
-        onChange={(e) =>
-          setForm({ ...form, maintenance_priority: e.target.value })
-        }
-      />
-      <DateField
-        label="Date of request"
-        value={form.maintenance_date_request}
-        onChange={(maintenance_date_request) =>
-          setForm({ ...form, maintenance_date_request })
-        }
-        required
-      />
-      <Select
-        label="Requested by"
-        required
-        options={toSelectOptions(staff)}
-        value={form.maintenance_request_by}
-        onChange={(e) =>
-          setForm({ ...form, maintenance_request_by: e.target.value })
-        }
-      />
+      <div className="ceo-form-row">
+        <Select
+          label="Type"
+          required
+          options={toSelectOptions(types)}
+          value={form.maintenance_type}
+          onChange={(e) =>
+            setForm({ ...form, maintenance_type: e.target.value })
+          }
+        />
+        <Select
+          label="Priority"
+          required
+          options={[
+            { id: "High", label: "High" },
+            { id: "Medium", label: "Medium" },
+            { id: "Low", label: "Low" },
+          ]}
+          value={form.maintenance_priority}
+          onChange={(e) =>
+            setForm({ ...form, maintenance_priority: e.target.value })
+          }
+        />
+      </div>
+      <div className="ceo-form-row">
+        <DateField
+          label="Date of request"
+          value={form.maintenance_date_request}
+          onChange={(maintenance_date_request) =>
+            setForm({ ...form, maintenance_date_request })
+          }
+          required
+        />
+        <Select
+          label="Requested by"
+          required
+          options={toSelectOptions(staff)}
+          value={form.maintenance_request_by}
+          onChange={(e) =>
+            setForm({ ...form, maintenance_request_by: e.target.value })
+          }
+        />
+      </div>
       <label className="block space-y-1.5">
         <span className="text-sm font-medium text-[var(--muted)]">
           Description
         </span>
         <textarea
-          className="w-full rounded-xl border border-[var(--border)] bg-white px-3.5 py-3 outline-none ring-[var(--accent)] focus:ring-2"
+          className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 outline-none ring-[var(--accent)] focus:ring-2"
           rows={3}
           required
           value={form.maintenance_description}
@@ -276,7 +280,7 @@ export function MaintenanceForm({
           Other notes
         </span>
         <textarea
-          className="w-full rounded-xl border border-[var(--border)] bg-white px-3.5 py-3 outline-none ring-[var(--accent)] focus:ring-2"
+          className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 outline-none ring-[var(--accent)] focus:ring-2"
           rows={2}
           value={form.maintenance_symptoms}
           onChange={(e) =>
@@ -284,49 +288,53 @@ export function MaintenanceForm({
           }
         />
       </label>
-      <Select
-        label="Unit"
-        placeholder="Optional"
-        options={toSelectOptions(units)}
-        value={form.maintenance_unit}
-        onChange={(e) =>
-          setForm({ ...form, maintenance_unit: e.target.value })
-        }
-      />
-      <Select
-        label="Location"
-        placeholder="Optional"
-        options={toSelectOptions(locations)}
-        value={form.maintenance_location}
-        onChange={(e) =>
-          setForm({ ...form, maintenance_location: e.target.value })
-        }
-      />
-      <Select
-        label="Department"
-        placeholder="Optional"
-        options={toSelectOptions(departments)}
-        value={form.maintenance_department}
-        onChange={(e) =>
-          setForm({ ...form, maintenance_department: e.target.value })
-        }
-      />
-      <Select
-        label="Personnel"
-        required
-        options={[
-          { id: "Internal", label: "Internal" },
-          { id: "External", label: "External" },
-        ]}
-        value={form.maintenance_source}
-        onChange={(e) =>
-          setForm({
-            ...form,
-            maintenance_source: e.target.value,
-            maintenance_sources_trade: [],
-          })
-        }
-      />
+      <div className="ceo-form-row">
+        <Select
+          label="Unit"
+          placeholder="Optional"
+          options={toSelectOptions(units)}
+          value={form.maintenance_unit}
+          onChange={(e) =>
+            setForm({ ...form, maintenance_unit: e.target.value })
+          }
+        />
+        <Select
+          label="Location"
+          placeholder="Optional"
+          options={toSelectOptions(locations)}
+          value={form.maintenance_location}
+          onChange={(e) =>
+            setForm({ ...form, maintenance_location: e.target.value })
+          }
+        />
+      </div>
+      <div className="ceo-form-row">
+        <Select
+          label="Department"
+          placeholder="Optional"
+          options={toSelectOptions(departments)}
+          value={form.maintenance_department}
+          onChange={(e) =>
+            setForm({ ...form, maintenance_department: e.target.value })
+          }
+        />
+        <Select
+          label="Personnel"
+          required
+          options={[
+            { id: "Internal", label: "Internal" },
+            { id: "External", label: "External" },
+          ]}
+          value={form.maintenance_source}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              maintenance_source: e.target.value,
+              maintenance_sources_trade: [],
+            })
+          }
+        />
+      </div>
       {form.maintenance_source === "Internal" ? (
         <Select
           label="Assigned person"
@@ -358,7 +366,7 @@ export function MaintenanceForm({
               Trades
             </legend>
             {trades.length ? (
-              <ul className="space-y-2 rounded-xl border border-[var(--border)] bg-white p-3">
+              <ul className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-3">
                 {trades.map((t) => {
                   const id = String(t.id);
                   const checked = form.maintenance_sources_trade.includes(id);
@@ -406,7 +414,7 @@ export function MaintenanceForm({
               Internal notes
             </span>
             <textarea
-              className="w-full rounded-xl border border-[var(--border)] bg-white px-3.5 py-3 outline-none ring-[var(--accent)] focus:ring-2"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 outline-none ring-[var(--accent)] focus:ring-2"
               rows={3}
               required
               value={form.maintenance_sources_internal_note}
@@ -438,12 +446,12 @@ export function MaintenanceForm({
         disabled={loading}
       />
       {error ? (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-xl bg-[#3a1c1c] px-3 py-2 text-sm text-[var(--danger)]">
           {error}
         </p>
       ) : null}
       {message ? (
-        <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <p className="rounded-xl bg-[#163a28] px-3 py-2 text-sm text-[var(--ok)]">
           {message}
         </p>
       ) : null}

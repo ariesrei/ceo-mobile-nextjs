@@ -68,7 +68,13 @@ export async function POST(request: Request) {
     return response;
   } catch (err) {
     return NextResponse.json(
-      { valid: false, message: fetchErrorMessage(err) },
+      {
+        valid: false,
+        message: fetchErrorMessage(
+          err,
+          `${baseUrl}/wp-json/onesource/v1/mobile/verify-connect`
+        ),
+      },
       { status: 502 }
     );
   }

@@ -1,34 +1,34 @@
 import { AppShell } from "@/components/AppShell";
-import { MaintenanceForm } from "@/components/MaintenanceForm";
+import { WarrantyForm } from "@/components/WarrantyForm";
 import { Card } from "@/components/ui/Card";
-import type { MaintenanceItem } from "@/lib/maintenance";
+import type { WarrantyItem } from "@/lib/warranties";
 import { getServerClientBranding, requireMenuPath } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
 
 type Props = { params: Promise<{ id: string }> };
 
-export default async function EditMaintenancePage({ params }: Props) {
+export default async function EditWarrantyPage({ params }: Props) {
   const { id } = await params;
-  await requireMenuPath("/account/maintenance");
+  await requireMenuPath("/account/warranties");
   const [result, branding] = await Promise.all([
-    wpFetchServer<MaintenanceItem>(`/app/maintenance/${id}`),
+    wpFetchServer<WarrantyItem>(`/app/warranties/${id}`),
     getServerClientBranding(),
   ]);
 
   return (
     <AppShell
-      title="Edit maintenance"
+      title="Edit ticket"
       subtitle="Update request details"
-      backHref="/account/maintenance"
+      backHref="/account/warranties"
       clientName={branding.name}
       clientLogo={branding.logo}
     >
       {result.data ? (
-        <MaintenanceForm record={result.data} />
+        <WarrantyForm record={result.data} />
       ) : (
         <Card>
           <p className="text-sm text-[var(--danger)]">
-            {result.error || "Maintenance record not found."}
+            {result.error || "Warranty not found."}
           </p>
         </Card>
       )}

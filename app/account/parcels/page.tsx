@@ -9,7 +9,7 @@ export default async function ParcelsPage() {
   return (
     <AppShell
       title="Parcels"
-      subtitle="In storage and claimed deliveries"
+      subtitle="Deliveries in storage"
       backHref="/account"
       clientName={branding.name}
       clientLogo={branding.logo}

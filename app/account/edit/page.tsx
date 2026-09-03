@@ -16,12 +16,12 @@ export default async function EditProfilePage() {
     <AppShell
       title="Edit Profile"
       subtitle="Changes may require staff approval."
-      backHref="/account"
+      backHref="/account/profile"
       clientName={clientName}
     >
       {!result.data ? (
         <Card>
-          <p className="text-sm text-red-700">{result.error || "Profile unavailable."}</p>
+          <p className="text-sm text-[var(--danger)]">{result.error || "Profile unavailable."}</p>
         </Card>
       ) : (
         <Card>

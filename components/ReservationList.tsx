@@ -27,7 +27,7 @@ export function ReservationList({
         pageSize={5}
         emptyMessage={emptyMessage}
         getKey={(item) => item.id}
-        listClassName="space-y-3"
+        listClassName="ceo-list"
         renderItem={(item) => (
           <div className="rounded-xl bg-[var(--surface-2)] p-3">
             <p className="font-semibold text-[var(--ink)]">{item.resource_name}</p>

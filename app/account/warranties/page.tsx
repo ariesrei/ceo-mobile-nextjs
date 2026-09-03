@@ -1,11 +1,20 @@
-import { StaffModulePlaceholder } from "@/components/StaffModulePlaceholder";
+import { AppShell } from "@/components/AppShell";
+import { WarrantyList } from "@/components/WarrantyList";
+import { getServerClientBranding, requireMenuPath } from "@/lib/server-nav";
 
-export default function WarrantiesPage() {
+export default async function WarrantiesPage() {
+  await requireMenuPath("/account/warranties");
+  const branding = await getServerClientBranding();
+
   return (
-    <StaffModulePlaceholder
-      path="/account/warranties"
-      title="Warranties"
-      accessKey="warranties_access"
-    />
+    <AppShell
+      title="ClaimTrack"
+      subtitle="Active and past claims"
+      backHref="/account"
+      clientName={branding.name}
+      clientLogo={branding.logo}
+    >
+      <WarrantyList />
+    </AppShell>
   );
 }

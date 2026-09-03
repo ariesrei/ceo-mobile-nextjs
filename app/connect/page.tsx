@@ -7,6 +7,8 @@ export default function ConnectPage() {
     <AppShell
       title="Connect"
       subtitle="Enter your property URL and mobile security key."
+      showNav={false}
+      narrow
     >
       <Card>
         <ConnectForm />

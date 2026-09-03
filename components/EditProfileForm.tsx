@@ -5,6 +5,7 @@ import type { Profile } from "@/lib/types";
 import { Button } from "./ui/Button";
 import { DateField } from "./ui/DateField";
 import { Input } from "./ui/Input";
+import { ProfileAvatarField } from "./ProfileAvatarField";
 
 export function EditProfileForm({ profile }: { profile: Profile }) {
   const [form, setForm] = useState({
@@ -25,6 +26,10 @@ export function EditProfileForm({ profile }: { profile: Profile }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pendingAvatar, setPendingAvatar] = useState<{
+    id: number;
+    url: string;
+  } | null>(null);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -35,7 +40,15 @@ export function EditProfileForm({ profile }: { profile: Profile }) {
       const res = await fetch("/api/wp/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          ...(pendingAvatar
+            ? {
+                custom_avatar_id: pendingAvatar.id,
+                custom_avatar: pendingAvatar.url,
+              }
+            : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -50,9 +63,20 @@ export function EditProfileForm({ profile }: { profile: Profile }) {
     }
   }
 
+  const initials = (
+    form.first_name ||
+    profile.first_name ||
+    "?"
+  ).slice(0, 1);
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
+      <ProfileAvatarField
+        avatar={profile.avatar}
+        initials={initials}
+        onPendingChange={setPendingAvatar}
+      />
+      <div className="ceo-form-row">
         <Input
           label="First name"
           value={form.first_name}
@@ -64,17 +88,19 @@ export function EditProfileForm({ profile }: { profile: Profile }) {
           onChange={(e) => setForm({ ...form, last_name: e.target.value })}
         />
       </div>
-      <Input
-        label="Email"
-        type="email"
-        value={form.email}
-        onChange={(e) => setForm({ ...form, email: e.target.value })}
-      />
-      <Input
-        label="Phone"
-        value={form.phone}
-        onChange={(e) => setForm({ ...form, phone: e.target.value })}
-      />
+      <div className="ceo-form-row">
+        <Input
+          label="Email"
+          type="email"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+        />
+        <Input
+          label="Phone"
+          value={form.phone}
+          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+        />
+      </div>
       <div className="space-y-1.5">
         <Input
           label="Mobile Number for SMS Notifications"
@@ -86,16 +112,18 @@ export function EditProfileForm({ profile }: { profile: Profile }) {
           Primary number for SMS. Use country code when possible (e.g. +1…).
         </p>
       </div>
-      <Input
-        label="Company"
-        value={form.company}
-        onChange={(e) => setForm({ ...form, company: e.target.value })}
-      />
-      <Input
-        label="Job title"
-        value={form.job_title}
-        onChange={(e) => setForm({ ...form, job_title: e.target.value })}
-      />
+      <div className="ceo-form-row">
+        <Input
+          label="Company"
+          value={form.company}
+          onChange={(e) => setForm({ ...form, company: e.target.value })}
+        />
+        <Input
+          label="Job title"
+          value={form.job_title}
+          onChange={(e) => setForm({ ...form, job_title: e.target.value })}
+        />
+      </div>
       <DateField
         label="Birthday"
         value={form.birthday}
@@ -107,7 +135,7 @@ export function EditProfileForm({ profile }: { profile: Profile }) {
           Emergency contact
         </span>
         <textarea
-          className="w-full rounded-xl border border-[var(--border)] bg-white px-3.5 py-3 text-[var(--ink)] outline-none ring-[var(--accent)] focus:ring-2"
+          className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 text-[var(--ink)] outline-none ring-[var(--accent)] focus:ring-2"
           rows={3}
           value={form.emergency_contact}
           onChange={(e) =>
@@ -115,24 +143,27 @@ export function EditProfileForm({ profile }: { profile: Profile }) {
           }
         />
       </label>
-      <label className="flex items-center gap-2 text-sm text-[var(--ink)]">
-        <input
-          type="checkbox"
-          checked={form.opt_email}
-          onChange={(e) => setForm({ ...form, opt_email: e.target.checked })}
-        />
-        Receive Email Notifications
-      </label>
+      <button
+        type="button"
+        className="flex w-full items-center justify-between rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm font-semibold"
+        onClick={() => setForm({ ...form, opt_email: !form.opt_email })}
+      >
+        Email notifications
+        <span className={`ceo-toggle ${form.opt_email ? "is-on" : ""}`} aria-hidden>
+          <span />
+        </span>
+      </button>
       <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-3">
-        <label className="flex items-start gap-2 text-sm font-medium text-[var(--ink)]">
-          <input
-            type="checkbox"
-            className="mt-0.5"
-            checked={form.opt_sms}
-            onChange={(e) => setForm({ ...form, opt_sms: e.target.checked })}
-          />
-          Receive SMS Notifications
-        </label>
+        <button
+          type="button"
+          className="flex w-full items-center justify-between text-left text-sm font-semibold"
+          onClick={() => setForm({ ...form, opt_sms: !form.opt_sms })}
+        >
+          SMS notifications
+          <span className={`ceo-toggle ${form.opt_sms ? "is-on" : ""}`} aria-hidden>
+            <span />
+          </span>
+        </button>
         <p className="text-xs leading-relaxed text-[var(--muted)]">
           I agree to receive SMS text messages from CE OneSource regarding
           warranty requests, work order updates, amenity bookings, package and
@@ -163,10 +194,10 @@ export function EditProfileForm({ profile }: { profile: Profile }) {
         </p>
       </div>
       {error ? (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <p className="rounded-xl bg-[#3a1c1c] px-3 py-2 text-sm text-[var(--danger)]">{error}</p>
       ) : null}
       {message ? (
-        <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <p className="rounded-xl bg-[#163a28] px-3 py-2 text-sm text-[var(--ok)]">
           {message}
         </p>
       ) : null}

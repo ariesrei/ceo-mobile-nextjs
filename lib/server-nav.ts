@@ -14,6 +14,7 @@ import { applyNavVisibility, isPathAllowed } from "./navigation";
 export type ClientBranding = {
   name: string;
   logo: string;
+  hero: string;
 };
 
 /**
@@ -27,14 +28,11 @@ export const getServerClientBranding = cache(async (): Promise<ClientBranding> =
 
   let name = fromCookieName && fromCookieName !== "Client" ? fromCookieName : "";
   let logo = fromCookieLogo;
-
-  if (name && logo) {
-    return { name, logo };
-  }
+  let hero = "";
 
   const token = jar.get(COOKIE_ACCESS)?.value;
   if (!token) {
-    return { name, logo };
+    return { name, logo, hero };
   }
 
   const me = await wpFetchServer<AppUser>("/app/me");
@@ -44,7 +42,8 @@ export const getServerClientBranding = cache(async (): Promise<ClientBranding> =
   if (!logo) {
     logo = me.data?.client_logo?.trim() || "";
   }
-  return { name, logo };
+  hero = me.data?.client_hero?.trim() || "";
+  return { name, logo, hero };
 });
 
 export async function getServerClientName(): Promise<string> {
@@ -79,4 +78,15 @@ export async function requireMenuPath(path: string) {
     redirect("/account");
   }
   return nav;
+}
+
+export function isStaffMenuPath(
+  nav: NavigationResponse | null | undefined,
+  path: string
+): boolean {
+  return Boolean(
+    nav?.menus?.some(
+      (m) => m.enabled && m.path === path && m.group === "staff"
+    )
+  );
 }

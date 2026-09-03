@@ -32,7 +32,21 @@ export async function serverFetch(
   } as Parameters<typeof undiciFetch>[1]) as unknown as Promise<Response>;
 }
 
-export function fetchErrorMessage(err: unknown): string {
+function isPrivateWpHost(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return (
+      host === "localhost" ||
+      host.endsWith(".local") ||
+      host === "127.0.0.1" ||
+      host === "::1"
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function fetchErrorMessage(err: unknown, requestUrl?: string): string {
   const cause =
     err && typeof err === "object" && "cause" in err
       ? (err as { cause?: { code?: string; message?: string } }).cause
@@ -49,7 +63,24 @@ export function fetchErrorMessage(err: unknown): string {
       "Try the http:// site URL from Local, or keep NODE_ENV=development / set CEO_ALLOW_INSECURE_TLS=1."
     );
   }
-  if (code === "ECONNREFUSED" || code === "ENOTFOUND") {
+  if (
+    requestUrl &&
+    isPrivateWpHost(requestUrl) &&
+    process.env.NODE_ENV === "production"
+  ) {
+    return (
+      "This hosted Next.js app cannot reach LocalWP (.local / localhost). " +
+      "Run npm run dev and open http://localhost:3000, then Connect with http://ceonesource.local/your-property. " +
+      "Or use a LocalWP Live Link URL from the Vercel demo."
+    );
+  }
+  if (code === "ECONNREFUSED" || code === "ENOTFOUND" || code === "ETIMEDOUT") {
+    if (requestUrl && isPrivateWpHost(requestUrl)) {
+      return (
+        "Could not reach WordPress at that .local URL. Use the LocalWP site URL including the property path " +
+        "(example: http://ceonesource.local/starlink), and run this Next app locally (npm run dev) — not on Vercel."
+      );
+    }
     return "Could not reach WordPress. Is LocalWP running, and is the property URL correct?";
   }
   return err instanceof Error ? err.message : "Network error talking to WordPress.";

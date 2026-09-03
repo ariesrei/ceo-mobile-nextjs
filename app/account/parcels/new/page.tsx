@@ -1,10 +1,18 @@
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { ParcelForm } from "@/components/ParcelForm";
-import { getServerClientBranding, requireMenuPath } from "@/lib/server-nav";
+import {
+  getServerClientBranding,
+  isStaffMenuPath,
+  requireMenuPath,
+} from "@/lib/server-nav";
+import { redirect } from "next/navigation";
 
 export default async function NewParcelPage() {
-  await requireMenuPath("/account/parcels");
+  const nav = await requireMenuPath("/account/parcels");
+  if (!isStaffMenuPath(nav, "/account/parcels")) {
+    redirect("/account/parcels");
+  }
   const branding = await getServerClientBranding();
 
   return (

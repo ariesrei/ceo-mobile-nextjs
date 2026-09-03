@@ -1,8 +1,31 @@
 "use client";
 
-import { ReactNode, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 
 export const DEFAULT_PAGE_SIZE = 5;
+
+function useResponsivePageSize(phoneSize: number) {
+  const [size, setSize] = useState(phoneSize);
+
+  useEffect(() => {
+    const tablet = window.matchMedia("(min-width: 768px)");
+    const wide = window.matchMedia("(min-width: 1024px)");
+    const apply = () => {
+      if (wide.matches) setSize(Math.max(phoneSize, 10));
+      else if (tablet.matches) setSize(Math.max(phoneSize, 8));
+      else setSize(phoneSize);
+    };
+    apply();
+    tablet.addEventListener("change", apply);
+    wide.addEventListener("change", apply);
+    return () => {
+      tablet.removeEventListener("change", apply);
+      wide.removeEventListener("change", apply);
+    };
+  }, [phoneSize]);
+
+  return size;
+}
 
 type Props<T> = {
   items: T[];
@@ -19,24 +42,25 @@ export function PaginatedList<T>({
   emptyMessage,
   getKey,
   renderItem,
-  listClassName = "space-y-3",
+  listClassName = "ceo-list",
 }: Props<T>) {
   const [page, setPage] = useState(1);
+  const resolvedPageSize = useResponsivePageSize(pageSize);
   const total = items.length;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const totalPages = Math.max(1, Math.ceil(total / resolvedPageSize));
   const currentPage = Math.min(page, totalPages);
 
   const pageItems = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return items.slice(start, start + pageSize);
-  }, [items, currentPage, pageSize]);
+    const start = (currentPage - 1) * resolvedPageSize;
+    return items.slice(start, start + resolvedPageSize);
+  }, [items, currentPage, resolvedPageSize]);
 
   if (total === 0) {
     return <p className="text-sm text-[var(--muted)]">{emptyMessage}</p>;
   }
 
-  const from = (currentPage - 1) * pageSize + 1;
-  const to = Math.min(currentPage * pageSize, total);
+  const from = (currentPage - 1) * resolvedPageSize + 1;
+  const to = Math.min(currentPage * resolvedPageSize, total);
 
   return (
     <div className="space-y-3">
@@ -49,7 +73,7 @@ export function PaginatedList<T>({
       <div className="flex items-center justify-between gap-3 border-t border-[var(--border)] pt-3">
         <p className="text-xs text-[var(--muted)]">
           {from}–{to} of {total}
-          <span className="ml-1 opacity-70">({pageSize}/page)</span>
+          <span className="ml-1 opacity-70">({resolvedPageSize}/page)</span>
         </p>
         <div className="flex items-center gap-2">
           <button

@@ -10,6 +10,7 @@ export type AppUser = {
   email: string;
   username: string;
   display_name: string;
+  first_name?: string;
   roles: string[];
   role_primary: string;
   access_flags: string[];
@@ -17,6 +18,7 @@ export type AppUser = {
   blog_id: number;
   client_name?: string;
   client_logo?: string;
+  client_hero?: string;
 };
 
 export type MenuItem = {

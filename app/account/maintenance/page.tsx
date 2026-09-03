@@ -8,8 +8,8 @@ export default async function MaintenancePage() {
 
   return (
     <AppShell
-      title="Maintenance"
-      subtitle="Internal, external, and completed"
+      title="Work Orders"
+      subtitle="My requests and building work"
       backHref="/account"
       clientName={branding.name}
       clientLogo={branding.logo}

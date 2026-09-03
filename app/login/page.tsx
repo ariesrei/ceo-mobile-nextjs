@@ -13,6 +13,8 @@ export default async function LoginPage() {
       subtitle="Resident, Building Admin, and Staff access for your property."
       clientName={branding.name}
       clientLogo={branding.logo}
+      showNav={false}
+      narrow
     >
       <Card>
         <LoginForm />

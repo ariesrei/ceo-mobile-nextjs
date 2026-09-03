@@ -4,7 +4,12 @@ import type { MenuItem, NavigationResponse } from "./types";
  * Temporary: which *staff* modules to show. Resident (account) menus are never filtered.
  * Set to null to restore all staff modules (Contacts, Guests, etc.).
  */
-export const STAFF_MENU_ALLOWLIST: string[] | null = ["parcels", "maintenance"];
+export const STAFF_MENU_ALLOWLIST: string[] | null = [
+  "parcels",
+  "maintenance",
+  "guests",
+  "warranties",
+];
 
 function isStaffMenu(item: MenuItem): boolean {
   return item.group === "staff";
@@ -17,7 +22,11 @@ function isAllowedStaffMenu(item: MenuItem): boolean {
     (item.path === "/account/parcels" &&
       STAFF_MENU_ALLOWLIST.includes("parcels")) ||
     (item.path === "/account/maintenance" &&
-      STAFF_MENU_ALLOWLIST.includes("maintenance"))
+      STAFF_MENU_ALLOWLIST.includes("maintenance")) ||
+    (item.path === "/account/guests" &&
+      STAFF_MENU_ALLOWLIST.includes("guests")) ||
+    (item.path === "/account/warranties" &&
+      STAFF_MENU_ALLOWLIST.includes("warranties"))
   );
 }
 

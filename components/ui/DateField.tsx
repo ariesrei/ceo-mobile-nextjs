@@ -83,7 +83,7 @@ export function DateField({
           aria-expanded={open}
           aria-haspopup="dialog"
           onClick={() => setOpen((v) => !v)}
-          className="flex w-full items-center justify-between rounded-xl border border-[var(--border)] bg-white px-3.5 py-3 text-left text-[var(--ink)] outline-none ring-[var(--accent)] focus:ring-2"
+          className="flex w-full items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 text-left text-[var(--ink)] outline-none ring-[var(--accent)] focus:ring-2"
         >
           <span className={selected ? "" : "text-[var(--muted)]"}>
             {selected ? format(selected, DATE_FORMAT) : placeholder}
@@ -116,7 +116,7 @@ export function DateField({
         <div
           role="dialog"
           aria-label={label}
-          className="ceo-date-popover absolute left-0 right-0 z-50 mt-2 rounded-2xl border border-[var(--border)] bg-white p-3 shadow-[0_16px_40px_rgba(15,23,42,0.12)]"
+          className="ceo-date-popover absolute left-0 right-0 z-50 mt-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-3 shadow-[0_16px_40px_rgba(15,23,42,0.12)]"
         >
           <DayPicker
             mode="single"

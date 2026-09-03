@@ -1,5 +1,4 @@
-import { AccountMenu } from "@/components/AccountMenu";
-import { AppShell } from "@/components/AppShell";
+import { HomeScreen } from "@/components/HomeScreen";
 import { Card } from "@/components/ui/Card";
 import { getNavigation, getServerClientBranding, requireAuth } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
@@ -14,28 +13,30 @@ export default async function AccountPage() {
   ]);
 
   const user = me.data;
-  const subtitle = user
-    ? `${user.display_name} · ${user.role_primary.replace(/_/g, " ")}`
-    : "My Account";
   const clientName = user?.client_name?.trim() || branding.name;
   const clientLogo = user?.client_logo?.trim() || branding.logo;
+  const clientHero = user?.client_hero?.trim() || branding.hero;
 
-  return (
-    <AppShell
-      title="My Account"
-      subtitle={subtitle}
-      clientName={clientName}
-      clientLogo={clientLogo}
-    >
-      {nav ? (
-        <AccountMenu menus={nav.menus} />
-      ) : (
+  if (!nav) {
+    return (
+      <div className="ceo-app mx-auto min-h-dvh w-full px-[var(--app-pad)] py-10">
         <Card>
-          <p className="text-sm text-red-700">
+          <p className="text-sm text-[var(--danger)]">
             {me.error || "Could not load navigation."}
           </p>
         </Card>
-      )}
-    </AppShell>
+      </div>
+    );
+  }
+
+  return (
+    <HomeScreen
+      menus={nav.menus}
+      clientName={clientName}
+      clientLogo={clientLogo}
+      clientHero={clientHero}
+      displayName={user?.display_name}
+      firstName={user?.first_name}
+    />
   );
 }

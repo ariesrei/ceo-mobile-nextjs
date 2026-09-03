@@ -166,75 +166,83 @@ export function ParcelForm({ parcel }: { parcel?: ParcelItem | null }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <Select
-        label="Unit"
-        required
-        options={toSelectOptions(units)}
-        value={form.parcel_recipient}
-        onChange={(e) =>
-          setForm({
-            ...form,
-            parcel_recipient: e.target.value,
-            parcel_resident: "",
-          })
-        }
-      />
-      <Select
-        label="Resident"
-        required
-        options={toSelectOptions(residents)}
-        value={form.parcel_resident}
-        onChange={(e) => setForm({ ...form, parcel_resident: e.target.value })}
-      />
-      <Select
-        label="Parcel type"
-        placeholder="Optional"
-        options={toSelectOptions(types)}
-        value={form.parcel_type}
-        onChange={(e) => setForm({ ...form, parcel_type: e.target.value })}
-      />
-      <Input
-        label="Other parcel type"
-        value={form.parcel_type_other}
-        onChange={(e) =>
-          setForm({ ...form, parcel_type_other: e.target.value })
-        }
-      />
-      <Select
-        label="Received by"
-        required
-        options={toSelectOptions(staff)}
-        value={form.parcel_received_by}
-        onChange={(e) =>
-          setForm({ ...form, parcel_received_by: e.target.value })
-        }
-      />
-      <Input
-        label="Number of parcels"
-        type="number"
-        min={1}
-        required
-        value={form.parcel_number}
-        onChange={(e) => setForm({ ...form, parcel_number: e.target.value })}
-      />
-      <DateField
-        label="Delivered on (date)"
-        value={form.delivered_date}
-        onChange={(delivered_date) => setForm({ ...form, delivered_date })}
-        required
-      />
-      <Input
-        label="Delivered time"
-        type="time"
-        value={form.delivered_time}
-        onChange={(e) => setForm({ ...form, delivered_time: e.target.value })}
-      />
+      <div className="ceo-form-row">
+        <Select
+          label="Unit"
+          required
+          options={toSelectOptions(units)}
+          value={form.parcel_recipient}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              parcel_recipient: e.target.value,
+              parcel_resident: "",
+            })
+          }
+        />
+        <Select
+          label="Resident"
+          required
+          options={toSelectOptions(residents)}
+          value={form.parcel_resident}
+          onChange={(e) => setForm({ ...form, parcel_resident: e.target.value })}
+        />
+      </div>
+      <div className="ceo-form-row">
+        <Select
+          label="Parcel type"
+          placeholder="Optional"
+          options={toSelectOptions(types)}
+          value={form.parcel_type}
+          onChange={(e) => setForm({ ...form, parcel_type: e.target.value })}
+        />
+        <Input
+          label="Other parcel type"
+          value={form.parcel_type_other}
+          onChange={(e) =>
+            setForm({ ...form, parcel_type_other: e.target.value })
+          }
+        />
+      </div>
+      <div className="ceo-form-row">
+        <Select
+          label="Received by"
+          required
+          options={toSelectOptions(staff)}
+          value={form.parcel_received_by}
+          onChange={(e) =>
+            setForm({ ...form, parcel_received_by: e.target.value })
+          }
+        />
+        <Input
+          label="Number of parcels"
+          type="number"
+          min={1}
+          required
+          value={form.parcel_number}
+          onChange={(e) => setForm({ ...form, parcel_number: e.target.value })}
+        />
+      </div>
+      <div className="ceo-form-row">
+        <DateField
+          label="Delivered on (date)"
+          value={form.delivered_date}
+          onChange={(delivered_date) => setForm({ ...form, delivered_date })}
+          required
+        />
+        <Input
+          label="Delivered time"
+          type="time"
+          value={form.delivered_time}
+          onChange={(e) => setForm({ ...form, delivered_time: e.target.value })}
+        />
+      </div>
       <label className="block space-y-1.5">
         <span className="text-sm font-medium text-[var(--muted)]">
           Comments / barcode
         </span>
         <textarea
-          className="w-full rounded-xl border border-[var(--border)] bg-white px-3.5 py-3 outline-none ring-[var(--accent)] focus:ring-2"
+          className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 outline-none ring-[var(--accent)] focus:ring-2"
           rows={3}
           value={form.comments_parcel_barcode}
           onChange={(e) =>
@@ -259,12 +267,12 @@ export function ParcelForm({ parcel }: { parcel?: ParcelItem | null }) {
         Email resident on save
       </label>
       {error ? (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-xl bg-[#3a1c1c] px-3 py-2 text-sm text-[var(--danger)]">
           {error}
         </p>
       ) : null}
       {message ? (
-        <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <p className="rounded-xl bg-[#163a28] px-3 py-2 text-sm text-[var(--ok)]">
           {message}
         </p>
       ) : null}

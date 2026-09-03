@@ -20,6 +20,7 @@ type Props = {
 export function HistoryLists({ guests, reservations }: Props) {
   return (
     <div className="space-y-4">
+      {guests?.enabled ? (
       <Card>
         <h2 className="mb-3 font-semibold">Guests</h2>
         <PaginatedList
@@ -37,6 +38,7 @@ export function HistoryLists({ guests, reservations }: Props) {
           )}
         />
       </Card>
+      ) : null}
 
       {reservations?.enabled ? (
         <Card>
@@ -55,6 +57,12 @@ export function HistoryLists({ guests, reservations }: Props) {
               </div>
             )}
           />
+        </Card>
+      ) : null}
+
+      {!guests?.enabled && !reservations?.enabled ? (
+        <Card>
+          <p className="text-sm text-[var(--muted)]">No history modules are enabled.</p>
         </Card>
       ) : null}
     </div>

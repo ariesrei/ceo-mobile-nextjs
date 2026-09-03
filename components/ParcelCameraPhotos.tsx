@@ -169,13 +169,13 @@ export function ParcelCameraPhotos({
         type="button"
         disabled={disabled || uploading}
         onClick={() => inputRef.current?.click()}
-        className="w-full rounded-xl border border-[var(--border)] bg-white px-3.5 py-3 text-sm font-semibold text-[var(--ink)] disabled:opacity-60"
+        className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 text-sm font-semibold text-[var(--ink)] disabled:opacity-60"
       >
         {uploading ? "Adding photo…" : "Take photo"}
       </button>
 
       {error ? (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-xl bg-[#3a1c1c] px-3 py-2 text-sm text-[var(--danger)]">
           {error}
         </p>
       ) : null}
