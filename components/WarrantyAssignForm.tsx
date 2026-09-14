@@ -7,6 +7,7 @@ import type {
   WarrantyItem,
   WarrantyOptions,
 } from "@/lib/warranties";
+import { ClaimThumb, claimContactName } from "./ClaimThumb";
 import { DateField } from "./ui/DateField";
 import { SearchIcon } from "./ui/Icons";
 
@@ -45,11 +46,7 @@ export function WarrantyAssignForm({ record }: { record: WarrantyItem }) {
       (s) => String(s.id) === form.warranty_sources_subcontractors
     )?.label || "";
 
-  const contact =
-    record.resident_name ||
-    [record.warranty_first_name, record.warranty_last_name]
-      .filter(Boolean)
-      .join(" ");
+  const contact = claimContactName(record);
 
   function selectVendor(id: string) {
     setForm((f) => ({ ...f, warranty_sources_subcontractors: id }));
@@ -93,14 +90,11 @@ export function WarrantyAssignForm({ record }: { record: WarrantyItem }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="ceo-claim-head">
-        {record.photos?.[0]?.url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={record.photos[0].url} alt="" className="ceo-claim-head__thumb" />
-        ) : (
-          <span className="ceo-claim-head__thumb ceo-claim-head__thumb--empty">
-            #{record.id}
-          </span>
-        )}
+        <ClaimThumb
+          src={record.photos?.[0]?.url}
+          name={contact}
+          size="head"
+        />
         <div className="min-w-0 flex-1">
           <p className="ceo-claim-card__id">Claim #{record.id}</p>
           <p className="ceo-claim-head__title">

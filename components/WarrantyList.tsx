@@ -9,6 +9,7 @@ import type {
   WarrantyOptions,
 } from "@/lib/warranties";
 import { isWarrantyExpiring, isWarrantyInProgress } from "@/lib/warranties";
+import { ClaimThumb, claimContactName } from "./ClaimThumb";
 import { FastLink } from "./FastLink";
 import { Card } from "./ui/Card";
 import { PaginatedList } from "./ui/PaginatedList";
@@ -332,10 +333,10 @@ export function WarrantyList({
           getKey={(w) => w.id}
           renderItem={(w) => (
             <Link href={`/account/warranties/${w.id}`} className="ceo-claim-card">
-              {w.photos?.[0]?.url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={w.photos[0].url} alt="" className="ceo-claim-card__thumb" />
-              ) : null}
+              <ClaimThumb
+                src={w.photos?.[0]?.url}
+                name={claimContactName(w)}
+              />
               <div className="min-w-0 flex-1">
                 <p className="ceo-claim-card__id">#{w.id}</p>
                 <p className="ceo-claim-card__title">
@@ -346,13 +347,7 @@ export function WarrantyList({
                 </p>
                 <div className="ceo-claim-card__meta">
                   <span>{w.unit_title || "—"}</span>
-                  <span>
-                    {[w.warranty_first_name, w.warranty_last_name]
-                      .filter(Boolean)
-                      .join(" ") ||
-                      w.resident_name ||
-                      "—"}
-                  </span>
+                  <span>{claimContactName(w) || "—"}</span>
                   <span>{w.created_date || "—"}</span>
                 </div>
               </div>
