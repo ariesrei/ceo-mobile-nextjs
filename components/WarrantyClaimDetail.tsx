@@ -16,12 +16,6 @@ type PathEvent = {
   message: string;
 };
 
-function initialsFrom(name: string) {
-  const parts = name.split(/\s+/).filter(Boolean);
-  const letters = parts.slice(0, 2).map((p) => p[0]?.toUpperCase() || "");
-  return letters.join("") || "•";
-}
-
 function contactName(record: WarrantyItem) {
   return claimContactName(record) || "Resident";
 }
