@@ -5,14 +5,17 @@ import type { AppUser, NavigationResponse } from "./types";
 import {
   COOKIE_ACCESS,
   COOKIE_BASE_URL,
+  COOKIE_CLIENT_HERO,
   COOKIE_CLIENT_LOGO,
   COOKIE_CLIENT_NAME,
+  COOKIE_CLIENT_TAGLINE,
   wpFetchServer,
 } from "./wp";
 import { applyNavVisibility, isPathAllowed } from "./navigation";
 
 export type ClientBranding = {
   name: string;
+  tagline: string;
   logo: string;
   hero: string;
 };
@@ -28,11 +31,20 @@ export const getServerClientBranding = cache(async (): Promise<ClientBranding> =
 
   let name = fromCookieName && fromCookieName !== "Client" ? fromCookieName : "";
   let logo = fromCookieLogo;
-  let hero = "";
+  // Set at connect time, so the login screen has a background before sign-in.
+  let hero = jar.get(COOKIE_CLIENT_HERO)?.value?.trim() || "";
+  let tagline = jar.get(COOKIE_CLIENT_TAGLINE)?.value?.trim() || "";
+
+  // Connect/login already stored branding. Hitting /app/me here blocked every
+  // account and warranty screen for as long as WordPress took to build the
+  // user payload (access flags, modules, hero). Skip that when cookies exist.
+  if (name && (hero || logo)) {
+    return { name, tagline, logo, hero };
+  }
 
   const token = jar.get(COOKIE_ACCESS)?.value;
   if (!token) {
-    return { name, logo, hero };
+    return { name, tagline, logo, hero };
   }
 
   const me = await wpFetchServer<AppUser>("/app/me");
@@ -42,8 +54,13 @@ export const getServerClientBranding = cache(async (): Promise<ClientBranding> =
   if (!logo) {
     logo = me.data?.client_logo?.trim() || "";
   }
-  hero = me.data?.client_hero?.trim() || "";
-  return { name, logo, hero };
+  if (!hero) {
+    hero = me.data?.client_hero?.trim() || "";
+  }
+  if (!tagline) {
+    tagline = me.data?.client_tagline?.trim() || "";
+  }
+  return { name, tagline, logo, hero };
 });
 
 export async function getServerClientName(): Promise<string> {
@@ -66,10 +83,10 @@ export async function requireAuth() {
   }
 }
 
-export async function getNavigation(): Promise<NavigationResponse | null> {
+export const getNavigation = cache(async (): Promise<NavigationResponse | null> => {
   const result = await wpFetchServer<NavigationResponse>("/app/navigation");
   return applyNavVisibility(result.data || null);
-}
+});
 
 export async function requireMenuPath(path: string) {
   await requireAuth();

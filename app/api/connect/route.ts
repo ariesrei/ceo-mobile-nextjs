@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { fetchErrorMessage, serverFetch } from "@/lib/server-fetch";
-import { COOKIE_BASE_URL, COOKIE_CLIENT_LOGO, COOKIE_CLIENT_NAME } from "@/lib/wp";
+import {
+  COOKIE_BASE_URL,
+  COOKIE_CLIENT_HERO,
+  COOKIE_CLIENT_LOGO,
+  COOKIE_CLIENT_NAME,
+  COOKIE_CLIENT_TAGLINE,
+} from "@/lib/wp";
 
 const cookieOpts = {
   httpOnly: true,
@@ -41,6 +47,8 @@ export async function POST(request: Request) {
       message?: string;
       client_name?: string;
       client_logo?: string;
+      client_hero?: string;
+      client_tagline?: string;
     };
 
     if (!res.ok || !data.valid) {
@@ -52,11 +60,15 @@ export async function POST(request: Request) {
 
     const clientName = String(data.client_name || "").trim();
     const clientLogo = String(data.client_logo || "").trim();
+    const clientHero = String(data.client_hero || "").trim();
+    const clientTagline = String(data.client_tagline || "").trim();
     const response = NextResponse.json({
       valid: true,
       baseUrl,
       clientName,
       clientLogo,
+      clientHero,
+      clientTagline,
     });
     response.cookies.set(COOKIE_BASE_URL, baseUrl, cookieOpts);
     if (clientName) {
@@ -64,6 +76,12 @@ export async function POST(request: Request) {
     }
     if (clientLogo) {
       response.cookies.set(COOKIE_CLIENT_LOGO, clientLogo, cookieOpts);
+    }
+    if (clientHero) {
+      response.cookies.set(COOKIE_CLIENT_HERO, clientHero, cookieOpts);
+    }
+    if (clientTagline) {
+      response.cookies.set(COOKIE_CLIENT_TAGLINE, clientTagline, cookieOpts);
     }
     return response;
   } catch (err) {

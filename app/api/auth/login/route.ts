@@ -4,8 +4,10 @@ import {
   apiUrl,
   COOKIE_ACCESS,
   COOKIE_BASE_URL,
+  COOKIE_CLIENT_HERO,
   COOKIE_CLIENT_LOGO,
   COOKIE_CLIENT_NAME,
+  COOKIE_FIRST_NAME,
   COOKIE_REFRESH,
 } from "@/lib/wp";
 import type { AuthTokens } from "@/lib/types";
@@ -69,6 +71,13 @@ export async function POST(request: Request) {
     });
     const clientName = String(data.user?.client_name || "").trim();
     const clientLogo = String(data.user?.client_logo || "").trim();
+    const clientHero = String(data.user?.client_hero || "").trim();
+    const firstName =
+      String(data.user?.first_name || "").trim() ||
+      String(data.user?.display_name || "")
+        .trim()
+        .split(/\s+/)[0] ||
+      "";
     if (clientName) {
       response.cookies.set(COOKIE_CLIENT_NAME, clientName, {
         ...cookieOpts,
@@ -77,6 +86,18 @@ export async function POST(request: Request) {
     }
     if (clientLogo) {
       response.cookies.set(COOKIE_CLIENT_LOGO, clientLogo, {
+        ...cookieOpts,
+        maxAge: 60 * 60 * 24 * 365,
+      });
+    }
+    if (clientHero) {
+      response.cookies.set(COOKIE_CLIENT_HERO, clientHero, {
+        ...cookieOpts,
+        maxAge: 60 * 60 * 24 * 365,
+      });
+    }
+    if (firstName) {
+      response.cookies.set(COOKIE_FIRST_NAME, firstName, {
         ...cookieOpts,
         maxAge: 60 * 60 * 24 * 365,
       });

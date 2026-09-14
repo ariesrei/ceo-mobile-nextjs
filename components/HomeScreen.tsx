@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { MenuItem } from "@/lib/types";
 import { AccountMenu } from "./AccountMenu";
 import { BottomNav } from "./BottomNav";
@@ -66,20 +66,37 @@ export function HomeScreen({
   firstName?: string;
 }) {
   const [showNotes, setShowNotes] = useState(false);
+  const [greeting, setGreeting] = useState("Good morning,");
   const brand = splitPropertyName(clientName);
-  const greeting = useMemo(() => greetingLabel(), []);
   const name = firstNameFrom(displayName, firstName);
+
+  useEffect(() => {
+    setGreeting(greetingLabel());
+  }, []);
+
+  useEffect(() => {
+    if (name && name !== "there") {
+      try {
+        sessionStorage.setItem("ceo_first_name", name);
+      } catch {
+        /* private mode */
+      }
+    }
+  }, [name]);
 
   return (
     <div className="ceo-home ceo-app mx-auto min-h-dvh w-full pb-24">
-      <section
-        className="ceo-home-hero relative overflow-hidden"
-        style={
-          clientHero
-            ? { backgroundImage: `url(${clientHero})` }
-            : undefined
-        }
-      >
+      <section className="ceo-home-hero relative overflow-hidden">
+        {/* Separate layer rather than a background on the section itself: an
+            inline background-image would replace the fallback gradient, so a
+            property with no photo — or an unreachable one — would paint flat. */}
+        {clientHero ? (
+          <div
+            className="ceo-home-hero__photo"
+            style={{ backgroundImage: `url(${clientHero})` }}
+            aria-hidden
+          />
+        ) : null}
         <div className="ceo-home-hero__shade" aria-hidden />
         <header className="relative z-10 flex items-start justify-between px-5 pt-5 md:px-8 md:pt-7">
           <div className="flex min-w-0 items-center gap-3">

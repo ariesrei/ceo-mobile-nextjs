@@ -5,6 +5,13 @@
   --muted: #9aa4b2;
   --accent: #2ec4b6;
   --accent-hover: #24a89c;
+  /* Derived from --accent. Declared as tokens rather than literals so a module
+     can restate the whole accent family in one block; the Warranty module does
+     exactly that below. */
+  --accent-ink: #081014;
+  --accent-soft: rgba(46, 196, 182, 0.13);
+  --accent-line: rgba(46, 196, 182, 0.35);
+  --accent-glow: rgba(46, 196, 182, 0.28);
   --surface: #1a1f27;
   --surface-2: #222833;
   --border: rgba(255, 255, 255, 0.08);
@@ -15,6 +22,8 @@
   --danger: #f07167;
   --app-max: 32rem;
   --app-pad: 1rem;
+  /* Company brand navy, used by the landing and splash lockup. */
+  --navy: #071020;
 }
 
 @media (min-width: 768px) {
@@ -77,7 +86,7 @@ a {
 }
 
 a.ceo-btn-accent {
-  color: #081014 !important;
+  color: var(--accent-ink) !important;
 }
 
 .ceo-field,
@@ -105,7 +114,7 @@ a.ceo-btn-accent {
 
 .ceo-date-popover .rdp-selected .rdp-day_button {
   background: var(--accent) !important;
-  color: #081014 !important;
+  color: var(--accent-ink) !important;
   border-color: var(--accent) !important;
 }
 
@@ -134,14 +143,40 @@ a.ceo-btn-accent {
   background-position: center;
 }
 
+/* The property's Customizer background image from WordPress. Sits above the
+   gradient in .ceo-home-hero so that an unset or unreachable photo falls back
+   to it instead of painting the bare background-color. The bottom fade lets
+   the photo dissolve into the app background where the card sheet begins. */
+.ceo-home-hero__photo {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    #000 0%,
+    #000 52%,
+    rgba(0, 0, 0, 0.35) 84%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    180deg,
+    #000 0%,
+    #000 52%,
+    rgba(0, 0, 0, 0.35) 84%,
+    transparent 100%
+  );
+}
+
 .ceo-home-hero__shade {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(8, 12, 20, 0.28) 0%,
-    rgba(8, 12, 20, 0.08) 40%,
-    rgba(8, 12, 20, 0.62) 100%
+    rgba(8, 12, 20, 0.52) 0%,
+    rgba(8, 12, 20, 0.12) 32%,
+    rgba(8, 12, 20, 0.58) 74%,
+    var(--bg) 100%
   );
 }
 
@@ -178,7 +213,7 @@ a.ceo-btn-accent {
   width: 2.15rem;
   height: 2.15rem;
   border-radius: 0.8rem;
-  background: rgba(46, 196, 182, 0.14);
+  background: var(--accent-soft);
   color: var(--accent);
 }
 
@@ -229,7 +264,7 @@ a.ceo-btn-accent {
 
 .ceo-tabs button.is-active {
   background: var(--accent);
-  color: #081014;
+  color: var(--accent-ink);
 }
 
 .ceo-search {
@@ -270,8 +305,8 @@ a.ceo-btn-accent {
 
 .ceo-status--progress {
   color: var(--accent);
-  background: rgba(46, 196, 182, 0.12);
-  border: 1px solid rgba(46, 196, 182, 0.35);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
 }
 
 .ceo-status--warn {
@@ -292,21 +327,28 @@ a.ceo-btn-accent {
   border: 1px solid rgba(154, 164, 178, 0.25);
 }
 
+.ceo-status--danger {
+  color: var(--danger);
+  background: rgba(240, 113, 103, 0.12);
+  border: 1px solid rgba(240, 113, 103, 0.35);
+}
+
 .ceo-fab {
   position: fixed;
   right: max(var(--app-pad), calc(50vw - (var(--app-max) / 2) + var(--app-pad)));
-  bottom: 5.5rem;
+  /* Clears the bottom nav plus the Android system navigation bar. */
+  bottom: calc(5.5rem + env(safe-area-inset-bottom));
   z-index: 40;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   border-radius: 999px;
   background: var(--accent);
-  color: #081014 !important;
+  color: var(--accent-ink) !important;
   padding: 0.85rem 1.1rem;
   font-size: 0.88rem;
   font-weight: 800;
-  box-shadow: 0 10px 24px rgba(46, 196, 182, 0.28);
+  box-shadow: 0 10px 24px var(--accent-glow);
 }
 
 .ceo-bottom-nav {
@@ -444,7 +486,7 @@ a.ceo-btn-accent {
   }
 
   .ceo-fab {
-    bottom: 6.75rem;
+    bottom: calc(6.75rem + env(safe-area-inset-bottom));
   }
 
   .ceo-sheet {
@@ -480,6 +522,22 @@ a.ceo-btn-accent {
     min-height: 100dvh;
   }
 
+  /* Here the hero is a full-height side column, not a band above the cards,
+     so there is no seam for the bottom fade to hide. */
+  .ceo-home-hero__photo {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .ceo-home-hero__shade {
+    background: linear-gradient(
+      180deg,
+      rgba(8, 12, 20, 0.52) 0%,
+      rgba(8, 12, 20, 0.12) 38%,
+      rgba(8, 12, 20, 0.55) 100%
+    );
+  }
+
   .ceo-home .ceo-home-sheet {
     margin-top: 0;
     max-height: 100dvh;
@@ -496,3 +554,1988 @@ a.ceo-btn-accent {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+.is-pending {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.ceo-skel {
+  background: linear-gradient(
+    90deg,
+    var(--surface) 0%,
+    var(--surface-2) 50%,
+    var(--surface) 100%
+  );
+  background-size: 200% 100%;
+  animation: ceo-skel 1.1s ease-in-out infinite;
+}
+
+@keyframes ceo-skel {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+/* ---------- Warranty module ---------- */
+
+/* The Warranty design system, restated for this module only. Everything below
+   and every shared component rendered inside it — buttons, fields, badges, the
+   bottom nav — reads these rather than the :root defaults, so the module can
+   carry its own palette without touching the login screens or the Operations
+   build. Scoped deliberately: the two app variants are meant to diverge. */
+.ceo-warranty {
+  --accent: #00c897;
+  --accent-hover: #00b184;
+  /* Near-black rather than pure black: pure black on this teal reads harsh at
+     button-label weight. */
+  --accent-ink: #05231b;
+  --accent-soft: rgba(0, 200, 151, 0.13);
+  --accent-line: rgba(0, 200, 151, 0.38);
+  --accent-glow: rgba(0, 200, 151, 0.26);
+  /* Cards, and the slightly lighter fill used for inputs nested inside them.
+     The page itself stays on the darker --bg, which is what separates a card
+     from its background in the reference design. */
+  --surface: #1a1d26;
+  --surface-2: #232734;
+  --ink: #ffffff;
+  --muted: #adb5bd;
+  --border: rgba(255, 255, 255, 0.07);
+}
+
+.ceo-warranty-stat:active,
+.ceo-warranty-new:active,
+.ceo-claim-card:active,
+.ceo-home-tile:active {
+  transform: scale(0.98);
+}
+
+/* A row is now part of a grouped card, so it tints instead of scaling; scaling
+   one row would pull it away from the hairlines above and below it. */
+.ceo-warranty-menu__row:active {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* The property photo. Both headers below paint the same `client_hero` the
+   /account home hero uses, so the module reads as part of the property rather
+   than a separate app. */
+.ceo-warranty-hero,
+.ceo-warranty-topbar {
+  position: relative;
+  overflow: hidden;
+  background-color: #161b22;
+  background-image:
+    radial-gradient(120% 90% at 72% 16%, var(--accent-glow), transparent 58%),
+    linear-gradient(180deg, #1d2530 0%, #141922 60%, var(--bg) 100%);
+}
+
+.ceo-warranty-hero__photo,
+.ceo-warranty-topbar__photo {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    #000 0%,
+    #000 48%,
+    rgba(0, 0, 0, 0.35) 82%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    180deg,
+    #000 0%,
+    #000 48%,
+    rgba(0, 0, 0, 0.35) 82%,
+    transparent 100%
+  );
+}
+
+.ceo-warranty-hero__shade,
+.ceo-warranty-topbar__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(8, 12, 20, 0.58) 0%,
+    rgba(8, 12, 20, 0.18) 34%,
+    rgba(8, 12, 20, 0.62) 76%,
+    var(--bg) 100%
+  );
+}
+
+/* ---------- Warranty home (module landing) ---------- */
+
+.ceo-warranty-hero {
+  display: flex;
+  /* Sized so the overview card starts just under a third of the way down, as
+     it does in the reference. Tablet and up override this further below. */
+  min-height: 33dvh;
+  flex-direction: column;
+}
+
+.ceo-warranty-hero__bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: calc(1.1rem + env(safe-area-inset-top)) var(--app-pad) 0;
+}
+
+.ceo-warranty-hero__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  margin: -0.15rem 0 0 -0.2rem;
+  color: #fff;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+}
+
+.ceo-warranty-hero__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  flex: 0 0 auto;
+  color: #fff;
+}
+
+.ceo-warranty-hero__property {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #fff;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
+}
+
+.ceo-warranty-hero__property-sub {
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.ceo-warranty-hero__greeting {
+  position: relative;
+  z-index: 1;
+  padding: 3.5rem var(--app-pad) 3rem;
+}
+
+/*
+ * A property with no photo in Appearance > Background gets no `client_hero`, and
+ * the hero above is sized to sit behind one. Left alone it reads as a tall empty
+ * band, so these collapse the reserved space and lean on a layered brand
+ * gradient instead. Written with two classes so the responsive `min-height`
+ * further down this file does not win on source order.
+ */
+.ceo-warranty-hero.ceo-warranty-hero--flat {
+  min-height: 0;
+  background-image:
+    radial-gradient(100% 80% at 85% 0%, var(--accent-glow), transparent 60%),
+    radial-gradient(70% 60% at 8% 8%, rgba(46, 196, 182, 0.1), transparent 70%),
+    linear-gradient(180deg, #1f2937 0%, #161d27 55%, var(--bg) 100%);
+}
+
+.ceo-warranty-hero--flat .ceo-warranty-hero__greeting {
+  padding-top: 1.75rem;
+  padding-bottom: 2.25rem;
+}
+
+/* The sheet is pulled up to overlap the photo; with no photo that pull would
+   crowd the greeting instead. */
+.ceo-warranty-hero--flat + .ceo-warranty-sheet {
+  margin-top: 0;
+}
+
+.ceo-warranty-topbar--flat .ceo-warranty-topbar__row {
+  padding-bottom: 1.5rem;
+}
+
+.ceo-warranty-sheet {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 1rem;
+  margin-top: -2rem;
+  padding: 0 var(--app-pad);
+}
+
+/* ---------- Warranty sub-page header ---------- */
+
+.ceo-warranty-topbar__row {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 2.5rem 1fr auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: calc(0.85rem + env(safe-area-inset-top)) var(--app-pad) 2.1rem;
+}
+
+.ceo-warranty-topbar__title {
+  min-width: 0;
+  text-align: center;
+}
+
+.ceo-warranty-topbar__name {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
+}
+
+.ceo-warranty-topbar__sub {
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.ceo-warranty-topbar__action {
+  display: flex;
+  min-width: 2.5rem;
+  justify-content: flex-end;
+}
+
+.ceo-warranty-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 14, 20, 0.42);
+  color: #fff;
+  backdrop-filter: blur(6px);
+}
+
+.ceo-warranty-iconbtn--empty {
+  border-color: transparent;
+  background: transparent;
+}
+
+/* ---------- Overview card ---------- */
+
+.ceo-warranty-overview {
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1.05rem 1rem 1.2rem;
+}
+
+.ceo-warranty-overview__period {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Three columns with no tile fills, split by hairlines. The rules sit on the
+   stat rather than the card so they stop at the figures instead of running the
+   card's full height. */
+.ceo-warranty-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 1.05rem;
+}
+
+.ceo-warranty-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.4rem;
+}
+
+.ceo-warranty-stat + .ceo-warranty-stat {
+  border-left: 1px solid var(--border);
+}
+
+.ceo-warranty-stat__n {
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ceo-warranty-stat__l {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
+}
+
+.ceo-warranty-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink) !important;
+  font-weight: 700;
+  padding: 0.8rem 1rem;
+}
+
+/* ---------- Menu rows ---------- */
+
+/* One card holding the rows, split by hairlines — not a stack of separate
+   cards. Reports, Settings and Vendors all render into this same list. */
+.ceo-warranty-menu {
+  display: flex;
+  flex-direction: column;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  /* Keeps the first and last rows from squaring off the card's corners. */
+  overflow: hidden;
+}
+
+.ceo-warranty-menu__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: transparent;
+  padding: 0.85rem 1rem;
+  font-weight: 500;
+}
+
+.ceo-warranty-menu__row + .ceo-warranty-menu__row {
+  border-top: 1px solid var(--border);
+}
+
+.ceo-warranty-menu__row--static {
+  color: var(--ink);
+}
+
+.ceo-warranty-menu__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex: 0 0 auto;
+  border-radius: 0.7rem;
+  /* Weaker than --accent-soft on purpose. That token is sized for status
+     badges, where the fill carries the meaning; here the teal glyph already
+     does, so a badge-strength tile reads as a second, competing chip. */
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  color: var(--accent);
+}
+
+.ceo-warranty-menu--home .ceo-warranty-menu__icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.ceo-warranty-menu__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.9rem;
+}
+
+.ceo-warranty-menu__meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* Vendors have no avatar in WordPress, so the row is marked with the first
+   letter of the company name in place of one. */
+.ceo-vendor-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.ceo-warranty-menu__chev {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.ceo-warranty-detail {
+  display: grid;
+  gap: 0.9rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1rem;
+}
+
+.ceo-contact-card {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.9rem 1rem;
+}
+
+.ceo-contact-card__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.ceo-contact-card__name {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.ceo-contact-card__meta {
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* ---------- Claim list ---------- */
+
+.ceo-claim-tabs {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ceo-claim-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* Only the selected tab is a filled pill; the rest are bare labels with their
+   count beside them. */
+.ceo-claim-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.ceo-claim-tab.is-active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.ceo-claim-tab__count {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.05rem 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.ceo-claim-tab.is-active .ceo-claim-tab__count {
+  background: rgba(8, 16, 20, 0.18);
+}
+
+.ceo-claim-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding-left: 0.85rem;
+}
+
+.ceo-claim-search > .ceo-claim-search__icon {
+  margin-right: 0.15rem;
+}
+
+.ceo-claim-search__icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.ceo-claim-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  padding: 0.8rem 0.6rem;
+  font-size: 0.88rem;
+  color: var(--ink);
+  outline: none;
+}
+
+.ceo-claim-search input::placeholder {
+  color: var(--muted);
+}
+
+.ceo-claim-search input::-webkit-search-cancel-button {
+  filter: invert(0.6);
+}
+
+.ceo-claim-search__filter {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  border-radius: 0 1rem 1rem 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.ceo-claim-search__filter.is-active {
+  color: var(--accent);
+}
+
+.ceo-claim-search__dot {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.6rem;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.ceo-claim-filters {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.ceo-claim-filter {
+  display: grid;
+  grid-template-columns: 7.4rem minmax(0, 1fr);
+  align-items: center;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.ceo-claim-filter__label {
+  padding: 0.85rem 0.95rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.ceo-claim-filter__value {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.ceo-claim-filter select {
+  width: 100%;
+  min-width: 0;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0.85rem 0.95rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: right;
+  outline: none;
+}
+
+.ceo-claim-filter__cal {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: 0 0 auto;
+  margin-right: 0.9rem;
+  color: var(--muted);
+}
+
+.ceo-claim-filter-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+}
+
+.ceo-claim-list {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: 1fr;
+}
+
+.ceo-claim-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.8rem;
+}
+
+.ceo-claim-card__thumb {
+  width: 3.2rem;
+  height: 3.2rem;
+  flex: 0 0 auto;
+  border-radius: 0.7rem;
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
+.ceo-claim-card__thumb--empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.ceo-claim-card__id {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.ceo-claim-card__title {
+  margin-top: 0.1rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.ceo-claim-card__meta {
+  display: grid;
+  gap: 0.05rem;
+  margin-top: 0.2rem;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+/* ---------- Claim detail ---------- */
+
+.ceo-claim-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.9rem;
+}
+
+.ceo-claim-head__thumb {
+  width: 4rem;
+  height: 4rem;
+  flex: 0 0 auto;
+  border-radius: 0.8rem;
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
+.ceo-claim-head__thumb--empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.ceo-claim-head__title {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+/* Underlined segmented control, as distinct from the pill tabs on the list. */
+.ceo-seg {
+  display: flex;
+  gap: 0.15rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.ceo-seg button {
+  flex: 1 1 0;
+  padding: 0.6rem 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.ceo-seg button.is-active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ---------- Updates / timeline path ---------- */
+
+.ceo-feed {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0.15rem 0 0;
+  list-style: none;
+}
+
+.ceo-feed__item {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  column-gap: 0.75rem;
+  align-items: flex-start;
+  padding-bottom: 1.45rem;
+}
+
+.ceo-feed__item:last-child {
+  padding-bottom: 0.1rem;
+}
+
+.ceo-feed__rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.ceo-feed__item:not(:last-child) .ceo-feed__rail::after {
+  content: "";
+  position: absolute;
+  top: 2.25rem;
+  bottom: -1.45rem;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background: var(--accent);
+}
+
+.ceo-feed__avatar {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.ceo-feed__who {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.ceo-feed__name {
+  min-width: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.ceo-feed__at {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.ceo-feed__msg {
+  margin-top: 0.18rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.ceo-composer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.3rem 0.3rem 0.3rem 1rem;
+}
+
+.ceo-composer input {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  font-size: 0.85rem;
+  color: var(--ink);
+  outline: none;
+}
+
+.ceo-composer input::placeholder {
+  color: var(--muted);
+}
+
+.ceo-composer button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* ---------- Files ---------- */
+
+.ceo-chips {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.ceo-chips button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.ceo-chips button.is-active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.ceo-file-thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 0.8rem;
+  border: 1px solid var(--border);
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
+.ceo-file-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.85rem 0.9rem;
+}
+
+/* Document row: a red-tinted badge for the file type, name over size. */
+.ceo-doc-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  flex: 0 0 auto;
+  border-radius: 0.6rem;
+  background: rgba(240, 113, 103, 0.16);
+  color: var(--danger);
+}
+
+.ceo-doc-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.ceo-doc-size {
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* ---------- Timeline ---------- */
+
+.ceo-timeline {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0.25rem 0 0.25rem 1.15rem;
+  border-left: 1px solid var(--accent-line);
+}
+
+.ceo-timeline__item {
+  position: relative;
+  padding-left: 0.5rem;
+}
+
+.ceo-timeline__item::before {
+  content: "";
+  position: absolute;
+  top: 0.35rem;
+  left: -1.65rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--muted);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+.ceo-timeline__item.is-progress::before {
+  background: var(--accent);
+}
+
+.ceo-timeline__item.is-warn::before {
+  background: var(--warn);
+}
+
+.ceo-timeline__item.is-done::before {
+  background: var(--ok);
+}
+
+.ceo-timeline__title {
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.ceo-timeline__at {
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.ceo-timeline__detail {
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* ---------- Status stepper ---------- */
+
+.ceo-stepper {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  margin: 0;
+  padding: 0.25rem 0 0;
+  list-style: none;
+}
+
+.ceo-stepper__step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* The connector is drawn by each step except the first, so it always spans the
+   exact gap between two dots regardless of how many steps there are. */
+.ceo-stepper__step:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  top: 0.55rem;
+  right: 50%;
+  left: -50%;
+  height: 1px;
+  background: var(--border);
+}
+
+.ceo-stepper__step.is-done:not(:first-child)::before {
+  background: var(--accent);
+}
+
+.ceo-stepper__dot {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--accent-ink);
+}
+
+.ceo-stepper__step.is-done .ceo-stepper__dot {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.ceo-stepper__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+}
+
+.ceo-stepper__step.is-done .ceo-stepper__label {
+  color: var(--ink);
+}
+
+.ceo-stepper--scroll {
+  display: flex;
+  overflow-x: auto;
+  padding-bottom: 0.35rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ceo-stepper--scroll .ceo-stepper__step {
+  flex: 0 0 5.6rem;
+}
+
+.ceo-stepper__hit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+}
+
+.ceo-stepper__label {
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Shared warranty controls ---------- */
+
+.ceo-btn-solid,
+.ceo-btn-outline,
+.ceo-btn-danger-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 1rem;
+  padding: 0.85rem 1rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.ceo-btn-solid {
+  background: var(--accent);
+  color: var(--accent-ink) !important;
+}
+
+.ceo-btn-solid:disabled {
+  opacity: 0.6;
+}
+
+.ceo-btn-outline {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--ink);
+}
+
+.ceo-btn-danger-outline {
+  border: 1px solid rgba(240, 113, 103, 0.45);
+  background: transparent;
+  color: var(--danger);
+}
+
+.ceo-section-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Read-only value styled as a field, for the status shown on Create Claim.
+   There is deliberately nothing to open. */
+.ceo-field-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  padding: 0.8rem 0.9rem;
+  font-size: 0.88rem;
+}
+
+/* Attachment row: thumbnails followed by the dashed add tile. */
+.ceo-photo-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.ceo-photo-tile {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.ceo-photo-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ceo-photo-tile__remove {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.15rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.65);
+  padding: 0.05rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.ceo-photo-add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  aspect-ratio: 1;
+  border-radius: 0.75rem;
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+  background: var(--surface-2);
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.ceo-photo-add:disabled {
+  opacity: 0.6;
+}
+
+.ceo-empty-note {
+  border-radius: 1rem;
+  border: 1px dashed var(--border);
+  background: var(--surface-2);
+  padding: 0.75rem 0.9rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.ceo-assign-select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.85rem 1rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.ceo-assign-select.is-empty {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.ceo-assign-select__chev {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.ceo-assign-radios {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ceo-radio-list {
+  display: grid;
+  gap: 0.35rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.45rem;
+  max-height: 15rem;
+  overflow-y: auto;
+}
+
+.ceo-assign-radios .ceo-radio {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 1rem;
+  padding: 0.85rem 1rem;
+}
+
+.ceo-radio {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.65rem;
+  font-size: 0.85rem;
+}
+
+.ceo-radio:has(input:checked) {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.ceo-radio input {
+  accent-color: var(--accent);
+}
+
+.ceo-inline-select {
+  max-width: 11rem;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: right;
+  outline: none;
+}
+
+/* ---------- Edit claim accordion ---------- */
+
+.ceo-accordion {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.ceo-accordion__item {
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.ceo-accordion__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.95rem 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+/* Rows outside a <details> carry the card themselves, since there is no
+   wrapping .ceo-accordion__item to draw it for them. */
+div.ceo-accordion__row,
+a.ceo-accordion__row {
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+div.ceo-accordion__row {
+  cursor: default;
+}
+
+.ceo-accordion__stack {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.ceo-accordion__value {
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.ceo-accordion__row::-webkit-details-marker {
+  display: none;
+}
+
+.ceo-accordion__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.ceo-accordion__meta {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.ceo-accordion__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.ceo-accordion__chev {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: 0 0 auto;
+  color: var(--muted);
+  transition: transform 0.18s ease;
+}
+
+.ceo-accordion__item[open] .ceo-accordion__chev {
+  transform: rotate(90deg);
+}
+
+.ceo-accordion__body {
+  display: grid;
+  gap: 1rem;
+  border-top: 1px solid var(--border);
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .ceo-warranty-hero {
+    min-height: 30dvh;
+  }
+
+  .ceo-claim-list {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .ceo-claim-card {
+    height: 100%;
+  }
+
+  .ceo-warranty-sheet {
+    gap: 1.15rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ceo-accordion__chev {
+    transition: none;
+  }
+}
+
+/* ---------- Splash screen ---------- */
+
+.ceo-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* Decorative only. Without this the splash swallows every tap for its first
+     two seconds, so a sign-in press during that window silently does nothing
+     and the button has to be pressed a second time. */
+  pointer-events: none;
+  padding: 7vh 1.75rem calc(3rem + env(safe-area-inset-bottom));
+  text-align: center;
+  /* Tinted per app variant: the three custom properties are set inline from
+     lib/brand.ts, so the Warranty build renders brown from the same rules. */
+  background:
+    radial-gradient(
+      130% 58% at 50% 30%,
+      var(--splash-glow, rgba(30, 122, 71, 0.55)) 0%,
+      transparent 70%
+    ),
+    linear-gradient(
+      180deg,
+      var(--splash-to, #04100a) 0%,
+      var(--splash-from, #0c2a1a) 38%,
+      var(--splash-from, #0c2a1a) 52%,
+      var(--splash-to, #04100a) 100%
+    );
+  transition: opacity 0.4s ease;
+}
+
+.ceo-splash.is-leaving {
+  opacity: 0;
+}
+
+/* A faint architectural watermark across the lower half, not a photo in its
+   own right. Greyscaling it first means soft-light tints it with whatever
+   variant colour sits behind, instead of the photo's own blue cast fighting
+   the green. */
+.ceo-splash__photo {
+  position: absolute;
+  inset: 34% 0 0;
+  /* Zoomed past `cover` on purpose: it crops the palms at the photo's edges so
+     only the building structure reads as a watermark. */
+  background-size: 210% auto;
+  background-position: center 26%;
+  opacity: 0.42;
+  filter: grayscale(1) contrast(1.1);
+  mix-blend-mode: soft-light;
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    #000 24%,
+    #000 70%,
+    transparent 97%
+  );
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    #000 24%,
+    #000 70%,
+    transparent 97%
+  );
+}
+
+.ceo-splash__lockup {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  /* Sits a little above centre so the wordmark clears the watermark below. */
+  margin-bottom: 7vh;
+  animation: ceo-splash-in 0.7s ease both;
+}
+
+@keyframes ceo-splash-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The variant badge: a circular, already-transparent PNG, so it needs no
+   blend trick. */
+.ceo-splash__badge {
+  width: min(46vw, 12.5rem);
+  height: auto;
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.45));
+}
+
+/* The blue company mark, shown before a property is connected. */
+.ceo-splash__mark {
+  width: min(34vw, 8.5rem);
+  height: auto;
+  /* Source PNG has a solid black backing; screen drops it on the navy. */
+  mix-blend-mode: screen;
+}
+
+.ceo-splash__tagline {
+  font-size: clamp(0.6rem, 2.9vw, 0.72rem);
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.ceo-splash__title {
+  margin-top: 1.6rem;
+  font-size: clamp(1.2rem, 5.9vw, 1.55rem);
+  font-weight: 300;
+  letter-spacing: 0.16em;
+  color: #fff;
+}
+
+.ceo-splash__title-bold {
+  font-weight: 700;
+}
+
+.ceo-splash__wordmark {
+  font-size: clamp(1.4rem, 6.9vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #fff;
+}
+
+.ceo-splash__foot {
+  position: absolute;
+  left: 1.75rem;
+  right: 1.75rem;
+  bottom: calc(3rem + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.ceo-splash__bar {
+  position: relative;
+  width: min(16rem, 62%);
+  height: 3px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.ceo-splash__bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  border-radius: 999px;
+  /* Light rather than the teal accent, so it reads the same on the green and
+     the brown build. */
+  background: rgba(255, 255, 255, 0.88);
+  animation: ceo-splash-bar 1.2s ease-in-out infinite;
+}
+
+@keyframes ceo-splash-bar {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(260%);
+  }
+}
+
+.ceo-splash__loading {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+/* On a wide window the 210% zoom magnifies the photo into abstract blocks.
+   A landscape viewport already crops a portrait source hard enough on its own,
+   so `cover` is the tighter framing here, not the looser one. */
+@media (min-width: 768px) {
+  .ceo-splash__photo {
+    inset: 0;
+    background-size: cover;
+    background-position: center 30%;
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ceo-splash__lockup,
+  .ceo-splash__bar::after {
+    animation: none;
+  }
+}
+
+/* ---------- Login screen ---------- */
+
+.ceo-login-page {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  /* No vertical padding: the form card is flush with the bottom edge. */
+  background: transparent;
+}
+
+.ceo-login {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 24rem;
+  min-height: 100dvh;
+  padding-top: calc(2.25rem + env(safe-area-inset-top));
+  padding-bottom: calc(1.1rem + env(safe-area-inset-bottom));
+  background: var(--navy);
+  overflow: hidden;
+}
+
+/* The property header image from WordPress, one full-bleed layer. It used to be
+   two — a blurred copy behind a sharp strip — but `cover` frames a 42%-tall
+   strip and a full-height box at different scales, so the two copies never
+   lined up and the seam read as a ghosted double exposure. */
+.ceo-login__hero {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+.ceo-login > *:not(.ceo-login__hero) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Carries all the contrast now that nothing else dims the photo: dark under the
+   brand lockup and under the card, bright through the middle where the building
+   is the only thing on show. */
+.ceo-login__hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(7, 16, 32, 0.8) 0%,
+    rgba(7, 16, 32, 0.4) 20%,
+    rgba(7, 16, 32, 0.12) 42%,
+    rgba(7, 16, 32, 0.45) 72%,
+    rgba(7, 16, 32, 0.82) 100%
+  );
+}
+
+.ceo-login__hint {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* App lockup, pinned top-left: the variant badge beside a two-line wordmark.
+   The splash screen has its own larger, centred version. */
+/* Centred so the lockup lines up with the property name, the mode line and the
+   card below it, which are all centred too. */
+.ceo-login__brand {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding: 0 1.35rem;
+}
+
+.ceo-login__lockup {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: left;
+}
+
+/* The blue company mark, used only on the connect screen. */
+.ceo-login__company-mark {
+  width: 2.15rem;
+  height: auto;
+  flex: 0 0 auto;
+  /* Source PNG has a solid black backing; screen drops it on the dark page. */
+  mix-blend-mode: screen;
+}
+
+.ceo-login__company-tagline {
+  font-size: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.ceo-login__badge-mark {
+  width: 2.6rem;
+  height: auto;
+  flex: 0 0 auto;
+}
+
+.ceo-login__lockup-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.ceo-login__company-name {
+  font-size: 0.95rem;
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+  color: #fff;
+}
+
+.ceo-login__company-name-bold {
+  font-weight: 700;
+}
+
+.ceo-login__company-variant {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  line-height: 1.1;
+  color: #fff;
+}
+
+/* The property's own identity, centred over the photo. */
+.ceo-login__property {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.5rem 1.25rem 0;
+  text-align: center;
+}
+
+.ceo-login__property-logo {
+  width: min(48%, 10rem);
+  height: auto;
+  max-height: 5.5rem;
+  object-fit: contain;
+}
+
+.ceo-login__property-name {
+  font-size: clamp(1.45rem, 7vw, 1.9rem);
+  font-weight: 300;
+  letter-spacing: 0.09em;
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: #fff;
+  /* The photo behind this varies per property, so the text carries its own
+     shadow rather than relying on the veil to guarantee contrast. */
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+}
+
+.ceo-login__property-tagline {
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+}
+
+.ceo-login__mode {
+  margin-top: 0.9rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+}
+
+/* Styled like a field so the property reads as part of the form, but it is
+   plain text: there is deliberately nothing to open. */
+.ceo-login__card-head {
+  margin-bottom: 0.55rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  text-align: center;
+}
+
+.ceo-login__card-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.ceo-login__card-value {
+  margin-top: 0.1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ceo-login__change {
+  align-self: center;
+  margin-bottom: 1.2rem;
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* Floating panel: inset on all sides so its rounded corners are fully visible
+   rather than running off the screen edge. `auto` on both block sides splits
+   the leftover height evenly, so the card sits centred in the space under the
+   property lockup instead of being pinned low by a hand-tuned lift. */
+.ceo-login__card {
+  margin: auto 0.85rem;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 1.75rem;
+  background: rgba(10, 22, 33, 0.94);
+  backdrop-filter: blur(14px);
+  /* Extra 60px above the first field and below the hint so the card is not
+     flush to the inputs the way the connect screenshot was. */
+  padding: calc(1.6rem + 45px) 1.25rem;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
+}
+
+.ceo-login__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Icon-prefixed input, placeholder inside, no label above (see mockup). */
+.ceo-field {
+  position: relative;
+  display: block;
+}
+
+.ceo-field__icon {
+  position: absolute;
+  top: 50%;
+  left: 0.85rem;
+  transform: translateY(-50%);
+  width: 1.15rem;
+  height: 1.15rem;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.ceo-field__input {
+  width: 100%;
+  min-height: 3.05rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--border);
+  /* Translucent so the field reads as part of whatever card it sits in. */
+  background: rgba(255, 255, 255, 0.06);
+  /* Left padding clears the icon so the caret never overlaps it. */
+  padding: 0.7rem 0.9rem 0.7rem 2.7rem;
+  font-size: 0.9rem;
+  color: var(--ink);
+  outline: none;
+}
+
+.ceo-field__input::placeholder {
+  color: var(--muted);
+}
+
+.ceo-field__input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-line);
+}
+
+.ceo-field:focus-within .ceo-field__icon {
+  color: var(--accent);
+}
+
+.ceo-field__input--password {
+  padding-right: 3.1rem;
+}
+
+/* Two classes to outrank the generic `.ceo-field button` surface fill above. */
+.ceo-field .ceo-field__eye {
+  position: absolute;
+  top: 50%;
+  right: 0.25rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 44px touch target without visually enlarging the icon. */
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: var(--muted);
+}
+
+.ceo-field .ceo-field__eye:hover,
+.ceo-field .ceo-field__eye[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+.ceo-field__eye-svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.ceo-login__error {
+  border-radius: 0.9rem;
+  background: #3a1c1c;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.85rem;
+  color: var(--danger);
+}
+
+.ceo-login__links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.ceo-login__link {
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+
+.ceo-login__link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Desktop and tablet. The phone layout is a photo strip with the card anchored
+   near the bottom, which does not stretch, so this replaces it with a
+   full-bleed photo and a centred card. 768px is the app's first --app-max step,
+   so these two screens now widen in step with every screen after sign-in
+   instead of staying phone-width for ever. Everything here overrides the mobile
+   rules above; none of them were changed to accommodate it. */
+@media (min-width: 768px) {
+  .ceo-login {
+    max-width: var(--app-max);
+    justify-content: center;
+    padding-top: 0;
+    padding-block: 2rem;
+    background: transparent;
+  }
+
+  /* `fixed` rather than the mobile `absolute`, so the photo covers the whole
+     window instead of only the centred --app-max column the card sits in. */
+  .ceo-login__hero {
+    position: fixed;
+  }
+
+  /* The card floats over a much larger expanse of photo here, so the veil is
+     flatter and heavier throughout than the phone's bright-middle gradient. */
+  .ceo-login__hero::after {
+    background: linear-gradient(
+      180deg,
+      rgba(7, 16, 32, 0.82) 0%,
+      rgba(7, 16, 32, 0.7) 24%,
+      rgba(7, 16, 32, 0.52) 52%,
+      rgba(7, 16, 32, 0.78) 100%
+    );
+  }
+
+  .ceo-login__property {
+    padding-top: 1.25rem;
+  }
+
+  /* Capped well below --app-max: a login form stretched that wide reads badly. */
+  .ceo-login__card {
+    margin: 1.5rem auto 0;
+    width: 100%;
+    max-width: 28rem;
+  }
+}
+

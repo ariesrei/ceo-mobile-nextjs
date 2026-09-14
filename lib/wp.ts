@@ -1,5 +1,6 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
-import { serverFetch } from "./server-fetch";
+import { fetchErrorMessage, serverFetch } from "./server-fetch";
 import type { ConnectConfig } from "./types";
 
 export const COOKIE_ACCESS = "ceo_access_token";
@@ -7,6 +8,9 @@ export const COOKIE_REFRESH = "ceo_refresh_token";
 export const COOKIE_BASE_URL = "ceo_wp_base_url";
 export const COOKIE_CLIENT_NAME = "ceo_client_name";
 export const COOKIE_CLIENT_LOGO = "ceo_client_logo";
+export const COOKIE_CLIENT_HERO = "ceo_client_hero";
+export const COOKIE_CLIENT_TAGLINE = "ceo_client_tagline";
+export const COOKIE_FIRST_NAME = "ceo_first_name";
 
 export function apiUrl(baseUrl: string, path: string): string {
   const root = baseUrl.replace(/\/+$/, "");
@@ -26,7 +30,7 @@ export async function getAccessToken(): Promise<string | null> {
   return jar.get(COOKIE_ACCESS)?.value || null;
 }
 
-export async function wpFetchServer<T>(
+async function wpFetchServerImpl<T>(
   path: string,
   init: RequestInit = {}
 ): Promise<{ data?: T; error?: string; status: number }> {
@@ -46,11 +50,16 @@ export async function wpFetchServer<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  const res = await serverFetch(apiUrl(connect.baseUrl, path), {
-    ...init,
-    headers,
-    cache: "no-store",
-  });
+  // A transport failure (LocalWP down, untrusted cert) must not escape: these
+  // callers are server components, so a throw here renders as a bare 500 with
+  // no clue what went wrong.
+  const url = apiUrl(connect.baseUrl, path);
+  let res: Response;
+  try {
+    res = await serverFetch(url, { ...init, headers, cache: "no-store" });
+  } catch (err) {
+    return { error: fetchErrorMessage(err, url), status: 502 };
+  }
 
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -62,6 +71,20 @@ export async function wpFetchServer<T>(
   }
 
   return { data: json as T, status: res.status };
+}
+
+const wpGetCached = cache((path: string) => wpFetchServerImpl(path));
+
+/** GET requests are deduped per RSC request so layouts do not hit /app/me twice. */
+export async function wpFetchServer<T>(
+  path: string,
+  init: RequestInit = {}
+): Promise<{ data?: T; error?: string; status: number }> {
+  const method = String(init.method || "GET").toUpperCase();
+  if (method === "GET" && !init.body) {
+    return wpGetCached(path) as Promise<{ data?: T; error?: string; status: number }>;
+  }
+  return wpFetchServerImpl<T>(path, init);
 }
 
 /** Browser-side WP fetch using cookies via Next API proxy. */

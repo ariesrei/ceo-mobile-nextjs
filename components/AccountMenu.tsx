@@ -54,7 +54,7 @@ export function AccountMenu({
       <ul className="ceo-home-grid">
         {visible.map((item) => (
           <li key={item.id}>
-            <Link href={item.path} className="ceo-home-tile">
+            <Link href={item.path} prefetch={false} className="ceo-home-tile">
               <span className="ceo-home-tile__icon">
                 <MenuIcon id={item.id} />
               </span>
@@ -72,6 +72,7 @@ export function AccountMenu({
         <li key={item.id}>
           <Link
             href={item.path}
+            prefetch={false}
             className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-4 transition hover:border-[var(--accent)] hover:bg-[var(--surface-2)]"
           >
             <span className="flex items-center gap-3 font-medium text-[var(--ink)]">

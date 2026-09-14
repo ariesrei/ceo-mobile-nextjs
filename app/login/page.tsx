@@ -1,5 +1,3 @@
-import { AppShell } from "@/components/AppShell";
-import { Card } from "@/components/ui/Card";
 import { LoginForm } from "@/components/LoginForm";
 import { getServerClientBranding, requireConnected } from "@/lib/server-nav";
 
@@ -8,17 +6,13 @@ export default async function LoginPage() {
   const branding = await getServerClientBranding();
 
   return (
-    <AppShell
-      title="Sign in"
-      subtitle="Resident, Building Admin, and Staff access for your property."
-      clientName={branding.name}
-      clientLogo={branding.logo}
-      showNav={false}
-      narrow
-    >
-      <Card>
-        <LoginForm />
-      </Card>
-    </AppShell>
+    <main className="ceo-login-page">
+      <LoginForm
+        fallbackLogo={branding.logo}
+        fallbackName={branding.name}
+        fallbackHero={branding.hero}
+        fallbackTagline={branding.tagline}
+      />
+    </main>
   );
 }

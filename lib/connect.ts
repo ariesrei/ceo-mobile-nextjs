@@ -35,10 +35,26 @@ export function getClientLogo(): string {
   return (cfg?.clientLogo || "").trim();
 }
 
+export function getClientHero(): string {
+  const cfg = getConnectConfig();
+  return (cfg?.clientHero || "").trim();
+}
+
+export function getClientTagline(): string {
+  const cfg = getConnectConfig();
+  return (cfg?.clientTagline || "").trim();
+}
+
+/**
+ * Only the property this device connected to is stored. We deliberately keep no
+ * list of properties, so a user can never browse or pick another one.
+ */
 export function saveConnectConfig(
   baseUrl: string,
   clientName?: string,
-  clientLogo?: string
+  clientLogo?: string,
+  clientHero?: string,
+  clientTagline?: string
 ): ConnectConfig {
   const existing = getConnectConfig();
   const config: ConnectConfig = {
@@ -46,6 +62,9 @@ export function saveConnectConfig(
     verifiedAt: new Date().toISOString(),
     clientName: (clientName || existing?.clientName || "").trim() || undefined,
     clientLogo: (clientLogo || existing?.clientLogo || "").trim() || undefined,
+    clientHero: (clientHero || existing?.clientHero || "").trim() || undefined,
+    clientTagline:
+      (clientTagline || existing?.clientTagline || "").trim() || undefined,
   };
   window.localStorage.setItem(CONNECT_STORAGE_KEY, JSON.stringify(config));
   return config;

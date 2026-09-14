@@ -39,16 +39,11 @@ export function AppShell({
   const [clientName, setClientName] = useState(() => {
     if (isRealClientName(clientNameProp)) return clientNameProp.trim();
     if (isRealClientName(brand.name)) return brand.name.trim();
-    if (typeof window !== "undefined") {
-      const stored = getClientName();
-      if (isRealClientName(stored)) return stored;
-    }
     return "Client";
   });
   const [clientLogo, setClientLogo] = useState(() => {
     if (clientLogoProp?.trim()) return clientLogoProp.trim();
     if (brand.logo?.trim()) return brand.logo.trim();
-    if (typeof window !== "undefined") return getClientLogo();
     return "";
   });
 
@@ -113,9 +108,11 @@ export function AppShell({
             </span>
           )}
         </div>
-        <h1 className="text-[28px] font-bold tracking-tight text-[var(--ink)] md:text-[34px]">
-          {title}
-        </h1>
+        {title ? (
+          <h1 className="text-[28px] font-bold tracking-tight text-[var(--ink)] md:text-[34px]">
+            {title}
+          </h1>
+        ) : null}
         {subtitle ? (
           <p className="mt-1 text-sm text-[var(--muted)]">{subtitle}</p>
         ) : null}
