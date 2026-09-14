@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { WarrantyItem } from "@/lib/warranties";
+import { ClaimThumb, claimContactName } from "./ClaimThumb";
 import { FastLink } from "./FastLink";
 import { FileIcon, ImageIcon, PlusIcon, SendIcon } from "./ui/Icons";
 
@@ -22,13 +23,7 @@ function initialsFrom(name: string) {
 }
 
 function contactName(record: WarrantyItem) {
-  return (
-    [record.warranty_first_name, record.warranty_last_name]
-      .filter(Boolean)
-      .join(" ") ||
-    record.resident_name ||
-    "Resident"
-  );
+  return claimContactName(record) || "Resident";
 }
 
 /** The claim record carries no update log, so the path is derived from it. */
@@ -116,14 +111,7 @@ export function WarrantyClaimDetail({
   return (
     <div className="space-y-4">
       <div className="ceo-claim-head">
-        {photos[0]?.url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={photos[0].url} alt="" className="ceo-claim-head__thumb" />
-        ) : (
-          <span className="ceo-claim-head__thumb ceo-claim-head__thumb--empty">
-            <ImageIcon className="h-6 w-6" />
-          </span>
-        )}
+        <ClaimThumb src={photos[0]?.url} name={contact} size="head" />
         <div className="min-w-0 flex-1">
           <p className="ceo-claim-head__title">{title}</p>
           <div className="ceo-claim-card__meta mt-1">

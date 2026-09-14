@@ -1219,8 +1219,10 @@ a.ceo-btn-accent {
   align-items: center;
   justify-content: center;
   font-size: 0.66rem;
-  font-weight: 700;
-  color: var(--muted);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .ceo-claim-card__id {
@@ -1270,9 +1272,11 @@ a.ceo-btn-accent {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .ceo-claim-head__title {
