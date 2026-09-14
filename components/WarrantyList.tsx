@@ -9,7 +9,7 @@ import type {
   WarrantyOptions,
 } from "@/lib/warranties";
 import { isWarrantyExpiring, isWarrantyInProgress } from "@/lib/warranties";
-import { ClaimThumb, claimContactName } from "./ClaimThumb";
+import { ClaimThumb, claimContactName, claimMetaLines } from "./ClaimThumb";
 import { FastLink } from "./FastLink";
 import { Card } from "./ui/Card";
 import { PaginatedList } from "./ui/PaginatedList";
@@ -331,7 +331,14 @@ export function WarrantyList({
               : "No claims yet."
           }
           getKey={(w) => w.id}
-          renderItem={(w) => (
+          renderItem={(w) => {
+            const title =
+              w.warranty_describe_the_request ||
+              w.warranty_describe_the_request_single ||
+              w.unit_title ||
+              "Warranty claim";
+            const meta = claimMetaLines(w, title);
+            return (
             <Link href={`/account/warranties/${w.id}`} className="ceo-claim-card">
               <ClaimThumb
                 src={w.photos?.[0]?.url}
@@ -339,21 +346,19 @@ export function WarrantyList({
               />
               <div className="min-w-0 flex-1">
                 <p className="ceo-claim-card__id">#{w.id}</p>
-                <p className="ceo-claim-card__title">
-                  {w.warranty_describe_the_request ||
-                    w.warranty_describe_the_request_single ||
-                    w.unit_title ||
-                    "Warranty claim"}
-                </p>
-                <div className="ceo-claim-card__meta">
-                  <span>{w.unit_title || "—"}</span>
-                  <span>{claimContactName(w) || "—"}</span>
-                  <span>{w.created_date || "—"}</span>
-                </div>
+                <p className="ceo-claim-card__title">{title}</p>
+                {meta.length ? (
+                  <div className="ceo-claim-card__meta">
+                    {meta.map((line) => (
+                      <span key={line}>{line}</span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <StatusBadge label={w.status_label} short />
             </Link>
-          )}
+            );
+          }}
         />
       )}
 

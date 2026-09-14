@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { WarrantyItem } from "@/lib/warranties";
-import { ClaimThumb, claimContactName } from "./ClaimThumb";
+import { ClaimThumb, claimContactName, claimMetaLines } from "./ClaimThumb";
 import { FastLink } from "./FastLink";
 import { FileIcon, ImageIcon, PlusIcon, SendIcon } from "./ui/Icons";
 
@@ -107,6 +107,7 @@ export function WarrantyClaimDetail({
   const events = useMemo(() => claimPathEvents(record), [record]);
   const photos = record.photos || [];
   const contactInitials = initialsFrom(contact);
+  const meta = claimMetaLines(record, title);
 
   return (
     <div className="space-y-4">
@@ -114,11 +115,13 @@ export function WarrantyClaimDetail({
         <ClaimThumb src={photos[0]?.url} name={contact} size="head" />
         <div className="min-w-0 flex-1">
           <p className="ceo-claim-head__title">{title}</p>
-          <div className="ceo-claim-card__meta mt-1">
-            <span>{record.unit_title || "—"}</span>
-            <span>{contact}</span>
-            {record.created_date ? <span>{record.created_date}</span> : null}
-          </div>
+          {meta.length ? (
+            <div className="ceo-claim-card__meta mt-1">
+              {meta.map((line) => (
+                <span key={line}>{line}</span>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
 
