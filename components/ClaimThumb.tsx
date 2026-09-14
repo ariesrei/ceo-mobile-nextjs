@@ -23,6 +23,28 @@ export function claimContactName(record: {
   );
 }
 
+function present(value?: string) {
+  const text = (value || "").trim();
+  return text && text !== "—" ? text : "";
+}
+
+/** Unit, resident, and date — omitted when empty so the card has no dash rows. */
+export function claimMetaLines(
+  record: {
+    unit_title?: string;
+    warranty_first_name?: string;
+    warranty_last_name?: string;
+    resident_name?: string;
+    created_date?: string;
+  },
+  title = ""
+) {
+  const unit = present(record.unit_title);
+  const name = present(claimContactName(record));
+  const date = present(record.created_date);
+  return [unit && unit !== title ? unit : "", name, date].filter(Boolean);
+}
+
 type Props = {
   src?: string;
   name?: string;

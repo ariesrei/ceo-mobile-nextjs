@@ -7,7 +7,7 @@ import type {
   WarrantyItem,
   WarrantyOptions,
 } from "@/lib/warranties";
-import { ClaimThumb, claimContactName } from "./ClaimThumb";
+import { ClaimThumb, claimContactName, claimMetaLines } from "./ClaimThumb";
 import { DateField } from "./ui/DateField";
 import { SearchIcon } from "./ui/Icons";
 
@@ -47,6 +47,11 @@ export function WarrantyAssignForm({ record }: { record: WarrantyItem }) {
     )?.label || "";
 
   const contact = claimContactName(record);
+  const assignTitle =
+    record.warranty_describe_the_request ||
+    record.warranty_describe_the_request_single ||
+    record.title;
+  const assignMeta = claimMetaLines(record, assignTitle);
 
   function selectVendor(id: string) {
     setForm((f) => ({ ...f, warranty_sources_subcontractors: id }));
@@ -98,13 +103,11 @@ export function WarrantyAssignForm({ record }: { record: WarrantyItem }) {
         <div className="min-w-0 flex-1">
           <p className="ceo-claim-card__id">Claim #{record.id}</p>
           <p className="ceo-claim-head__title">
-            {record.warranty_describe_the_request ||
-              record.warranty_describe_the_request_single ||
-              record.title}
+            {assignTitle}
           </p>
-          <p className="ceo-claim-card__meta mt-1">
-            {[record.unit_title, contact].filter(Boolean).join(" - ") || "—"}
-          </p>
+          {assignMeta.length ? (
+            <p className="ceo-claim-card__meta mt-1">{assignMeta.join(" · ")}</p>
+          ) : null}
         </div>
       </div>
 
