@@ -33,8 +33,6 @@ export type WarrantyItem = {
   is_assigned?: boolean;
   resident_id: number;
   resident_name: string;
-  /** Resident/contact profile photo. Empty when none is set. */
-  avatar?: string;
   created_date: string;
   photos?: WarrantyPhoto[];
   can_edit?: boolean;

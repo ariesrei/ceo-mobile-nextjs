@@ -10,7 +10,6 @@ import type {
 import { Card } from "./ui/Card";
 import { PaginatedList } from "./ui/PaginatedList";
 import { StatusBadge } from "./ui/StatusBadge";
-import { MenuSelect } from "./ui/MenuSelect";
 
 type Tab = "internal" | "external" | "completed";
 
@@ -237,17 +236,18 @@ export function MaintenanceList() {
               <span className="text-sm font-medium text-[var(--muted)]">
                 Status
               </span>
-              <MenuSelect
-                variant="field"
-                aria-label="Status"
+              <select
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 text-sm outline-none ring-[var(--accent)] focus:ring-2"
                 value={statusValue}
-                options={statuses.map((s) => ({
-                  id: s.id,
-                  label: s.label,
-                }))}
+                onChange={(e) => setStatusValue(e.target.value)}
                 disabled={savingStatus}
-                onChange={setStatusValue}
-              />
+              >
+                {statuses.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
             </label>
             {statusError ? (
               <p className="rounded-xl bg-[#3a1c1c] px-3 py-2 text-sm text-[var(--danger)]">
