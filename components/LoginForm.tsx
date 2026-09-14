@@ -43,9 +43,20 @@ export function LoginForm({
     setBaseUrl(cfg.baseUrl);
     if (cfg.clientName) setPropertyName(cfg.clientName);
     if (cfg.clientLogo) setPropertyLogo(cfg.clientLogo);
-    if (cfg.clientHero) setHero(cfg.clientHero);
-    if (cfg.clientTagline) setTagline(cfg.clientTagline);
-  }, [router]);
+    const nextHero = cfg.clientHero || fallbackHero;
+    if (nextHero) setHero(nextHero);
+    const nextTagline = cfg.clientTagline || fallbackTagline;
+    if (nextTagline) setTagline(nextTagline);
+    if (!cfg.clientHero && fallbackHero) {
+      saveConnectConfig(
+        cfg.baseUrl,
+        cfg.clientName,
+        cfg.clientLogo,
+        fallbackHero,
+        nextTagline
+      );
+    }
+  }, [router, fallbackHero, fallbackTagline]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
