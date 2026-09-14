@@ -6,6 +6,7 @@ import type { ParcelItem, ParcelListResponse, ParcelOptions } from "@/lib/parcel
 import { Card } from "./ui/Card";
 import { PaginatedList } from "./ui/PaginatedList";
 import { StatusBadge } from "./ui/StatusBadge";
+import { MenuSelect } from "./ui/MenuSelect";
 
 /** Set true later to show Claimed history tab again. */
 const SHOW_CLAIMED_TAB = false;
@@ -247,18 +248,14 @@ export function ParcelsList() {
               <span className="text-sm font-medium text-[var(--muted)]">
                 Pickup type
               </span>
-              <select
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 text-sm outline-none ring-[var(--accent)] focus:ring-2"
+              <MenuSelect
+                variant="field"
+                aria-label="Pickup type"
                 value={pickupType}
-                onChange={(e) => setPickupType(e.target.value)}
+                options={pickupTypes.map((t) => ({ id: t, label: t }))}
                 disabled={signingOut}
-              >
-                {pickupTypes.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+                onChange={setPickupType}
+              />
             </label>
             {signoutError ? (
               <p className="rounded-xl bg-[#3a1c1c] px-3 py-2 text-sm text-[var(--danger)]">

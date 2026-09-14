@@ -53,6 +53,20 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  color-scheme: dark;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Native OS pickers ignore the dark page theme on Windows (light text on a
+   white menu). Keep any leftover <select> readable. In-app menus use MenuSelect. */
+select {
+  color-scheme: light;
+}
+
+select option,
+select optgroup {
+  color: #111827;
+  background-color: #ffffff;
 }
 
 body {
@@ -498,6 +512,11 @@ a.ceo-btn-accent {
   .ceo-tabs button {
     padding: 0.65rem 1rem;
     font-size: 0.88rem;
+  }
+
+  .ceo-claim-list {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem;
   }
 }
 
@@ -1005,6 +1024,16 @@ a.ceo-btn-accent {
   color: var(--accent);
   font-size: 0.78rem;
   font-weight: 800;
+  object-fit: cover;
+}
+
+img.ceo-contact-card__avatar {
+  padding: 0;
+  background: var(--surface-2);
+}
+
+.ceo-contact-card__avatar--empty {
+  overflow: hidden;
 }
 
 .ceo-contact-card__name {
@@ -1144,7 +1173,6 @@ a.ceo-btn-accent {
   border-radius: 1rem;
   border: 1px solid var(--border);
   background: var(--surface);
-  overflow: hidden;
 }
 
 .ceo-claim-filter__label {
@@ -1160,10 +1188,18 @@ a.ceo-btn-accent {
   min-width: 0;
 }
 
-.ceo-claim-filter select {
+.ceo-menu-select {
+  position: relative;
+  min-width: 0;
+}
+
+.ceo-menu-select--inline {
+  flex: 1;
+}
+
+.ceo-menu-select--inline > button {
   width: 100%;
   min-width: 0;
-  appearance: none;
   border: 0;
   background: transparent;
   padding: 0.85rem 0.95rem;
@@ -1172,6 +1208,60 @@ a.ceo-btn-accent {
   color: var(--ink);
   text-align: right;
   outline: none;
+}
+
+.ceo-inline-select.ceo-menu-select--inline > button {
+  padding: 0.2rem 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.ceo-menu-select--field > button {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--ink);
+  padding: 0.75rem 0.9rem;
+  font-size: 0.875rem;
+  text-align: left;
+  outline: none;
+}
+
+.ceo-menu-select > button:disabled {
+  opacity: 0.55;
+}
+
+.ceo-menu-select__list {
+  position: fixed;
+  z-index: 80;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  overflow: auto;
+  border-radius: 0.85rem;
+  border: 1px solid #3a4250;
+  background: #1a1f27;
+  color: #f4f7fb;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+.ceo-menu-select__list button {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: #f4f7fb;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.55rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.ceo-menu-select__list button:hover,
+.ceo-menu-select__list button.is-active {
+  background: rgba(46, 196, 182, 0.16);
+  color: #2ec4b6;
 }
 
 .ceo-claim-filter__cal {
@@ -2185,7 +2275,8 @@ div.ceo-accordion__row {
   padding-top: calc(2.25rem + env(safe-area-inset-top));
   padding-bottom: calc(1.1rem + env(safe-area-inset-bottom));
   background: var(--navy);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* The property header image from WordPress, one full-bleed layer. It used to be
@@ -2424,7 +2515,8 @@ div.ceo-accordion__row {
   background: rgba(255, 255, 255, 0.06);
   /* Left padding clears the icon so the caret never overlaps it. */
   padding: 0.7rem 0.9rem 0.7rem 2.7rem;
-  font-size: 0.9rem;
+  /* 16px stops iOS Safari from zooming the page when the field is focused. */
+  font-size: 1rem;
   color: var(--ink);
   outline: none;
 }
@@ -2498,13 +2590,9 @@ div.ceo-accordion__row {
   text-underline-offset: 2px;
 }
 
-/* Desktop and tablet. The phone layout is a photo strip with the card anchored
-   near the bottom, which does not stretch, so this replaces it with a
-   full-bleed photo and a centred card. 768px is the app's first --app-max step,
-   so these two screens now widen in step with every screen after sign-in
-   instead of staying phone-width for ever. Everything here overrides the mobile
-   rules above; none of them were changed to accommodate it. */
-@media (min-width: 768px) {
+/* Real desktop / laptop landscape — not a phone flipped on its side
+   (those are wide but only ~390px tall). */
+@media (min-width: 1024px) and (min-height: 600px) {
   .ceo-login {
     max-width: var(--app-max);
     justify-content: center;
@@ -2540,6 +2628,59 @@ div.ceo-accordion__row {
     margin: 1.5rem auto 0;
     width: 100%;
     max-width: 28rem;
+  }
+}
+
+/* Phone / small tablet flipped sideways. Keep the photo and form on one
+   short screen instead of stacking a tall portrait layout the user must scroll. */
+@media (orientation: landscape) and (max-height: 540px) {
+  .ceo-login {
+    max-width: 46rem;
+    flex-flow: row wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem 1.25rem;
+    padding: 0.55rem 1rem;
+  }
+
+  .ceo-login__brand,
+  .ceo-login__property {
+    flex: 1 1 11rem;
+    padding: 0;
+  }
+
+  .ceo-login__property {
+    gap: 0.2rem;
+  }
+
+  .ceo-login__card {
+    flex: 1 1 18rem;
+    margin: 0;
+    padding: 1rem 1.15rem;
+  }
+
+  .ceo-home-hero,
+  .ceo-warranty-hero {
+    min-height: 22dvh;
+  }
+
+  .ceo-app {
+    padding-top: 0.7rem;
+    padding-bottom: 5.25rem;
+  }
+
+  .ceo-bottom-nav a,
+  .ceo-bottom-nav button {
+    min-height: 2.55rem;
+    font-size: 0.62rem;
+  }
+
+  .ceo-claim-list {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ceo-fab {
+    bottom: calc(4.6rem + env(safe-area-inset-bottom));
   }
 }
 
