@@ -9,12 +9,11 @@ import type {
   WarrantyOptions,
 } from "@/lib/warranties";
 import { isWarrantyExpiring, isWarrantyInProgress } from "@/lib/warranties";
-import { ClaimThumb, claimContactName, claimMetaLines, claimThumbSrc } from "./ClaimThumb";
+import { ClaimThumb, claimContactName, claimMetaLines } from "./ClaimThumb";
 import { FastLink } from "./FastLink";
 import { Card } from "./ui/Card";
 import { PaginatedList } from "./ui/PaginatedList";
 import { StatusBadge } from "./ui/StatusBadge";
-import { MenuSelect } from "./ui/MenuSelect";
 import { CalendarIcon, FilterIcon, PlusIcon, SearchIcon } from "./ui/Icons";
 
 type Tab = "open" | "progress" | "closed" | "assigned" | "expiring";
@@ -342,7 +341,7 @@ export function WarrantyList({
             return (
             <Link href={`/account/warranties/${w.id}`} className="ceo-claim-card">
               <ClaimThumb
-                src={claimThumbSrc(w)}
+                src={w.photos?.[0]?.url}
                 name={claimContactName(w)}
               />
               <div className="min-w-0 flex-1">
@@ -350,8 +349,8 @@ export function WarrantyList({
                 <p className="ceo-claim-card__title">{title}</p>
                 {meta.length ? (
                   <div className="ceo-claim-card__meta">
-                    {meta.map((line, i) => (
-                      <span key={`${i}-${line}`}>{line}</span>
+                    {meta.map((line) => (
+                      <span key={line}>{line}</span>
                     ))}
                   </div>
                 ) : null}
@@ -389,19 +388,19 @@ function FilterRow({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="ceo-claim-filter">
+    <label className="ceo-claim-filter">
       <span className="ceo-claim-filter__label">{label}</span>
       <span className="ceo-claim-filter__value">
-        <MenuSelect
-          variant="inline"
-          aria-label={label}
-          value={value}
-          placeholder={placeholder}
-          options={options}
-          onChange={onChange}
-        />
+        <select value={value} onChange={(e) => onChange(e.target.value)}>
+          <option value="">{placeholder}</option>
+          {options.map((o) => (
+            <option key={String(o.id)} value={String(o.id)}>
+              {o.label}
+            </option>
+          ))}
+        </select>
         {trailing ? <CalendarIcon className="ceo-claim-filter__cal" /> : null}
       </span>
-    </div>
+    </label>
   );
 }

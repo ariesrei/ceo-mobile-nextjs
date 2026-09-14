@@ -3,7 +3,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { WarrantyChoice, WarrantyItem, WarrantyOptions } from "@/lib/warranties";
-import { MenuSelect } from "./ui/MenuSelect";
 import { CheckIcon } from "./ui/Icons";
 
 export function WarrantyStatusForm({ record }: { record: WarrantyItem }) {
@@ -92,14 +91,18 @@ export function WarrantyStatusForm({ record }: { record: WarrantyItem }) {
 
       <label className="block space-y-1.5">
         <span className="text-sm font-medium text-[var(--muted)]">Status</span>
-        <MenuSelect
-          variant="field"
-          aria-label="Status"
+        <select
+          className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 text-sm outline-none ring-[var(--accent)] focus:ring-2"
           value={value}
-          options={statuses}
+          onChange={(e) => setValue(e.target.value)}
           disabled={saving || !statuses.length}
-          onChange={setValue}
-        />
+        >
+          {statuses.map((s) => (
+            <option key={String(s.id)} value={String(s.id)}>
+              {s.label}
+            </option>
+          ))}
+        </select>
       </label>
 
       <label className="block space-y-1.5">

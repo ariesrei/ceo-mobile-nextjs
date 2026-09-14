@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { fetchErrorMessage, serverFetch } from "@/lib/server-fetch";
-import { publicWpErrorMessage } from "@/lib/wp-error";
 import {
   apiUrl,
   COOKIE_ACCESS,
@@ -41,21 +40,14 @@ export async function POST(request: Request) {
       cache: "no-store",
     });
 
-    const rawBody = await res.text();
-    const data = (() => {
-      try {
-        return JSON.parse(rawBody) as AuthTokens & {
-          message?: string;
-          code?: string;
-        };
-      } catch {
-        return { message: rawBody } as AuthTokens & { message?: string };
-      }
-    })();
+    const data = (await res.json().catch(() => ({}))) as AuthTokens & {
+      message?: string;
+      code?: string;
+    };
 
     if (!res.ok) {
       return NextResponse.json(
-        { message: publicWpErrorMessage(data.message, "Login failed.") },
+        { message: data.message || "Login failed." },
         { status: res.status }
       );
     }
