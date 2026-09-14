@@ -1,35 +1,45 @@
-import { SelectHTMLAttributes } from "react";
+import { MenuSelect } from "./MenuSelect";
 
-type Props = SelectHTMLAttributes<HTMLSelectElement> & {
+type Props = {
   label: string;
+  name?: string;
+  value?: string | number;
+  onChange?: (e: { target: { name?: string; value: string } }) => void;
   options: Array<{ id: string | number; label: string }>;
   placeholder?: string;
+  className?: string;
+  id?: string;
+  disabled?: boolean;
+  required?: boolean;
 };
 
 export function Select({
   label,
+  name,
+  value,
+  onChange,
   options,
   placeholder = "Select…",
   className = "",
   id,
-  ...props
+  disabled,
 }: Props) {
-  const inputId = id || props.name || label.replace(/\s+/g, "-").toLowerCase();
+  const inputId = id || name || label.replace(/\s+/g, "-").toLowerCase();
   return (
     <label className="block space-y-1.5" htmlFor={inputId}>
       <span className="text-sm font-medium text-[var(--muted)]">{label}</span>
-      <select
+      <MenuSelect
         id={inputId}
-        className={`w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 text-[var(--ink)] outline-none ring-[var(--accent)] focus:ring-2 ${className}`}
-        {...props}
-      >
-        <option value="">{placeholder}</option>
-        {options.map((opt) => (
-          <option key={String(opt.id)} value={String(opt.id)}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+        variant="field"
+        className={className}
+        value={value == null ? "" : String(value)}
+        disabled={disabled}
+        placeholder={placeholder}
+        options={options}
+        onChange={(next) =>
+          onChange?.({ target: { name, value: next } })
+        }
+      />
     </label>
   );
 }

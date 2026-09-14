@@ -6,6 +6,7 @@ import { Button } from "./ui/Button";
 import { EyeIcon, EyeOffIcon, LockIcon, UserIcon } from "./ui/Icons";
 import { appBrand } from "@/lib/brand";
 import { getConnectConfig, saveConnectConfig } from "@/lib/connect";
+import { publicWpErrorMessage } from "@/lib/wp-error";
 
 type Props = {
   /** Property branding resolved on the server from the connect cookies. */
@@ -70,7 +71,7 @@ export function LoginForm({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.message || "Login failed.");
+        setError(publicWpErrorMessage(data.message, "Login failed."));
         setLoading(false);
         return;
       }

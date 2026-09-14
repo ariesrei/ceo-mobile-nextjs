@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { WarrantyItem } from "@/lib/warranties";
-import { ClaimThumb, claimContactName, claimMetaLines } from "./ClaimThumb";
+import { ClaimThumb, claimContactName, claimMetaLines, claimThumbSrc } from "./ClaimThumb";
 import { FastLink } from "./FastLink";
 import { FileIcon, ImageIcon, PlusIcon, SendIcon } from "./ui/Icons";
 
@@ -100,19 +100,18 @@ export function WarrantyClaimDetail({
   const contact = contactName(record);
   const events = useMemo(() => claimPathEvents(record), [record]);
   const photos = record.photos || [];
-  const contactInitials = initialsFrom(contact);
   const meta = claimMetaLines(record, title);
 
   return (
     <div className="space-y-4">
       <div className="ceo-claim-head">
-        <ClaimThumb src={photos[0]?.url} name={contact} size="head" />
+        <ClaimThumb src={claimThumbSrc(record)} name={contact} size="head" />
         <div className="min-w-0 flex-1">
           <p className="ceo-claim-head__title">{title}</p>
           {meta.length ? (
             <div className="ceo-claim-card__meta mt-1">
-              {meta.map((line) => (
-                <span key={line}>{line}</span>
+              {meta.map((line, i) => (
+                <span key={`${i}-${line}`}>{line}</span>
               ))}
             </div>
           ) : null}
@@ -143,9 +142,11 @@ export function WarrantyClaimDetail({
         <div className="space-y-3">
           {contact ? (
             <div className="ceo-contact-card">
-              <span className="ceo-contact-card__avatar" aria-hidden>
-                {contactInitials}
-              </span>
+              <ClaimThumb
+                src={claimThumbSrc(record)}
+                name={contact}
+                size="contact"
+              />
               <div className="min-w-0">
                 <p className="ceo-contact-card__name">{contact}</p>
                 {record.warranty_email_address ? (

@@ -7,7 +7,7 @@ import type {
   WarrantyItem,
   WarrantyOptions,
 } from "@/lib/warranties";
-import { ClaimThumb, claimContactName, claimMetaLines } from "./ClaimThumb";
+import { ClaimThumb, claimContactName, claimMetaLines, claimThumbSrc } from "./ClaimThumb";
 import { DateField } from "./ui/DateField";
 import { SearchIcon } from "./ui/Icons";
 
@@ -96,7 +96,7 @@ export function WarrantyAssignForm({ record }: { record: WarrantyItem }) {
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="ceo-claim-head">
         <ClaimThumb
-          src={record.photos?.[0]?.url}
+          src={claimThumbSrc(record)}
           name={contact}
           size="head"
         />

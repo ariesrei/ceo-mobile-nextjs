@@ -9,11 +9,12 @@ import type {
   WarrantyOptions,
 } from "@/lib/warranties";
 import { isWarrantyExpiring, isWarrantyInProgress } from "@/lib/warranties";
-import { ClaimThumb, claimContactName, claimMetaLines } from "./ClaimThumb";
+import { ClaimThumb, claimContactName, claimMetaLines, claimThumbSrc } from "./ClaimThumb";
 import { FastLink } from "./FastLink";
 import { Card } from "./ui/Card";
 import { PaginatedList } from "./ui/PaginatedList";
 import { StatusBadge } from "./ui/StatusBadge";
+import { MenuSelect } from "./ui/MenuSelect";
 import { CalendarIcon, FilterIcon, PlusIcon, SearchIcon } from "./ui/Icons";
 
 type Tab = "open" | "progress" | "closed" | "assigned" | "expiring";
@@ -135,7 +136,7 @@ export function WarrantyList({
   }, [load, search]);
 
   useEffect(() => {
-    if (!showFilters || optionsLoaded) return;
+    if (optionsLoaded) return;
     fetch("/api/wp/warranties/options?lite=1")
       .then((r) => r.json())
       .then((data: WarrantyOptions) => {
@@ -145,7 +146,7 @@ export function WarrantyList({
         setOptionsLoaded(true);
       })
       .catch(() => undefined);
-  }, [showFilters, optionsLoaded]);
+  }, [optionsLoaded]);
 
   const closedIds = useMemo(
     () => new Set(closedItems.map((w) => w.id)),
@@ -341,7 +342,7 @@ export function WarrantyList({
             return (
             <Link href={`/account/warranties/${w.id}`} className="ceo-claim-card">
               <ClaimThumb
-                src={w.photos?.[0]?.url}
+                src={claimThumbSrc(w)}
                 name={claimContactName(w)}
               />
               <div className="min-w-0 flex-1">
@@ -349,8 +350,8 @@ export function WarrantyList({
                 <p className="ceo-claim-card__title">{title}</p>
                 {meta.length ? (
                   <div className="ceo-claim-card__meta">
-                    {meta.map((line) => (
-                      <span key={line}>{line}</span>
+                    {meta.map((line, i) => (
+                      <span key={`${i}-${line}`}>{line}</span>
                     ))}
                   </div>
                 ) : null}
@@ -388,19 +389,19 @@ function FilterRow({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="ceo-claim-filter">
+    <div className="ceo-claim-filter">
       <span className="ceo-claim-filter__label">{label}</span>
       <span className="ceo-claim-filter__value">
-        <select value={value} onChange={(e) => onChange(e.target.value)}>
-          <option value="">{placeholder}</option>
-          {options.map((o) => (
-            <option key={String(o.id)} value={String(o.id)}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        <MenuSelect
+          variant="inline"
+          aria-label={label}
+          value={value}
+          placeholder={placeholder}
+          options={options}
+          onChange={onChange}
+        />
         {trailing ? <CalendarIcon className="ceo-claim-filter__cal" /> : null}
       </span>
-    </label>
+    </div>
   );
 }
