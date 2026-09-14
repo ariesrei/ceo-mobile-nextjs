@@ -1232,34 +1232,63 @@ img.ceo-contact-card__avatar {
   opacity: 0.55;
 }
 
-.ceo-menu-select__list {
+.ceo-menu-select__layer {
   position: fixed;
-  z-index: 80;
-  margin: 0;
-  padding: 0.35rem;
-  list-style: none;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0.75rem;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.ceo-menu-select__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.ceo-menu-select__sheet {
+  position: relative;
+  z-index: 1;
+  width: min(28rem, 100%);
+  max-height: min(70dvh, 28rem);
   overflow: auto;
-  border-radius: 0.85rem;
+  border-radius: 1.1rem;
   border: 1px solid #3a4250;
   background: #1a1f27;
   color: #f4f7fb;
+  padding: 0.45rem;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
 }
 
-.ceo-menu-select__list button {
+.ceo-menu-select__sheet-title {
+  margin: 0;
+  padding: 0.55rem 0.75rem 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9aa4b2;
+}
+
+.ceo-menu-select__option {
+  display: block;
   width: 100%;
   text-align: left;
   border: 0;
   background: transparent;
   color: #f4f7fb;
-  padding: 0.65rem 0.75rem;
-  border-radius: 0.55rem;
-  font-size: 0.85rem;
+  padding: 0.75rem 0.8rem;
+  border-radius: 0.7rem;
+  font-size: 0.9rem;
   font-weight: 600;
 }
 
-.ceo-menu-select__list button:hover,
-.ceo-menu-select__list button.is-active {
+.ceo-menu-select__option:hover,
+.ceo-menu-select__option.is-active {
   background: rgba(46, 196, 182, 0.16);
   color: #2ec4b6;
 }

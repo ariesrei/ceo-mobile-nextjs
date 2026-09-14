@@ -136,7 +136,7 @@ export function WarrantyList({
   }, [load, search]);
 
   useEffect(() => {
-    if (!showFilters || optionsLoaded) return;
+    if (optionsLoaded) return;
     fetch("/api/wp/warranties/options?lite=1")
       .then((r) => r.json())
       .then((data: WarrantyOptions) => {
@@ -146,7 +146,7 @@ export function WarrantyList({
         setOptionsLoaded(true);
       })
       .catch(() => undefined);
-  }, [showFilters, optionsLoaded]);
+  }, [optionsLoaded]);
 
   const closedIds = useMemo(
     () => new Set(closedItems.map((w) => w.id)),

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useState } from "react";
+import { createPortal } from "react-dom";
 
 export type MenuSelectOption = { id: string | number; label: string };
 
@@ -11,7 +12,6 @@ type Props = {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
-  /** "inline" for filter rows; "field" for full-width form controls. */
   variant?: "inline" | "field";
   id?: string;
   "aria-label"?: string;
@@ -29,14 +29,7 @@ export function MenuSelect({
   "aria-label": ariaLabel,
 }: Props) {
   const [open, setOpen] = useState(false);
-  const [coords, setCoords] = useState<{
-    top: number;
-    left: number;
-    width: number;
-    maxHeight: number;
-  } | null>(null);
-  const root = useRef<HTMLDivElement>(null);
-  const trigger = useRef<HTMLButtonElement>(null);
+  const [mounted, setMounted] = useState(false);
   const listId = useId();
   const items =
     placeholder != null
@@ -46,52 +39,75 @@ export function MenuSelect({
     items.find((o) => String(o.id) === String(value)) || items[0];
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (!open) return;
-
-    function place() {
-      const el = trigger.current;
-      if (!el) return;
-      const r = el.getBoundingClientRect();
-      const width = Math.max(r.width, variant === "inline" ? 220 : r.width);
-      let left = variant === "inline" ? r.right - width : r.left;
-      left = Math.min(Math.max(8, left), window.innerWidth - width - 8);
-      const spaceBelow = window.innerHeight - r.bottom - 12;
-      const spaceAbove = r.top - 12;
-      const openUp = spaceBelow < 160 && spaceAbove > spaceBelow;
-      const maxHeight = Math.min(256, openUp ? spaceAbove : spaceBelow);
-      const top = openUp ? r.top - maxHeight - 6 : r.bottom + 6;
-      setCoords({ top, left, width, maxHeight });
-    }
-
-    function onDoc(e: MouseEvent) {
-      if (root.current && !root.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
     }
-
-    place();
-    document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
-    window.addEventListener("resize", place);
-    window.addEventListener("scroll", place, true);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
-      window.removeEventListener("resize", place);
-      window.removeEventListener("scroll", place, true);
+      document.body.style.overflow = prev;
     };
-  }, [open, variant]);
+  }, [open]);
+
+  const sheet =
+    open && mounted
+      ? createPortal(
+          <div className="ceo-menu-select__layer" role="presentation">
+            <button
+              type="button"
+              className="ceo-menu-select__backdrop"
+              aria-label="Close menu"
+              onClick={() => setOpen(false)}
+            />
+            <div
+              id={listId}
+              role="listbox"
+              aria-label={ariaLabel}
+              className="ceo-menu-select__sheet"
+            >
+              {ariaLabel ? (
+                <p className="ceo-menu-select__sheet-title">{ariaLabel}</p>
+              ) : null}
+              {items.map((o) => {
+                const active = String(o.id) === String(value);
+                return (
+                  <button
+                    key={String(o.id) || "empty"}
+                    type="button"
+                    role="option"
+                    aria-selected={active}
+                    className={
+                      active
+                        ? "ceo-menu-select__option is-active"
+                        : "ceo-menu-select__option"
+                    }
+                    onClick={() => {
+                      onChange(String(o.id));
+                      setOpen(false);
+                    }}
+                  >
+                    {o.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
 
   return (
     <div
-      ref={root}
       className={`ceo-menu-select ceo-menu-select--${variant} ${className}`.trim()}
     >
       <button
-        ref={trigger}
         type="button"
         id={id}
         disabled={disabled}
@@ -103,39 +119,7 @@ export function MenuSelect({
       >
         <span>{current?.label || placeholder || "Select…"}</span>
       </button>
-      {open && coords ? (
-        <ul
-          id={listId}
-          role="listbox"
-          className="ceo-menu-select__list"
-          style={{
-            top: coords.top,
-            left: coords.left,
-            width: coords.width,
-            maxHeight: coords.maxHeight,
-          }}
-        >
-          {items.map((o) => {
-            const active = String(o.id) === String(value);
-            return (
-              <li key={String(o.id) || "empty"}>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={active}
-                  className={active ? "is-active" : ""}
-                  onClick={() => {
-                    onChange(String(o.id));
-                    setOpen(false);
-                  }}
-                >
-                  {o.label}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
+      {sheet}
     </div>
   );
 }
