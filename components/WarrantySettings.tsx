@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import type { WarrantyChoice, WarrantyOptions } from "@/lib/warranties";
+import { MenuSelect } from "./ui/MenuSelect";
 import {
   BellIcon,
   ChartIcon,
@@ -173,18 +174,15 @@ function SelectRow({
   return (
     <label className="ceo-warranty-menu__row ceo-warranty-menu__row--static">
       <span className="ceo-warranty-menu__label">{label}</span>
-      <select
+      <MenuSelect
+        variant="inline"
+        aria-label={label}
         className="ceo-inline-select"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        <option value="">{placeholder}</option>
-        {options.map((o) => (
-          <option key={String(o.id)} value={String(o.id)}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+        placeholder={placeholder}
+        options={options}
+        onChange={onChange}
+      />
       <ChevronRightIcon className="ceo-warranty-menu__chev" />
     </label>
   );
