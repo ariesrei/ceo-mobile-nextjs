@@ -33,6 +33,8 @@ type Props = {
   toDate?: Date;
   /** Earliest selectable date. */
   fromDate?: Date;
+  /** Mockup date rows are calendar-only — no Clear chip. */
+  showClear?: boolean;
 };
 
 export function DateField({
@@ -44,6 +46,7 @@ export function DateField({
   required,
   toDate,
   fromDate,
+  showClear = true,
 }: Props) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -100,7 +103,7 @@ export function DateField({
             <path d="M8 3v4M16 3v4M3 10h18" />
           </svg>
         </button>
-        {value ? (
+        {showClear && value ? (
           <button
             type="button"
             className="rounded-xl border border-[var(--border)] px-3 text-sm text-[var(--muted)] hover:bg-[var(--surface-2)]"

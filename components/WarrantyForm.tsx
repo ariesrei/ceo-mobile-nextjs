@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type {
   WarrantyChoice,
@@ -9,11 +9,12 @@ import type {
   WarrantyPhoto,
 } from "@/lib/warranties";
 import { CameraCapturePhotos } from "./CameraCapturePhotos";
+import { FastLink } from "./FastLink";
 import { Button } from "./ui/Button";
 import { DateField } from "./ui/DateField";
 import { Input } from "./ui/Input";
 import { Select } from "./ui/Select";
-import { StatusBadge } from "./ui/StatusBadge";
+import { ChevronRightIcon } from "./ui/Icons";
 
 function toSelectOptions(items: WarrantyChoice[]) {
   return items.map((i) => ({ id: i.id, label: i.label }));
@@ -21,8 +22,11 @@ function toSelectOptions(items: WarrantyChoice[]) {
 
 export function WarrantyForm({
   record,
+  /** Edit screen: the same fields grouped into collapsible sections. */
+  sectioned = false,
 }: {
   record?: WarrantyItem | null;
+  sectioned?: boolean;
 }) {
   const router = useRouter();
   const isEdit = Boolean(record?.id);
@@ -30,7 +34,7 @@ export function WarrantyForm({
   const [units, setUnits] = useState<WarrantyChoice[]>([]);
   const [isStaff, setIsStaff] = useState(false);
   const [statusLabel, setStatusLabel] = useState(
-    record?.status_label || "New Warranty Approved"
+    record?.status_label || ""
   );
   const [photos, setPhotos] = useState<WarrantyPhoto[]>(record?.photos || []);
   const [form, setForm] = useState({
@@ -51,6 +55,7 @@ export function WarrantyForm({
   });
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -92,7 +97,7 @@ export function WarrantyForm({
         });
       })
       .catch(() => undefined);
-  }, [form.warranty_type, isEdit]);
+  }, [form.warranty_type, isEdit, record?.status_label]);
 
   useEffect(() => {
     if (isEdit || !isStaff) return;
@@ -172,8 +177,8 @@ export function WarrantyForm({
     }
   }
 
-  return (
-    <form onSubmit={onSubmit} className="space-y-4">
+  const claimInformation = (
+    <>
       <div className="ceo-form-row">
         <Select
           label="Type"
@@ -204,14 +209,17 @@ export function WarrantyForm({
           options={toSelectOptions(units)}
         />
       </div>
-      {isStaff ? (
+      {isStaff && !sectioned && statusLabel ? (
         <div className="space-y-1.5">
           <span className="text-sm font-medium text-[var(--muted)]">Status</span>
-          <div>
-            <StatusBadge label={statusLabel} />
-          </div>
+          <p className="ceo-field-box">{statusLabel}</p>
         </div>
       ) : null}
+    </>
+  );
+
+  const contactInformation = (
+    <>
       <div className="ceo-form-row">
         <Input
           label="First name"
@@ -253,6 +261,11 @@ export function WarrantyForm({
           }
         />
       </div>
+    </>
+  );
+
+  const description = (
+    <>
       <label className="block space-y-1.5">
         <span className="text-sm font-medium text-[var(--muted)]">
           Describe your request
@@ -271,13 +284,28 @@ export function WarrantyForm({
           className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 text-[var(--ink)] outline-none ring-[var(--accent)] focus:ring-2"
         />
       </label>
+      <label className="block space-y-1.5">
+        <span className="text-sm font-medium text-[var(--muted)]">Entry notes</span>
+        <textarea
+          name="warranty_entry_notes"
+          rows={2}
+          value={form.warranty_entry_notes}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, warranty_entry_notes: e.target.value }))
+          }
+          className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 text-[var(--ink)] outline-none ring-[var(--accent)] focus:ring-2"
+        />
+      </label>
+    </>
+  );
+
+  const datesAndTimes = (
+    <>
       <DateField
         label="Entry date"
         name="warranty_entry_date"
         value={form.warranty_entry_date}
-        onChange={(value) =>
-          setForm((f) => ({ ...f, warranty_entry_date: value }))
-        }
+        onChange={(value) => setForm((f) => ({ ...f, warranty_entry_date: value }))}
       />
       <div className="grid grid-cols-2 gap-3">
         <Input
@@ -286,10 +314,7 @@ export function WarrantyForm({
           placeholder="9:00 am"
           value={form.warranty_entry_start_time}
           onChange={(e) =>
-            setForm((f) => ({
-              ...f,
-              warranty_entry_start_time: e.target.value,
-            }))
+            setForm((f) => ({ ...f, warranty_entry_start_time: e.target.value }))
           }
         />
         <Input
@@ -302,28 +327,24 @@ export function WarrantyForm({
           }
         />
       </div>
-      <label className="block space-y-1.5">
-        <span className="text-sm font-medium text-[var(--muted)]">
-          Entry notes
-        </span>
-        <textarea
-          name="warranty_entry_notes"
-          rows={2}
-          value={form.warranty_entry_notes}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, warranty_entry_notes: e.target.value }))
-          }
-          className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 text-[var(--ink)] outline-none ring-[var(--accent)] focus:ring-2"
-        />
-      </label>
-      <CameraCapturePhotos
-        photos={photos}
-        onChange={setPhotos}
-        uploadUrl="/api/wp/warranties/media"
-        parentIdKey="warranty_id"
-        parentId={record?.id}
-        disabled={loading}
-      />
+    </>
+  );
+
+  const attachments = (
+    <CameraCapturePhotos
+      variant="tiles"
+      label="Photos / Documents"
+      photos={photos}
+      onChange={setPhotos}
+      uploadUrl="/api/wp/warranties/media"
+      parentIdKey="warranty_id"
+      parentId={record?.id}
+      disabled={loading}
+    />
+  );
+
+  const feedback = (
+    <>
       {error ? (
         <p className="rounded-xl bg-[#3a1c1c] px-3 py-2 text-sm text-[var(--danger)]">
           {error}
@@ -334,15 +355,135 @@ export function WarrantyForm({
           {message}
         </p>
       ) : null}
+    </>
+  );
+
+  const submitLabel = loading
+    ? "Saving…"
+    : isEdit
+      ? "Save Claim"
+      : isStaff
+        ? "Create Claim"
+        : "Submit Warranty";
+
+  if (sectioned) {
+    return (
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div className="ceo-accordion">
+          <Section title="Claim Information">
+            {claimInformation}
+          </Section>
+          <Section title="Contact Information">{contactInformation}</Section>
+          <Section title="Description & Notes">{description}</Section>
+          <Section title="Dates & Times">{datesAndTimes}</Section>
+          <Section
+            title="Photos & Documents"
+            meta={photos.length ? `${photos.length} attached` : undefined}
+          >
+            {attachments}
+          </Section>
+
+          {record?.id ? (
+            <FastLink
+              href={`/account/warranties/${record.id}/status`}
+              className="ceo-accordion__row"
+            >
+              <span className="ceo-accordion__title">Status</span>
+              <span className="ceo-accordion__meta">
+                {record.status_label || statusLabel || "—"}
+              </span>
+              <ChevronRightIcon className="ceo-accordion__chev" />
+            </FastLink>
+          ) : (
+            <div className="ceo-accordion__row">
+              <span className="ceo-accordion__title">Status</span>
+              <span className="ceo-accordion__meta">{statusLabel || "—"}</span>
+            </div>
+          )}
+
+          {record?.id ? (
+            <FastLink
+              href={`/account/warranties/${record.id}/assign`}
+              className="ceo-accordion__row"
+            >
+              <span className="ceo-accordion__title">Assigned Subcontractor</span>
+              <span className="ceo-accordion__meta">
+                {record.subcontractor_name || "Unassigned"}
+              </span>
+              <ChevronRightIcon className="ceo-accordion__chev" />
+            </FastLink>
+          ) : (
+            <div className="ceo-accordion__row">
+              <span className="ceo-accordion__title">Assigned Subcontractor</span>
+              <span className="ceo-accordion__meta">Unassigned</span>
+            </div>
+          )}
+
+          <Section title="Internal Notes">
+            <p className="text-sm text-[var(--muted)]">
+              {record?.warranty_sources_internal_note ||
+                "No internal notes yet. Notes are added when a claim is assigned."}
+            </p>
+          </Section>
+        </div>
+
+        {feedback}
+
+        <Button type="submit" disabled={loading} className="w-full">
+          {submitLabel}
+        </Button>
+
+        <button
+          type="button"
+          className="ceo-btn-danger-outline w-full"
+          onClick={() =>
+            setNotice("Archiving connects to WordPress in a later pass.")
+          }
+        >
+          Archive Claim
+        </button>
+        {notice ? (
+          <p className="text-center text-xs text-[var(--muted)]">{notice}</p>
+        ) : null}
+      </form>
+    );
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      {claimInformation}
+      <p className="ceo-section-label pt-1">Contact Information</p>
+      {contactInformation}
+      {description}
+      {datesAndTimes}
+      {attachments}
+      {feedback}
       <Button type="submit" disabled={loading} className="w-full">
-        {loading
-          ? "Saving…"
-          : isEdit
-            ? "Save ticket"
-            : isStaff
-              ? "Create ticket"
-              : "Submit warranty"}
+        {submitLabel}
       </Button>
     </form>
+  );
+}
+
+function Section({
+  title,
+  meta,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  meta?: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <details className="ceo-accordion__item" open={defaultOpen}>
+      <summary className="ceo-accordion__row">
+        <span className="ceo-accordion__title">{title}</span>
+        {meta ? <span className="ceo-accordion__meta">{meta}</span> : null}
+        <ChevronRightIcon className="ceo-accordion__chev" />
+      </summary>
+      <div className="ceo-accordion__body">{children}</div>
+    </details>
   );
 }

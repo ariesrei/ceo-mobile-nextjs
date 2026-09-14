@@ -1,30 +1,23 @@
-import { AppShell } from "@/components/AppShell";
 import { WarrantyForm } from "@/components/WarrantyForm";
+import { WarrantyShell } from "@/components/WarrantyShell";
 import { Card } from "@/components/ui/Card";
 import type { WarrantyItem } from "@/lib/warranties";
-import { getServerClientBranding, requireMenuPath } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
 
 type Props = { params: Promise<{ id: string }> };
 
 export default async function EditWarrantyPage({ params }: Props) {
   const { id } = await params;
-  await requireMenuPath("/account/warranties");
-  const [result, branding] = await Promise.all([
-    wpFetchServer<WarrantyItem>(`/app/warranties/${id}`),
-    getServerClientBranding(),
-  ]);
+  const result = await wpFetchServer<WarrantyItem>(`/app/warranties/${id}`);
 
   return (
-    <AppShell
-      title="Edit ticket"
-      subtitle="Update request details"
-      backHref="/account/warranties"
-      clientName={branding.name}
-      clientLogo={branding.logo}
+    <WarrantyShell
+      title="Edit Claim"
+      backHref={`/account/warranties/${id}`}
+      showNav={false}
     >
       {result.data ? (
-        <WarrantyForm record={result.data} />
+        <WarrantyForm record={result.data} sectioned />
       ) : (
         <Card>
           <p className="text-sm text-[var(--danger)]">
@@ -32,6 +25,6 @@ export default async function EditWarrantyPage({ params }: Props) {
           </p>
         </Card>
       )}
-    </AppShell>
+    </WarrantyShell>
   );
 }

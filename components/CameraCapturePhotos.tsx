@@ -66,6 +66,9 @@ type Props = {
   parentIdKey?: string;
   parentId?: number;
   disabled?: boolean;
+  /** "tiles" puts the add control in the thumbnail row instead of below it. */
+  variant?: "stack" | "tiles";
+  label?: string;
 };
 
 export function CameraCapturePhotos({
@@ -75,6 +78,8 @@ export function CameraCapturePhotos({
   parentIdKey,
   parentId,
   disabled,
+  variant = "stack",
+  label = "Photos",
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -122,10 +127,73 @@ export function CameraCapturePhotos({
     onChange(photos.filter((p) => p.id !== id));
   }
 
+  const fileInput = (
+    <input
+      ref={inputRef}
+      type="file"
+      accept="image/*"
+      capture="environment"
+      className="sr-only"
+      disabled={disabled || uploading}
+      onChange={(e) => onFilesSelected(e.target.files)}
+    />
+  );
+
+  const errorNote = error ? (
+    <p className="rounded-xl bg-[#3a1c1c] px-3 py-2 text-sm text-[var(--danger)]">
+      {error}
+    </p>
+  ) : null;
+
+  if (variant === "tiles") {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <span className="ceo-section-label">{label}</span>
+          <span className="text-xs text-[var(--muted)]">
+            {photos.length ? `${photos.length} attached` : "Optional"}
+          </span>
+        </div>
+
+        <div className="ceo-photo-tiles">
+          {photos.map((p) => (
+            <div key={p.id} className="ceo-photo-tile">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.url} alt="" />
+              <button
+                type="button"
+                disabled={disabled || uploading}
+                onClick={() => removePhoto(p.id)}
+                className="ceo-photo-tile__remove"
+                aria-label="Remove photo"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="ceo-photo-add"
+            disabled={disabled || uploading}
+            onClick={() => inputRef.current?.click()}
+          >
+            <span aria-hidden className="text-base leading-none">
+              +
+            </span>
+            {uploading ? "Adding…" : "Add More"}
+          </button>
+        </div>
+
+        {fileInput}
+        {errorNote}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium text-[var(--muted)]">Photos</span>
+        <span className="text-sm font-medium text-[var(--muted)]">{label}</span>
         <span className="text-xs text-[var(--muted)]">
           {photos.length ? `${photos.length} attached` : "Optional"}
         </span>
@@ -158,15 +226,7 @@ export function CameraCapturePhotos({
         </p>
       )}
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="sr-only"
-        disabled={disabled || uploading}
-        onChange={(e) => onFilesSelected(e.target.files)}
-      />
+      {fileInput}
 
       <button
         type="button"
@@ -177,11 +237,7 @@ export function CameraCapturePhotos({
         {uploading ? "Adding photo…" : "Take photo"}
       </button>
 
-      {error ? (
-        <p className="rounded-xl bg-[#3a1c1c] px-3 py-2 text-sm text-[var(--danger)]">
-          {error}
-        </p>
-      ) : null}
+      {errorNote}
     </div>
   );
 }

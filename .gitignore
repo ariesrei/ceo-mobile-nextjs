@@ -15,7 +15,11 @@
 
 # next.js
 /.next/
+/.next-warranty/
 /out/
+
+# local Cursor audit (not the app)
+/logs/
 
 # production
 /build

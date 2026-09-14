@@ -39,6 +39,14 @@ export type WarrantyItem = {
   is_closed?: boolean;
 };
 
+export type WarrantySummary = {
+  open: number;
+  in_progress: number;
+  closed: number;
+  assigned: number;
+  expiring: number;
+};
+
 export type WarrantyListResponse = {
   items: WarrantyItem[];
   total: number;
@@ -75,3 +83,32 @@ export type WarrantyOptions = {
     user_id?: number;
   };
 };
+
+export function isWarrantyClosed(w: WarrantyItem): boolean {
+  if (w.is_closed) return true;
+  const s = (w.status_label || "").toLowerCase();
+  return (
+    s.includes("closed") ||
+    s.includes("complete") ||
+    s.includes("claimed") ||
+    s.includes("done")
+  );
+}
+
+export function isWarrantyInProgress(w: WarrantyItem): boolean {
+  if (isWarrantyClosed(w)) return false;
+  const s = (w.status_label || "").toLowerCase();
+  return s.includes("progress") || Boolean(w.is_assigned);
+}
+
+export function isWarrantyExpiring(w: WarrantyItem, withinDays = 45): boolean {
+  const due = (w.warranty_sources_target_due || "").trim();
+  if (!due || isWarrantyClosed(w)) return false;
+  const parsed = new Date(due);
+  if (Number.isNaN(parsed.getTime())) return false;
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const limit = new Date(now);
+  limit.setDate(limit.getDate() + withinDays);
+  return parsed >= now && parsed <= limit;
+}

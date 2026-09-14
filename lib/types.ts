@@ -3,6 +3,10 @@ export type ConnectConfig = {
   verifiedAt: string;
   clientName?: string;
   clientLogo?: string;
+  /** WordPress background image for this property, used as the login background. */
+  clientHero?: string;
+  /** WordPress site tagline, shown under the property name. */
+  clientTagline?: string;
 };
 
 export type AppUser = {
@@ -17,6 +21,7 @@ export type AppUser = {
   active: boolean;
   blog_id: number;
   client_name?: string;
+  client_tagline?: string;
   client_logo?: string;
   client_hero?: string;
 };
