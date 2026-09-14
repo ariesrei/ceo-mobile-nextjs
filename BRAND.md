@@ -1,8 +1,8 @@
 # Two app builds, one code base
 
-Warranty and Operations ship from this same repo. The only differences are the
-app icon, the splash screen, and the login screen branding. Everything after
-sign-in is driven by the property login, so no screens are duplicated.
+Warranty and Operations ship from this same repo. Splash, icon, and login
+branding follow the build. After sign-in the dashboard depends on who
+logged in: residents get the account tiles; Warranty staff get ClaimTrack.
 
 ## Build switch
 
@@ -27,6 +27,7 @@ Defined in `lib/brand.ts`:
 - Tagline: "CAPTURE. TRACK. ASSIGN. CLOSE." or "OPERATE. SERVE. ENHANCE."
 - Login badge: "Warranty Management" or "Operations Management"
 - Splash gradient and theme color
+- Post-login home: `/account` for residents; Warranty staff continue to `/account/warranties`
 
 The blue CE OneSource mark is the company/site-level logo and is not used by
 either app build.

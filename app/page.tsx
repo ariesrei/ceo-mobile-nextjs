@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { postLoginPath } from "@/lib/brand";
 import { COOKIE_ACCESS, COOKIE_BASE_URL } from "@/lib/wp";
 
 export default async function HomePage() {
@@ -10,5 +11,5 @@ export default async function HomePage() {
   if (!jar.get(COOKIE_ACCESS)?.value) {
     redirect("/login");
   }
-  redirect("/account");
+  redirect(postLoginPath());
 }

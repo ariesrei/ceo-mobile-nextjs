@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/Button";
 import { EyeIcon, EyeOffIcon, LockIcon, UserIcon } from "./ui/Icons";
-import { appBrand } from "@/lib/brand";
+import { appBrand, postLoginPath } from "@/lib/brand";
 import { getConnectConfig, saveConnectConfig } from "@/lib/connect";
 import { publicWpErrorMessage } from "@/lib/wp-error";
 
@@ -90,7 +90,7 @@ export function LoginForm({
        * puts an idle-looking "Sign in" button back under the user's finger
        * while the sign-in is still finishing, inviting a second press.
        */
-      router.push("/account");
+      router.push(postLoginPath());
       router.refresh();
     } catch {
       setError("Network error. Please try again.");

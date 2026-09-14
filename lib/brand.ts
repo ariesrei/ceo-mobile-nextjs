@@ -2,8 +2,9 @@
  * One code base, two app builds.
  *
  * Set NEXT_PUBLIC_CEO_APP_VARIANT=warranty or operations per build.
- * Only the splash screen and login branding differ; everything after
- * sign-in stays driven by the property login.
+ * Splash and login branding follow the variant. After sign-in the home
+ * depends on who logged in: residents stay on /account; Warranty staff
+ * open ClaimTrack.
  */
 
 export type AppVariant = "warranty" | "operations";
@@ -81,4 +82,9 @@ export function appVariant(): AppVariant {
 
 export function appBrand(): AppBrand {
   return appVariant() === "operations" ? OPERATIONS : WARRANTY;
+}
+
+/** Default after connect + login. /account then sends Warranty staff to ClaimTrack. */
+export function postLoginPath(): "/account" {
+  return "/account";
 }

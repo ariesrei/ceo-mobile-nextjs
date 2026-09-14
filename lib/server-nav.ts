@@ -13,6 +13,7 @@ import {
   wpFetchServer,
 } from "./wp";
 import { serverFetch } from "./server-fetch";
+import { postLoginPath } from "./brand";
 import { applyNavVisibility, isPathAllowed } from "./navigation";
 
 export type ClientBranding = {
@@ -134,7 +135,7 @@ export async function requireMenuPath(path: string) {
   await requireAuth();
   const nav = await getNavigation();
   if (!isPathAllowed(nav, path)) {
-    redirect("/account");
+    redirect(postLoginPath());
   }
   return nav;
 }

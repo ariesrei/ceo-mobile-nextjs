@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { HomeScreen } from "@/components/HomeScreen";
 import { Card } from "@/components/ui/Card";
+import { appVariant } from "@/lib/brand";
 import { getNavigation, getServerClientBranding, requireAuth } from "@/lib/server-nav";
 import { COOKIE_FIRST_NAME } from "@/lib/wp";
 
@@ -12,6 +14,12 @@ export default async function AccountPage() {
     cookies(),
   ]);
   const firstName = jar.get(COOKIE_FIRST_NAME)?.value?.trim() || "";
+  const isStaff = Boolean(
+    nav?.menus?.some((m) => m.enabled && m.group === "staff")
+  );
+  if (appVariant() === "warranty" && isStaff) {
+    redirect("/account/warranties");
+  }
 
   if (!nav) {
     return (

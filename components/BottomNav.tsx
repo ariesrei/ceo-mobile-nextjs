@@ -136,9 +136,12 @@ export function BottomNav({
   const primaryPaths = new Set(["/account", ...primary.map((m) => m.path)]);
 
   const warranty = variant === "warranty";
-  const moreItems = warranty
-    ? enabled.filter((m) => !m.path.startsWith("/account/warranties"))
-    : enabled.filter((m) => !primaryPaths.has(m.path));
+  const moreItems =
+    warranty && appVariant() === "warranty"
+      ? []
+      : warranty
+        ? enabled.filter((m) => !m.path.startsWith("/account/warranties"))
+        : enabled.filter((m) => !primaryPaths.has(m.path));
 
   const tabs = warranty
     ? WARRANTY_TABS
