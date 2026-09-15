@@ -8,8 +8,10 @@ import { BottomNav } from "./BottomNav";
 const RESIDENT_HOME_IDS = [
   "profile",
   "edit_profile",
+  "additional_info",
   "reservations",
   "parcels",
+  "warranties",
 ];
 
 function homeMenus(menus: MenuItem[]): MenuItem[] {
