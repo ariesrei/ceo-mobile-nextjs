@@ -2,30 +2,109 @@
 
 Headless staff and resident app for CE OneSource. Connects to a WordPress property via **URL + mobile security key**, authenticates with **JWT**, and renders menus from a role-aware WordPress API.
 
-This repository is the Next.js app. WordPress REST lives in theme `dayone-intranet-sub` (`onesource/v1/app/*`).
+**One Next.js codebase, two store products.** Do not clone this folder for ClaimTrack. WordPress REST lives in theme `dayone-intranet-sub` (`onesource/v1/app/*`).
+
+## Folder structure
+
+```
+app/public/
+├── ceo-mobile-nextjs/              # This app (Next.js 15 on Vercel)
+│   ├── app/go/[profile]/           # /go/operations | /go/warranty — locks product
+│   ├── app/download/               # Unlisted store links
+│   ├── app/api/connect/            # verify-connect + plan mismatch
+│   ├── lib/app-profile.ts          # warranty | operations
+│   └── lib/navigation.ts           # ClaimTrack allowlist vs Operations modules
+├── ceo-mobile-nextjs-cap/          # Capacitor shell (two Android flavors + iOS schemes)
+│   ├── flavors/operations.json
+│   ├── flavors/warranty.json
+│   └── scripts/use-flavor.ps1
+└── wp-content/themes/dayone-intranet-sub/
+    └── inc/rest/app/               # JWT, navigation, warranties, …
+```
+
+Ignore the legacy `ceo-mobile/` WebView wrapper.
+
+## Two products
+
+| Profile | Store name | Bundle ID | Native entry | Who may connect |
+|---------|------------|-----------|--------------|-----------------|
+| `operations` | CE OneSource Operations | `com.ceonesource.residentnext` | `/go/operations` | Non-warranty-plan sites |
+| `warranty` | ClaimTrack | `com.ceonesource.warranty` | `/go/warranty` | Warranty-plan sites only |
+
+WordPress returns `plan_key` + `app_profile` on verify-connect, login, refresh, `/app/me`, and `/app/navigation` (from `ceonesource_client_is_warranty_plan()`). The wrong store app is refused at Connect.
+
+- **Operations UI:** home + every module WordPress has on (including Warranty / ClaimTrack).
+- **ClaimTrack UI:** warranties + profile/account only. Bottom nav: Home · Warranty · More.
+
+Property download page: WordPress shortcode `[ceo_app_download]`. Web: `/download`, `/download?app=operations`, `/download?app=warranty`.
 
 ## Requirements
 
 - Node.js 20+
 - A CE OneSource WordPress property with theme `dayone-intranet-sub`
-- Mobile security key configured in WP (same key used by the Capacitor connect flow)
+- Mobile security key configured in WP (Site Admin → Options → Mobile App)
 
 ## Setup
 
 ```bash
+cd ceo-mobile-nextjs
 npm install
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
+| URL | What it does |
+|-----|----------------|
+| `/` | Redirects to connect, login, or account |
+| `/connect` | Property URL + security key |
+| `/login` | JWT sign-in |
+| `/account` | Home |
+| `/go/operations` | Lock this browser session as Operations |
+| `/go/warranty` | Lock this browser session as ClaimTrack |
+| `/download` | Store links for the matching (or both) products |
+
+Optional env (see `.env.example`):
+
+```bash
+# NEXT_PUBLIC_APP_PROFILE=operations
+# NEXT_PUBLIC_PLAY_STORE_URL=
+# NEXT_PUBLIC_WARRANTY_PLAY_STORE_URL=
+# NEXT_PUBLIC_APP_STORE_URL=
+# NEXT_PUBLIC_WARRANTY_APP_STORE_URL=
+```
+
 ## App flow
 
 1. **Connect** (`/connect`) — property URL + security key → `POST /wp-json/onesource/v1/mobile/verify-connect`
-2. **Login** (`/login`) — credentials → `POST /wp-json/onesource/v1/app/auth/login` (tokens in httpOnly cookies)
-3. **Home** (`/account`) — menus from `GET /wp-json/onesource/v1/app/navigation`
+2. Product lock (if `/go/warranty` or `/go/operations` ran) must match the site `app_profile`
+3. **Login** (`/login`) — credentials → `POST /wp-json/onesource/v1/app/auth/login` (tokens in httpOnly cookies)
+4. **Home** (`/account`) — menus from `GET /wp-json/onesource/v1/app/navigation`
 
 Staff users see staff menus even if they also have a resident role.
+
+## Native commands (sibling folder)
+
+```bat
+cd ..\ceo-mobile-nextjs-cap
+npm install
+npm run flavor:android
+npm run flavor:operations
+npm run build:android:operations
+npm run flavor:warranty
+npm run build:android:warranty
+```
+
+| Command | Result |
+|---------|--------|
+| `npm run flavor:operations` | Capacitor + iOS identity → Operations |
+| `npm run flavor:warranty` | Capacitor + iOS identity → ClaimTrack |
+| `npm run flavor:android` | Re-apply Gradle `operations` / `warranty` flavors after `cap sync` |
+| `npm run build:android:operations` | AAB `android/app/build/outputs/bundle/operationsRelease/` |
+| `npm run build:android:warranty` | AAB `android/app/build/outputs/bundle/warrantyRelease/` |
+| `npm run open:ios` | Xcode — archive the **Operations** or **Warranty** scheme |
+
+Full store steps: `../ceo-mobile-nextjs-cap/STORE.md` and `../docs/Mobile-Store-Unlisted-Publish.MD`.
 
 ## Devices
 
@@ -59,7 +138,7 @@ Pets, vehicles, preferences, and profile photo go through **gatekeeper review**.
 
 Dashboard tile and bottom nav label: **Warranty**. List page title: **ClaimTrack**.
 
-Staff modules currently enabled in the app: **Parcels**, **Warranty (ClaimTrack)**, **Maintenance**, **Guests**.
+Operations shows WordPress-enabled modules (Parcels, Warranty, Maintenance, Guests, plus others the site turns on). The Warranty product is ClaimTrack-first: warranties + profile/account only.
 
 | Menu | Path | Enabled when |
 |------|------|----------------|
@@ -133,7 +212,7 @@ JWT secret is auto-generated into WP option `option_ceo_app_jwt_secret` (separat
 - Browser calls go through Next `/api/*` proxies so cookies stay first-party.
 - Profile photo and additional-info edits go through gatekeeper review.
 
-## Scripts
+## Scripts (this folder)
 
 - `npm run dev` — development server
 - `npm run build` — production build
@@ -145,6 +224,6 @@ See **[DEPLOY.md](./DEPLOY.md)**. This repo root **is** the Next app — do not 
 
 After deploy, Connect with a **public** WordPress URL (LocalWP Live Link or staging), not `*.local`.
 
-## Android
+## Android / iOS
 
-See **[ANDROID.md](./ANDROID.md)** and the Capacitor shell in `../ceo-mobile-nextjs-cap/`.
+See **[ANDROID.md](./ANDROID.md)** and **[`../ceo-mobile-nextjs-cap/README.md`](../ceo-mobile-nextjs-cap/README.md)**.

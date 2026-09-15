@@ -3,28 +3,22 @@ import "@fontsource/fraunces/600.css";
 import "@fontsource/manrope/400.css";
 import "@fontsource/manrope/600.css";
 import "@fontsource/manrope/700.css";
+import { getBuildAppProfile, productName } from "@/lib/app-profile";
 import "./globals.css";
-import { cookies } from "next/headers";
-import { SplashScreen } from "@/components/SplashScreen";
+import { SplashGate } from "@/components/SplashGate";
 import { appBrand } from "@/lib/brand";
-import { COOKIE_BASE_URL } from "@/lib/wp";
 
 const brand = appBrand();
 
+const buildProfile = getBuildAppProfile();
+const product = productName(buildProfile);
+
 export const metadata: Metadata = {
-  title: brand.appName,
-  description: `${brand.appName} — ${brand.tagline}`,
-  applicationName: brand.appName,
-  manifest: "/manifest.webmanifest",
-  icons: {
-    icon: brand.logo,
-    apple: brand.logo,
-  },
-  appleWebApp: {
-    capable: true,
-    title: brand.appName,
-    statusBarStyle: "black-translucent",
-  },
+  title: product,
+  description:
+    buildProfile === "warranty"
+      ? "ClaimTrack warranty app for CE OneSource properties"
+      : "Operations mobile app for CE OneSource (headless WordPress)",
 };
 
 export const viewport: Viewport = {
@@ -34,20 +28,15 @@ export const viewport: Viewport = {
   themeColor: brand.splashTo,
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  /* Resolved here rather than inside the splash so the very first paint already
-     shows the right branding. The cookie is set at connect time. */
-  const jar = await cookies();
-  const connected = Boolean(jar.get(COOKIE_BASE_URL)?.value?.trim());
-
   return (
-    <html lang="en" data-app-variant={brand.variant}>
-      <body className="antialiased">
-        <SplashScreen connected={connected} />
+    <html lang="en" data-app-variant={brand.variant} suppressHydrationWarning>
+      <body className="antialiased" suppressHydrationWarning>
+        <SplashGate />
         {children}
       </body>
     </html>

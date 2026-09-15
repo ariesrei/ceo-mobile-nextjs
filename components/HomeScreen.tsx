@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { isWarrantyProfile, type AppProfile } from "@/lib/app-profile";
 import type { MenuItem } from "@/lib/types";
 import { AccountMenu } from "./AccountMenu";
 import { BottomNav } from "./BottomNav";
@@ -12,8 +13,16 @@ const RESIDENT_HOME_IDS = [
   "parcels",
 ];
 
-function homeMenus(menus: MenuItem[]): MenuItem[] {
+const WARRANTY_HOME_IDS = ["warranties", "profile", "edit_profile"];
+
+function homeMenus(menus: MenuItem[], profile?: AppProfile | null): MenuItem[] {
   const enabled = menus.filter((m) => m.enabled);
+  if (isWarrantyProfile(profile)) {
+    const preferred = WARRANTY_HOME_IDS.map((id) =>
+      enabled.find((m) => m.id === id)
+    ).filter((m): m is MenuItem => Boolean(m));
+    return preferred.length ? preferred : enabled;
+  }
   const isStaff = enabled.some((m) => m.group === "staff");
   if (isStaff) return enabled;
   return RESIDENT_HOME_IDS.map((id) => enabled.find((m) => m.id === id)).filter(
@@ -57,6 +66,7 @@ export function HomeScreen({
   clientHero,
   displayName,
   firstName,
+  appProfile,
 }: {
   menus: MenuItem[];
   clientName: string;
@@ -64,6 +74,7 @@ export function HomeScreen({
   clientHero?: string;
   displayName?: string;
   firstName?: string;
+  appProfile?: AppProfile | null;
 }) {
   const [showNotes, setShowNotes] = useState(false);
   const [greeting, setGreeting] = useState("Good morning,");
@@ -165,10 +176,13 @@ export function HomeScreen({
       <section className="ceo-home-sheet relative z-20 -mt-8 px-4 pb-8 md:px-6">
         <div className="rounded-t-[28px] bg-[var(--bg)] px-3 pb-6 pt-5 md:px-5 md:pt-6">
           <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/15" />
-          <AccountMenu menus={homeMenus(menus)} variant="home" />
+          <AccountMenu menus={homeMenus(menus, appProfile)} variant="home" />
         </div>
       </section>
-      <BottomNav />
+      <BottomNav
+        appProfile={appProfile}
+        variant={isWarrantyProfile(appProfile) ? "warranty" : "app"}
+      />
 
       {showNotes ? (
         <div

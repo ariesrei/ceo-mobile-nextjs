@@ -32,6 +32,7 @@ export function WarrantyForm({
   const isEdit = Boolean(record?.id);
   const [types, setTypes] = useState<WarrantyChoice[]>([]);
   const [units, setUnits] = useState<WarrantyChoice[]>([]);
+  const [locations, setLocations] = useState<WarrantyChoice[]>([]);
   const [isStaff, setIsStaff] = useState(false);
   const [statusLabel, setStatusLabel] = useState(
     record?.status_label || ""
@@ -48,6 +49,11 @@ export function WarrantyForm({
       record?.warranty_describe_the_request ||
       record?.warranty_describe_the_request_single ||
       "",
+    warranty_location: (
+      record?.warranty_location ||
+      record?.warranty_location_single ||
+      []
+    ).map(String),
     warranty_entry_date: record?.warranty_entry_date || "",
     warranty_entry_start_time: record?.warranty_entry_start_time || "",
     warranty_entry_end_time: record?.warranty_entry_end_time || "",
@@ -67,6 +73,7 @@ export function WarrantyForm({
       .then((data: WarrantyOptions) => {
         setTypes(data.types || []);
         setUnits(data.units || []);
+        setLocations(data.locations || []);
         setIsStaff(Boolean(data.is_staff));
         if (!record?.status_label && data.default_status_id) {
           const match = (data.statuses || []).find(
@@ -155,6 +162,9 @@ export function WarrantyForm({
           warranty_describe_the_request: form.warranty_describe_the_request,
           warranty_describe_the_request_single:
             form.warranty_describe_the_request,
+          warranty_location: form.warranty_location
+            .map((id) => Number(id))
+            .filter((id) => id > 0),
           warranty_entry_date: form.warranty_entry_date,
           warranty_entry_start_time: form.warranty_entry_start_time,
           warranty_entry_end_time: form.warranty_entry_end_time,
@@ -266,6 +276,41 @@ export function WarrantyForm({
 
   const description = (
     <>
+      <label className="block space-y-1.5">
+        <span className="text-sm font-medium text-[var(--muted)]">
+          Locations
+        </span>
+        <div className="max-h-48 space-y-2 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3">
+          {locations.length === 0 ? (
+            <p className="text-sm text-[var(--muted)]">No locations available.</p>
+          ) : (
+            locations.map((loc) => {
+              const id = String(loc.id);
+              const checked = form.warranty_location.includes(id);
+              return (
+                <label
+                  key={id}
+                  className="flex items-center gap-2 text-sm text-[var(--ink)]"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) => {
+                      setForm((f) => ({
+                        ...f,
+                        warranty_location: e.target.checked
+                          ? [...f.warranty_location, id]
+                          : f.warranty_location.filter((x) => x !== id),
+                      }));
+                    }}
+                  />
+                  {loc.label}
+                </label>
+              );
+            })
+          )}
+        </div>
+      </label>
       <label className="block space-y-1.5">
         <span className="text-sm font-medium text-[var(--muted)]">
           Describe your request

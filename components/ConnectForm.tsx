@@ -36,7 +36,8 @@ export function ConnectForm() {
         data.clientName || "",
         data.clientLogo || "",
         data.clientHero || "",
-        data.clientTagline || ""
+        data.clientTagline || "",
+        { planKey: data.planKey, appProfile: data.appProfile }
       );
       /* Same reasoning as the login form: keep the button busy until the next
          screen actually arrives, rather than re-enabling it mid-navigation. */

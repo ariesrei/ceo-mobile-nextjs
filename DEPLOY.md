@@ -11,7 +11,14 @@ This GitHub repo (`ariesrei/ceo-mobile-nextjs`) **is** the Next.js app. Leave **
    - **Framework Preset:** Next.js
    - **Build Command:** `npm run build`
 4. **Environment variables:** none required for Connect.  
-   Do **not** set `CEO_ALLOW_INSECURE_TLS` on Vercel.
+   Do **not** set `CEO_ALLOW_INSECURE_TLS` on Vercel.  
+   After store listings exist, set:
+   - `NEXT_PUBLIC_PLAY_STORE_URL` / `NEXT_PUBLIC_OPERATIONS_PLAY_STORE_URL`
+   - `NEXT_PUBLIC_APP_STORE_URL` / `NEXT_PUBLIC_OPERATIONS_APP_STORE_URL`
+   - `NEXT_PUBLIC_WARRANTY_PLAY_STORE_URL`
+   - `NEXT_PUBLIC_WARRANTY_APP_STORE_URL`
+   Download pages: `/download`, `/download?app=operations`, `/download?app=warranty`.
+   Native shells open `/go/operations` or `/go/warranty`.
 5. **Deploy**. Open the `*.vercel.app` URL.
 
 ## Option B — Vercel CLI

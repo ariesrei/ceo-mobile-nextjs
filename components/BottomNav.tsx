@@ -4,6 +4,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { appVariant } from "@/lib/brand";
+import {
+  isWarrantyProfile,
+  type AppProfile,
+} from "@/lib/app-profile";
+import { applyNavVisibility } from "@/lib/navigation";
 import type { MenuItem, NavigationResponse } from "@/lib/types";
 
 const ICONS: Record<string, string> = {
@@ -31,6 +36,8 @@ const ICONS: Record<string, string> = {
   vendors:
     "M4 7.4A1.4 1.4 0 0 1 5.4 6h3.3l1.7 1.9h8.2A1.4 1.4 0 0 1 20 9.3v8.3a1.4 1.4 0 0 1-1.4 1.4H5.4A1.4 1.4 0 0 1 4 17.6V7.4Z",
   more: "M5 12.5A1.5 1.5 0 1 1 5 9.5a1.5 1.5 0 0 1 0 3Zm7 0A1.5 1.5 0 1 1 12 9.5a1.5 1.5 0 0 1 0 3Zm7 0A1.5 1.5 0 1 1 19 9.5a1.5 1.5 0 0 1 0 3Z",
+  messaging:
+    "M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8A2.5 2.5 0 0 1 17.5 16H8l-3.2 3.2A.8.8 0 0 1 3.5 18.6V5.5Z",
 };
 
 /**
@@ -85,7 +92,8 @@ function Icon({ id, outline = false }: { id: string; outline?: boolean }) {
 }
 
 const STAFF_IDS = ["parcels", "warranties", "maintenance"];
-const RESIDENT_IDS = ["profile", "edit_profile", "reservations", "parcels"];
+const RESIDENT_IDS = ["profile", "parcels"];
+const WARRANTY_IDS = ["warranties"];
 
 function tabLabel(item: MenuItem): string {
   if (item.id === "warranties") return "Warranty";
@@ -96,9 +104,11 @@ function tabLabel(item: MenuItem): string {
 
 export function BottomNav({
   variant = "app",
+  appProfile,
 }: {
   variant?: "app" | "warranty";
-}) {
+  appProfile?: AppProfile | null;
+} = {}) {
   const pathname = usePathname();
   const router = useRouter();
   const [menus, setMenus] = useState<MenuItem[]>([]);
@@ -120,16 +130,24 @@ export function BottomNav({
     fetch("/api/wp/navigation")
       .then((r) => r.json())
       .then((data: NavigationResponse) => {
-        const menus = data.menus || [];
-        setMenus(menus);
-        sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), menus }));
+        const filtered = applyNavVisibility(data, appProfile);
+        const next = filtered?.menus || [];
+        setMenus(next);
+        sessionStorage.setItem(
+          key,
+          JSON.stringify({ at: Date.now(), menus: next })
+        );
       })
       .catch(() => setMenus((prev) => prev));
-  }, []);
+  }, [appProfile]);
 
   const enabled = menus.filter((m) => m.enabled);
   const isStaff = enabled.some((m) => m.group === "staff");
-  const primaryIds = isStaff ? STAFF_IDS : RESIDENT_IDS;
+  const primaryIds = isWarrantyProfile(appProfile)
+    ? WARRANTY_IDS
+    : isStaff
+      ? STAFF_IDS
+      : RESIDENT_IDS;
   const primary = primaryIds
     .map((id) => enabled.find((m) => m.id === id))
     .filter((m): m is MenuItem => Boolean(m));

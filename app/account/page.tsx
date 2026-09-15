@@ -1,25 +1,27 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { HomeScreen } from "@/components/HomeScreen";
 import { Card } from "@/components/ui/Card";
-import { appVariant } from "@/lib/brand";
-import { getNavigation, getServerClientBranding, requireAuth } from "@/lib/server-nav";
-import { COOKIE_FIRST_NAME } from "@/lib/wp";
+import { normalizeAppProfile } from "@/lib/app-profile";
+import { getNavigation, getServerAppProfile, getServerClientBranding, requireAuth } from "@/lib/server-nav";
+import { wpFetchServer } from "@/lib/wp";
+import type { AppUser } from "@/lib/types";
 
 export default async function AccountPage() {
   await requireAuth();
-  const [nav, branding, jar] = await Promise.all([
+  const [nav, me, branding, buildProfile] = await Promise.all([
     getNavigation(),
+    wpFetchServer<AppUser>("/app/me"),
     getServerClientBranding(),
-    cookies(),
+    getServerAppProfile(),
   ]);
-  const firstName = jar.get(COOKIE_FIRST_NAME)?.value?.trim() || "";
-  const isStaff = Boolean(
-    nav?.menus?.some((m) => m.enabled && m.group === "staff")
-  );
-  if (appVariant() === "warranty" && isStaff) {
-    redirect("/account/warranties");
-  }
+  const appProfile =
+    normalizeAppProfile(me?.data?.app_profile) ||
+    normalizeAppProfile(nav?.app_profile) ||
+    buildProfile;
+
+  const user = me?.data;
+  const clientName = user?.client_name?.trim() || branding?.name || "";
+  const clientLogo = user?.client_logo?.trim() || branding?.logo || "";
+  const clientHero = user?.client_hero?.trim() || branding?.hero || "";
 
   if (!nav) {
     return (
@@ -35,11 +37,13 @@ export default async function AccountPage() {
 
   return (
     <HomeScreen
-      menus={nav.menus}
-      clientName={branding.name}
-      clientLogo={branding.logo}
-      clientHero={branding.hero}
-      firstName={firstName}
+      menus={nav.menus || []}
+      clientName={clientName}
+      clientLogo={clientLogo}
+      clientHero={clientHero}
+      displayName={user?.display_name}
+      firstName={user?.first_name}
+      appProfile={appProfile}
     />
   );
 }

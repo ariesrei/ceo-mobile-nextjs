@@ -1,6 +1,14 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { fetchErrorMessage, serverFetch } from "@/lib/server-fetch";
 import { publicWpErrorMessage } from "@/lib/wp-error";
+import {
+  COOKIE_APP_PROFILE,
+  COOKIE_SITE_PROFILE,
+  getBuildAppProfile,
+  normalizeAppProfile,
+  profileMismatchMessage,
+} from "@/lib/app-profile";
 import {
   apiUrl,
   COOKIE_ACCESS,
@@ -60,9 +68,23 @@ export async function POST(request: Request) {
       );
     }
 
+    const siteProfile =
+      normalizeAppProfile(data.user?.app_profile) || "operations";
+    const jar = await cookies();
+    const buildProfile =
+      normalizeAppProfile(jar.get(COOKIE_APP_PROFILE)?.value) ||
+      getBuildAppProfile();
+    if (buildProfile && buildProfile !== siteProfile) {
+      return NextResponse.json(
+        { message: profileMismatchMessage(buildProfile) },
+        { status: 403 }
+      );
+    }
+
     const response = NextResponse.json({
       user: data.user,
       expires_in: data.expires_in,
+      appProfile: siteProfile,
     });
 
     response.cookies.set(COOKIE_BASE_URL, baseUrl, {
@@ -110,6 +132,11 @@ export async function POST(request: Request) {
         maxAge: 60 * 60 * 24 * 365,
       });
     }
+    response.cookies.set(COOKIE_SITE_PROFILE, siteProfile, {
+      ...cookieOpts,
+      httpOnly: false,
+      maxAge: 60 * 60 * 24 * 365,
+    });
 
     return response;
   } catch (err) {

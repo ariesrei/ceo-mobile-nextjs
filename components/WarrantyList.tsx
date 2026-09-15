@@ -342,27 +342,44 @@ export function WarrantyList({
               : "No claims yet."
           }
           getKey={(w) => w.id}
-          renderItem={(w) => {
-            const title =
-              w.warranty_describe_the_request ||
-              w.warranty_describe_the_request_single ||
-              w.unit_title ||
-              "Warranty claim";
-            const meta = claimMetaLines(w, title);
-            return (
-            <Link href={`/account/warranties/${w.id}`} className="ceo-claim-card">
-              <ClaimThumb
-                src={claimThumbSrc(w)}
-                name={claimContactName(w)}
-              />
-              <div className="min-w-0 flex-1">
-                <p className="ceo-claim-card__id">#{w.id}</p>
-                <p className="ceo-claim-card__title">{title}</p>
-                {meta.length ? (
-                  <div className="ceo-claim-card__meta">
-                    {meta.map((line, i) => (
-                      <span key={`${i}-${line}`}>{line}</span>
-                    ))}
+            renderItem={(w) => (
+              <div className="ceo-list-card">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
+                  {w.photos?.[0]?.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={w.photos[0].url}
+                      alt=""
+                      className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                    />
+                  ) : null}
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-[var(--accent)]">
+                      #{w.id}
+                    </p>
+                    <p className="mt-0.5 font-semibold">
+                      {w.warranty_describe_the_request ||
+                        w.warranty_describe_the_request_single ||
+                        w.unit_title ||
+                        "Warranty claim"}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--muted)]">
+                      {[
+                        w.location_labels,
+                        w.unit_title,
+                        w.resident_name ||
+                          [w.warranty_first_name, w.warranty_last_name]
+                            .filter(Boolean)
+                            .join(" "),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                    {isStaff && w.status_label ? (
+                      <div className="mt-2">
+                        <StatusBadge label={w.status_label} />
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
@@ -383,39 +400,11 @@ export function WarrantyList({
   );
 }
 
-function FilterRow({
-  label,
-  value,
-  placeholder,
-  options,
-  trailing,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  placeholder: string;
-  options: WarrantyChoice[];
-  trailing?: boolean;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div className="ceo-claim-filter">
-      <span className="ceo-claim-filter__label">{label}</span>
-      <span className="ceo-claim-filter__value">
-        <MenuSelect
-          variant="inline"
-          aria-label={label}
-          value={value}
-          placeholder={placeholder}
-          options={options}
-          onChange={onChange}
-        />
-        {trailing ? (
-          <CalendarIcon className="ceo-claim-filter__cal" />
-        ) : (
-          <ChevronRightIcon className="ceo-claim-filter__chev" />
-        )}
-      </span>
+      {canCreate ? (
+        <Link href="/account/warranties/new" className="ceo-fab">
+          + New Warranty
+        </Link>
+      ) : null}
     </div>
   );
 }

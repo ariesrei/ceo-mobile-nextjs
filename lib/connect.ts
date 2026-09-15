@@ -1,3 +1,4 @@
+import { normalizeAppProfile, type AppProfile } from "./app-profile";
 import type { ConnectConfig } from "./types";
 
 export const CONNECT_STORAGE_KEY = "ceo_app_connect";
@@ -54,7 +55,8 @@ export function saveConnectConfig(
   clientName?: string,
   clientLogo?: string,
   clientHero?: string,
-  clientTagline?: string
+  clientTagline?: string,
+  extras?: { planKey?: string; appProfile?: AppProfile | string }
 ): ConnectConfig {
   const existing = getConnectConfig();
   const config: ConnectConfig = {
@@ -65,6 +67,9 @@ export function saveConnectConfig(
     clientHero: (clientHero || existing?.clientHero || "").trim() || undefined,
     clientTagline:
       (clientTagline || existing?.clientTagline || "").trim() || undefined,
+    planKey: extras?.planKey || existing?.planKey,
+    appProfile:
+      normalizeAppProfile(extras?.appProfile) || existing?.appProfile,
   };
   window.localStorage.setItem(CONNECT_STORAGE_KEY, JSON.stringify(config));
   return config;

@@ -8,10 +8,10 @@ export default async function LoginPage() {
   return (
     <main className="ceo-login-page">
       <LoginForm
-        fallbackLogo={branding.logo}
-        fallbackName={branding.name}
-        fallbackHero={branding.hero}
-        fallbackTagline={branding.tagline}
+        fallbackLogo={branding?.logo ?? ""}
+        fallbackName={branding?.name ?? ""}
+        fallbackHero={branding?.hero ?? ""}
+        fallbackTagline={branding?.tagline ?? ""}
       />
     </main>
   );

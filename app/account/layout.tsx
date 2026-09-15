@@ -11,7 +11,10 @@ export default async function AccountLayout({
   const branding = await getServerClientBranding();
 
   return (
-    <ClientBrandProvider name={branding.name} logo={branding.logo}>
+    <ClientBrandProvider
+      name={branding?.name ?? ""}
+      logo={branding?.logo ?? ""}
+    >
       {children}
     </ClientBrandProvider>
   );

@@ -81,7 +81,11 @@ export function LoginForm({
           data.user.client_name,
           data.user.client_logo || "",
           data.user.client_hero || "",
-          data.user.client_tagline || ""
+          data.user.client_tagline || "",
+          {
+            planKey: data.user.plan_key,
+            appProfile: data.user.app_profile || data.appProfile,
+          }
         );
       }
       /*

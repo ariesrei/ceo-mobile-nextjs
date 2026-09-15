@@ -55,7 +55,11 @@ export function SplashScreen({ connected = false }: Props) {
    * the Operations (or Warranty) badge, matching the connect and login screens.
    */
   const splash = connected
-    ? { from: brand.splashFrom, to: brand.splashTo, glow: brand.glow }
+    ? {
+        from: brand.splashFrom || COMPANY_SPLASH.from,
+        to: brand.splashTo || COMPANY_SPLASH.to,
+        glow: brand.glow || COMPANY_SPLASH.glow,
+      }
     : COMPANY_SPLASH;
 
   return (

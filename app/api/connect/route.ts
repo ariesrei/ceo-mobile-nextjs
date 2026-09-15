@@ -1,4 +1,13 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import {
+  COOKIE_APP_PROFILE,
+  COOKIE_SITE_PROFILE,
+  getBuildAppProfile,
+  normalizeAppProfile,
+  profileMismatchMessage,
+  type AppProfile,
+} from "@/lib/app-profile";
 import { fetchErrorMessage, serverFetch } from "@/lib/server-fetch";
 import {
   COOKIE_BASE_URL,
@@ -15,6 +24,14 @@ const cookieOpts = {
   path: "/",
   maxAge: 60 * 60 * 24 * 365,
 };
+
+async function resolveBuildProfile(): Promise<AppProfile | null> {
+  const jar = await cookies();
+  return (
+    normalizeAppProfile(jar.get(COOKIE_APP_PROFILE)?.value) ||
+    getBuildAppProfile()
+  );
+}
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
@@ -49,6 +66,8 @@ export async function POST(request: Request) {
       client_logo?: string;
       client_hero?: string;
       client_tagline?: string;
+      plan_key?: string;
+      app_profile?: string;
     };
 
     if (!res.ok || !data.valid) {
@@ -58,10 +77,25 @@ export async function POST(request: Request) {
       );
     }
 
+    const siteProfile = normalizeAppProfile(data.app_profile) || "operations";
+    const buildProfile = await resolveBuildProfile();
+    if (buildProfile && buildProfile !== siteProfile) {
+      return NextResponse.json(
+        {
+          valid: false,
+          message: profileMismatchMessage(buildProfile),
+          appProfile: siteProfile,
+          planKey: data.plan_key || "",
+        },
+        { status: 403 }
+      );
+    }
+
     const clientName = String(data.client_name || "").trim();
     const clientLogo = String(data.client_logo || "").trim();
     const clientHero = String(data.client_hero || "").trim();
     const clientTagline = String(data.client_tagline || "").trim();
+    const planKey = String(data.plan_key || "").trim();
     const response = NextResponse.json({
       valid: true,
       baseUrl,
@@ -69,8 +103,14 @@ export async function POST(request: Request) {
       clientLogo,
       clientHero,
       clientTagline,
+      planKey,
+      appProfile: siteProfile,
     });
     response.cookies.set(COOKIE_BASE_URL, baseUrl, cookieOpts);
+    response.cookies.set(COOKIE_SITE_PROFILE, siteProfile, {
+      ...cookieOpts,
+      httpOnly: false,
+    });
     if (clientName) {
       response.cookies.set(COOKIE_CLIENT_NAME, clientName, cookieOpts);
     }

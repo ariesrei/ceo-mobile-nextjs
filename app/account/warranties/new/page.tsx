@@ -1,15 +1,14 @@
 import { WarrantyForm } from "@/components/WarrantyForm";
-import { WarrantyShell } from "@/components/WarrantyShell";
-import { getNavigation, isStaffMenuPath } from "@/lib/server-nav";
+import { getServerClientBranding, requireMenuPath } from "@/lib/server-nav";
 
 export default async function NewWarrantyPage() {
-  const nav = await getNavigation();
-  const isStaff = isStaffMenuPath(nav, "/account/warranties");
+  await requireMenuPath("/account/warranties");
+  const branding = await getServerClientBranding();
 
   return (
-    <WarrantyShell
-      title="Create Claim"
-      subtitle={isStaff ? undefined : "Submit a warranty request"}
+    <AppShell
+      title="New Warranty"
+      subtitle="Submit a warranty request"
       backHref="/account/warranties"
       showNav={false}
     >

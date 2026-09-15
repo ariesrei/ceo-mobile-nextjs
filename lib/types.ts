@@ -1,12 +1,14 @@
+import type { AppProfile } from "./app-profile";
+
 export type ConnectConfig = {
   baseUrl: string;
   verifiedAt: string;
   clientName?: string;
   clientLogo?: string;
-  /** WordPress background image for this property, used as the login background. */
   clientHero?: string;
-  /** WordPress site tagline, shown under the property name. */
   clientTagline?: string;
+  planKey?: string;
+  appProfile?: AppProfile;
 };
 
 export type AppUser = {
@@ -18,6 +20,9 @@ export type AppUser = {
   roles: string[];
   role_primary: string;
   access_flags: string[];
+  modules?: Record<string, boolean>;
+  plan_key?: string;
+  app_profile?: AppProfile | string;
   active: boolean;
   blog_id: number;
   client_name?: string;
@@ -39,6 +44,9 @@ export type NavigationResponse = {
   role_primary: string;
   roles: string[];
   menus: MenuItem[];
+  modules?: Record<string, boolean>;
+  plan_key?: string;
+  app_profile?: AppProfile | string;
 };
 
 export type AuthTokens = {

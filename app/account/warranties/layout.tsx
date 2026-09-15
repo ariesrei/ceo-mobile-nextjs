@@ -19,9 +19,9 @@ export default async function WarrantiesLayout({
 
   return (
     <WarrantyBrandProvider
-      name={branding.name}
-      logo={branding.logo}
-      hero={branding.hero}
+      name={branding?.name ?? ""}
+      logo={branding?.logo ?? ""}
+      hero={branding?.hero ?? ""}
       firstName={firstName}
     >
       {children}

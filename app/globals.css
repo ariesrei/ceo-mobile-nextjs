@@ -523,6 +523,30 @@ a.ceo-btn-accent {
   }
 }
 
+.ceo-msg-bubble {
+  max-width: 82%;
+  margin-bottom: 0.65rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+.ceo-msg-bubble.is-mine {
+  margin-left: auto;
+  background: #16343a;
+}
+.ceo-msg-bubble.is-theirs {
+  margin-right: auto;
+  background: var(--surface-2);
+}
+.ceo-msg-bubble__meta {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
 @media (min-width: 1024px) and (orientation: landscape) {
   .ceo-home {
     display: grid;

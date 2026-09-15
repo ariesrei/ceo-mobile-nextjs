@@ -12,9 +12,17 @@ import {
   COOKIE_CLIENT_TAGLINE,
   wpFetchServer,
 } from "./wp";
-import { serverFetch } from "./server-fetch";
-import { postLoginPath } from "./brand";
+import { COOKIE_APP_PROFILE, getBuildAppProfile, normalizeAppProfile } from "./app-profile";
 import { applyNavVisibility, isPathAllowed } from "./navigation";
+import { serverFetch } from "./server-fetch";
+
+export async function getServerAppProfile() {
+  const jar = await cookies();
+  return (
+    normalizeAppProfile(jar.get(COOKIE_APP_PROFILE)?.value) ||
+    getBuildAppProfile()
+  );
+}
 
 export type ClientBranding = {
   name: string;
@@ -55,7 +63,22 @@ async function fetchPublicWpBranding(
   }
 }
 
+const EMPTY_BRANDING: ClientBranding = {
+  name: "",
+  tagline: "",
+  logo: "",
+  hero: "",
+};
+
 export const getServerClientBranding = cache(async (): Promise<ClientBranding> => {
+  try {
+    return await resolveClientBranding();
+  } catch {
+    return { ...EMPTY_BRANDING };
+  }
+});
+
+async function resolveClientBranding(): Promise<ClientBranding> {
   const jar = await cookies();
   const fromCookieName = jar.get(COOKIE_CLIENT_NAME)?.value?.trim() || "";
   const fromCookieLogo = jar.get(COOKIE_CLIENT_LOGO)?.value?.trim() || "";
@@ -104,11 +127,11 @@ export const getServerClientBranding = cache(async (): Promise<ClientBranding> =
     tagline = me.data?.client_tagline?.trim() || "";
   }
   return { name, tagline, logo, hero };
-});
+}
 
 export async function getServerClientName(): Promise<string> {
   const branding = await getServerClientBranding();
-  return branding.name;
+  return branding?.name ?? "";
 }
 
 export async function requireConnected() {
@@ -126,16 +149,20 @@ export async function requireAuth() {
   }
 }
 
-export const getNavigation = cache(async (): Promise<NavigationResponse | null> => {
-  const result = await wpFetchServer<NavigationResponse>("/app/navigation");
-  return applyNavVisibility(result.data || null);
-});
+export async function getNavigation(): Promise<NavigationResponse | null> {
+  const [result, profile] = await Promise.all([
+    wpFetchServer<NavigationResponse>("/app/navigation"),
+    getServerAppProfile(),
+  ]);
+  return applyNavVisibility(result.data || null, profile);
+}
 
 export async function requireMenuPath(path: string) {
   await requireAuth();
   const nav = await getNavigation();
-  if (!isPathAllowed(nav, path)) {
-    redirect(postLoginPath());
+  const profile = await getServerAppProfile();
+  if (!isPathAllowed(nav, path, profile)) {
+    redirect("/account");
   }
   return nav;
 }

@@ -18,6 +18,9 @@ export type WarrantyItem = {
   warranty_tel_number: string;
   warranty_describe_the_request?: string;
   warranty_describe_the_request_single?: string;
+  warranty_location?: number[];
+  warranty_location_single?: number[];
+  location_labels?: string;
   warranty_entry_date: string;
   warranty_entry_start_time: string;
   warranty_entry_end_time: string;
@@ -64,6 +67,7 @@ export type WarrantyOptions = {
   types: WarrantyChoice[];
   units: WarrantyChoice[];
   statuses: WarrantyChoice[];
+  locations?: WarrantyChoice[];
   trades: WarrantyChoice[];
   subcontractors?: WarrantyChoice[];
   can_edit: boolean;

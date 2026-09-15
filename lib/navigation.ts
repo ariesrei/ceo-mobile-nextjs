@@ -1,72 +1,80 @@
+import {
+  isWarrantyProfile,
+  normalizeAppProfile,
+  WARRANTY_MENU_ALLOWLIST,
+  type AppProfile,
+} from "./app-profile";
 import type { MenuItem, NavigationResponse } from "./types";
 
-/**
- * Temporary: which *staff* modules to show. Resident (account) menus are never filtered.
- * Set to null to restore all staff modules (Contacts, Guests, etc.).
- */
-export const STAFF_MENU_ALLOWLIST: string[] | null = [
-  "parcels",
-  "maintenance",
-  "guests",
-  "warranties",
-];
+/** Temporary: hide these modules for staff and residents. */
+export const HIDDEN_MENU_IDS: string[] = ["messaging"];
 
-function isStaffMenu(item: MenuItem): boolean {
-  return item.group === "staff";
-}
-
-function isAllowedStaffMenu(item: MenuItem): boolean {
-  if (!STAFF_MENU_ALLOWLIST) return true;
+function isHiddenMenu(item: MenuItem): boolean {
   return (
-    STAFF_MENU_ALLOWLIST.includes(item.id) ||
-    (item.path === "/account/parcels" &&
-      STAFF_MENU_ALLOWLIST.includes("parcels")) ||
-    (item.path === "/account/maintenance" &&
-      STAFF_MENU_ALLOWLIST.includes("maintenance")) ||
-    (item.path === "/account/guests" &&
-      STAFF_MENU_ALLOWLIST.includes("guests")) ||
-    (item.path === "/account/warranties" &&
-      STAFF_MENU_ALLOWLIST.includes("warranties"))
+    HIDDEN_MENU_IDS.includes(item.id) ||
+    (item.path === "/account/messaging" && HIDDEN_MENU_IDS.includes("messaging"))
   );
 }
 
-/** Apply temporary staff-module visibility (resident menus stay as returned by WP). */
-export function applyMenuVisibility(menus: MenuItem[]): MenuItem[] {
-  if (!STAFF_MENU_ALLOWLIST) {
-    return menus;
-  }
+function resolveProfile(
+  nav?: NavigationResponse | null,
+  profile?: AppProfile | null
+): AppProfile | null {
+  return (
+    normalizeAppProfile(profile) ||
+    normalizeAppProfile(nav?.app_profile) ||
+    null
+  );
+}
+
+function isWarrantyAllowed(item: MenuItem): boolean {
+  return (WARRANTY_MENU_ALLOWLIST as readonly string[]).includes(item.id);
+}
+
+/** Apply product + temporary module visibility. */
+export function applyMenuVisibility(
+  menus: MenuItem[],
+  profile?: AppProfile | null
+): MenuItem[] {
+  const warranty = isWarrantyProfile(profile);
   return menus.map((m) => {
-    if (!isStaffMenu(m)) {
-      return m;
+    if (isHiddenMenu(m)) {
+      return { ...m, enabled: false };
     }
-    return {
-      ...m,
-      enabled: Boolean(m.enabled && isAllowedStaffMenu(m)),
-    };
+    if (warranty && !isWarrantyAllowed(m)) {
+      return { ...m, enabled: false };
+    }
+    return m;
   });
 }
 
 export function applyNavVisibility(
-  nav: NavigationResponse | null | undefined
+  nav: NavigationResponse | null | undefined,
+  profile?: AppProfile | null
 ): NavigationResponse | null {
   if (!nav) return null;
+  const resolved = resolveProfile(nav, profile);
   return {
     ...nav,
-    menus: applyMenuVisibility(nav.menus || []),
+    menus: applyMenuVisibility(nav.menus || [], resolved),
   };
 }
 
-export function enabledMenus(nav: NavigationResponse | null | undefined): MenuItem[] {
-  const filtered = applyNavVisibility(nav);
+export function enabledMenus(
+  nav: NavigationResponse | null | undefined,
+  profile?: AppProfile | null
+): MenuItem[] {
+  const filtered = applyNavVisibility(nav, profile);
   if (!filtered?.menus?.length) return [];
   return filtered.menus.filter((m) => m.enabled);
 }
 
 export function isPathAllowed(
   nav: NavigationResponse | null | undefined,
-  path: string
+  path: string,
+  profile?: AppProfile | null
 ): boolean {
-  const filtered = applyNavVisibility(nav);
+  const filtered = applyNavVisibility(nav, profile);
   if (!filtered?.menus?.length) return false;
   return filtered.menus.some((m) => m.enabled && m.path === path);
 }
