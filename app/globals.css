@@ -912,6 +912,26 @@ a.ceo-btn-accent {
   overflow: hidden;
 }
 
+.ceo-warranty-menu--pills {
+  gap: 0.55rem;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+  border-radius: 0;
+}
+
+.ceo-warranty-menu--pills .ceo-warranty-menu__row {
+  border-radius: 999px;
+}
+
+.ceo-warranty-menu--pills .ceo-warranty-menu__row + .ceo-warranty-menu__row {
+  border-top-color: transparent;
+}
+
+.ceo-warranty-menu--pills .ceo-warranty-menu__icon {
+  border-radius: 999px;
+}
+
 .ceo-warranty-menu__row {
   display: flex;
   align-items: center;
@@ -1032,63 +1052,108 @@ a.ceo-btn-accent {
 
 /* ---------- Claim list ---------- */
 
+/* Glass rim used by ClaimTrack pills: bright top-left, darker bottom-right. */
+.ceo-claim-tabs,
+.ceo-seg,
+.ceo-chips,
+.ceo-claim-search,
+.ceo-claim-search__filter,
+.ceo-claim-filter__label,
+.ceo-claim-filter__value,
+.ceo-warranty-menu--pills .ceo-warranty-menu__row,
+.ceo-claim-filter-actions .ceo-btn-outline {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--surface-2), var(--surface-2)) padding-box,
+    linear-gradient(
+      155deg,
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0.08) 42%,
+      rgba(0, 0, 0, 0.42) 100%
+    ) border-box;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 1px 2px rgba(0, 0, 0, 0.22);
+}
+
 .ceo-claim-tabs {
   display: flex;
-  gap: 0.4rem;
-  overflow-x: auto;
-  scrollbar-width: none;
+  gap: 0.25rem;
+  padding: 0.28rem;
+  border-radius: 999px;
 }
 
-.ceo-claim-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-/* Only the selected tab is a filled pill; the rest are bare labels with their
-   count beside them. */
 .ceo-claim-tab {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  flex: 0 0 auto;
+  justify-content: center;
+  gap: 0.3rem;
+  flex: 1 1 0;
+  min-width: 0;
   border-radius: 999px;
-  border: 1px solid transparent;
+  border: 0;
   background: transparent;
-  padding: 0.5rem 0.8rem;
-  font-size: 0.78rem;
+  padding: 0.5rem 0.4rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--muted);
 }
 
 .ceo-claim-tab.is-active {
-  border-color: var(--accent);
   background: var(--accent);
   color: var(--accent-ink);
 }
 
 .ceo-claim-tab__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  padding: 0 0.3rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 0.05rem 0.4rem;
-  font-size: 0.68rem;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.66rem;
   font-weight: 800;
+  line-height: 1;
 }
 
 .ceo-claim-tab.is-active .ceo-claim-tab__count {
   background: rgba(8, 16, 20, 0.18);
 }
 
+.ceo-claim-search-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
 .ceo-claim-search {
   position: relative;
   display: flex;
   align-items: center;
-  border-radius: 1rem;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  padding-left: 0.85rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 3.05rem;
+  border-radius: 999px;
+  padding: 0.28rem 1rem 0.28rem 0.32rem;
 }
 
 .ceo-claim-search > .ceo-claim-search__icon {
+  margin-left: 0.55rem;
   margin-right: 0.15rem;
+}
+
+.ceo-claim-search__icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
 }
 
 .ceo-claim-search__icon {
@@ -1103,7 +1168,7 @@ a.ceo-btn-accent {
   min-width: 0;
   background: transparent;
   border: 0;
-  padding: 0.8rem 0.6rem;
+  padding: 0.55rem 0.45rem;
   font-size: 0.88rem;
   color: var(--ink);
   outline: none;
@@ -1122,22 +1187,31 @@ a.ceo-btn-accent {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 3.05rem;
+  height: 3.05rem;
   flex: 0 0 auto;
-  border-radius: 0 1rem 1rem 0;
-  background: transparent;
+  border-radius: 999px;
   color: var(--muted);
 }
 
 .ceo-claim-search__filter.is-active {
   color: var(--accent);
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--accent) 16%, var(--surface-2)),
+      color-mix(in srgb, var(--accent) 16%, var(--surface-2))
+    ) padding-box,
+    linear-gradient(
+      155deg,
+      rgba(46, 196, 182, 0.7) 0%,
+      rgba(46, 196, 182, 0.18) 100%
+    ) border-box;
 }
 
 .ceo-claim-search__dot {
   position: absolute;
-  top: 0.55rem;
-  right: 0.6rem;
+  top: 0.42rem;
+  right: 0.42rem;
   width: 0.42rem;
   height: 0.42rem;
   border-radius: 999px;
@@ -1151,24 +1225,30 @@ a.ceo-btn-accent {
 
 .ceo-claim-filter {
   display: grid;
-  grid-template-columns: 7.4rem minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.55rem;
   align-items: center;
-  border-radius: 1rem;
-  border: 1px solid var(--border);
-  background: var(--surface);
 }
 
 .ceo-claim-filter__label {
-  padding: 0.85rem 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.85rem;
+  padding: 0.55rem 1.05rem;
+  border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--ink);
+  white-space: nowrap;
 }
 
 .ceo-claim-filter__value {
   display: flex;
   align-items: center;
   min-width: 0;
+  min-height: 2.85rem;
+  padding-right: 0.85rem;
+  border-radius: 999px;
 }
 
 .ceo-menu-select {
@@ -1185,11 +1265,11 @@ a.ceo-btn-accent {
   min-width: 0;
   border: 0;
   background: transparent;
-  padding: 0.85rem 0.95rem;
+  padding: 0.7rem 0.85rem;
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--ink);
-  text-align: right;
+  text-align: left;
   outline: none;
 }
 
@@ -1276,12 +1356,16 @@ a.ceo-btn-accent {
   color: #2ec4b6;
 }
 
-.ceo-claim-filter__cal {
+.ceo-claim-filter__cal,
+.ceo-claim-filter__chev {
   width: 1.05rem;
   height: 1.05rem;
   flex: 0 0 auto;
-  margin-right: 0.9rem;
   color: var(--muted);
+}
+
+.ceo-claim-filter__chev {
+  transform: rotate(90deg);
 }
 
 .ceo-claim-filter-actions {
@@ -1289,6 +1373,15 @@ a.ceo-btn-accent {
   grid-template-columns: 1fr 1fr;
   gap: 0.55rem;
   margin-top: 0.35rem;
+}
+
+.ceo-claim-filter-actions .ceo-btn-solid,
+.ceo-claim-filter-actions .ceo-btn-outline {
+  border-radius: 999px;
+}
+
+.ceo-claim-filter-actions .ceo-btn-outline {
+  border-color: transparent;
 }
 
 .ceo-claim-list {
@@ -1390,24 +1483,26 @@ a.ceo-btn-accent {
 /* Underlined segmented control, as distinct from the pill tabs on the list. */
 .ceo-seg {
   display: flex;
-  gap: 0.15rem;
-  border-bottom: 1px solid var(--border);
+  gap: 0.25rem;
+  padding: 0.28rem;
+  border-radius: 999px;
 }
 
 .ceo-seg button {
   flex: 1 1 0;
-  padding: 0.6rem 0.3rem;
-  font-size: 0.8rem;
+  min-width: 0;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.55rem 0.25rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--muted);
   background: transparent;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
 }
 
 .ceo-seg button.is-active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 /* ---------- Updates / timeline path ---------- */
@@ -1535,24 +1630,28 @@ a.ceo-btn-accent {
 
 .ceo-chips {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.25rem;
+  padding: 0.28rem;
+  border-radius: 999px;
 }
 
 .ceo-chips button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.3rem;
+  flex: 1 1 0;
+  min-width: 0;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  padding: 0.4rem 0.8rem;
+  border: 0;
+  background: transparent;
+  padding: 0.45rem 0.45rem;
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--muted);
 }
 
 .ceo-chips button.is-active {
-  border-color: var(--accent);
   background: var(--accent);
   color: var(--accent-ink);
 }
@@ -1777,6 +1876,18 @@ a.ceo-btn-accent {
   border: 1px solid var(--border);
   background: transparent;
   color: var(--ink);
+}
+
+.ceo-claim-filter-actions .ceo-btn-outline {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--surface-2), var(--surface-2)) padding-box,
+    linear-gradient(
+      155deg,
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0.08) 42%,
+      rgba(0, 0, 0, 0.42) 100%
+    ) border-box;
 }
 
 .ceo-btn-danger-outline {

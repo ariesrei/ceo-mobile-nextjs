@@ -3,17 +3,43 @@
 import { useState } from "react";
 import type { WarrantyItem, WarrantyListResponse } from "@/lib/warranties";
 import { FastLink } from "./FastLink";
-import { ChevronRightIcon, FileIcon } from "./ui/Icons";
+import {
+  BuildingIcon,
+  ChartIcon,
+  CheckCircleIcon,
+  ChevronRightIcon,
+  ClockIcon,
+  DownloadIcon,
+  FolderOpenIcon,
+  UsersIcon,
+} from "./ui/Icons";
 
 const ROWS = [
-  { label: "Claims Summary", href: "/account/warranties" },
-  { label: "Open Claims", href: "/account/warranties/claims?tab=open" },
-  { label: "Closed Claims", href: "/account/warranties/claims?tab=closed" },
-  { label: "Claims by Subcontractor", href: "/account/warranties/vendors" },
-  { label: "Claims by Unit", href: "/account/warranties/claims" },
+  { label: "Claims Summary", href: "/account/warranties", Icon: ChartIcon },
+  {
+    label: "Open Claims",
+    href: "/account/warranties/claims?tab=open",
+    Icon: FolderOpenIcon,
+  },
+  {
+    label: "Closed Claims",
+    href: "/account/warranties/claims?tab=closed",
+    Icon: CheckCircleIcon,
+  },
+  {
+    label: "Claims by Subcontractor",
+    href: "/account/warranties/vendors",
+    Icon: UsersIcon,
+  },
+  {
+    label: "Claims by Unit",
+    href: "/account/warranties/claims",
+    Icon: BuildingIcon,
+  },
   {
     label: "Warranty Expirations",
     href: "/account/warranties/claims?tab=expiring",
+    Icon: ClockIcon,
   },
 ];
 
@@ -96,11 +122,11 @@ export function WarrantyReports() {
 
   return (
     <div className="space-y-3">
-      <nav className="ceo-warranty-menu">
-        {ROWS.map(({ label, href }) => (
+      <nav className="ceo-warranty-menu ceo-warranty-menu--pills">
+        {ROWS.map(({ label, href, Icon }) => (
           <FastLink key={label} href={href} className="ceo-warranty-menu__row">
             <span className="ceo-warranty-menu__icon">
-              <FileIcon className="h-[18px] w-[18px]" />
+              <Icon className="h-[18px] w-[18px]" />
             </span>
             <span className="ceo-warranty-menu__label">{label}</span>
             <ChevronRightIcon className="ceo-warranty-menu__chev" />
@@ -113,7 +139,7 @@ export function WarrantyReports() {
           onClick={exportData}
         >
           <span className="ceo-warranty-menu__icon">
-            <FileIcon className="h-[18px] w-[18px]" />
+            <DownloadIcon className="h-[18px] w-[18px]" />
           </span>
           <span className="ceo-warranty-menu__label">
             {exporting ? "Exporting…" : "Export Data"}

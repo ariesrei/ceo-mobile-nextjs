@@ -15,7 +15,13 @@ import { Card } from "./ui/Card";
 import { PaginatedList } from "./ui/PaginatedList";
 import { StatusBadge } from "./ui/StatusBadge";
 import { MenuSelect } from "./ui/MenuSelect";
-import { CalendarIcon, FilterIcon, PlusIcon, SearchIcon } from "./ui/Icons";
+import {
+  CalendarIcon,
+  ChevronRightIcon,
+  FilterIcon,
+  PlusIcon,
+  SearchIcon,
+} from "./ui/Icons";
 
 type Tab = "open" | "progress" | "closed" | "assigned" | "expiring";
 
@@ -226,15 +232,19 @@ export function WarrantyList({
         </p>
       ) : null}
 
-      <div className="ceo-claim-search">
-        <SearchIcon className="ceo-claim-search__icon" />
-        <input
-          type="search"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search unit, name, request…"
-          aria-label="Search claims"
-        />
+      <div className="ceo-claim-search-row">
+        <label className="ceo-claim-search">
+          <span className="ceo-claim-search__icon-wrap" aria-hidden>
+            <SearchIcon className="ceo-claim-search__icon" />
+          </span>
+          <input
+            type="search"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search unit, name, request…"
+            aria-label="Search claims"
+          />
+        </label>
         <button
           type="button"
           className={`ceo-claim-search__filter${showFilters ? " is-active" : ""}`}
@@ -400,7 +410,11 @@ function FilterRow({
           options={options}
           onChange={onChange}
         />
-        {trailing ? <CalendarIcon className="ceo-claim-filter__cal" /> : null}
+        {trailing ? (
+          <CalendarIcon className="ceo-claim-filter__cal" />
+        ) : (
+          <ChevronRightIcon className="ceo-claim-filter__chev" />
+        )}
       </span>
     </div>
   );

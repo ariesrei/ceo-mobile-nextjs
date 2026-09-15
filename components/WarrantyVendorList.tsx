@@ -69,7 +69,9 @@ export function WarrantyVendorList() {
   return (
     <div className="space-y-4">
       <div className="ceo-claim-search">
-        <SearchIcon className="ceo-claim-search__icon" />
+        <span className="ceo-claim-search__icon-wrap" aria-hidden>
+          <SearchIcon className="ceo-claim-search__icon" />
+        </span>
         <input
           type="search"
           value={search}
