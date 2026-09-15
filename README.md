@@ -128,9 +128,9 @@ Bottom nav: **Home · Profile · Edit Profile · Reservations · Parcels · More
 | Edit Profile | `/account/edit` | Photo queues for **gatekeeper review** |
 | Reservations | `/account/reservations` | When calendar / reservations module is on |
 | Parcels | `/account/parcels` | Own parcels only, read-only |
-| Additional Information | `/account/additional-info` | Pets, vehicles, preferences (More) |
+| Additional Information | `/account/additional-info` | Pets, vehicles, preferences (home tile) |
 | History | `/account/history` | More |
-| My Warranty | `/account/warranties` | More |
+| Warranty Claim | `/account/warranties` | Home tile (My Warranty in WP nav) |
 
 Pets, vehicles, preferences, and profile photo go through **gatekeeper review**.
 

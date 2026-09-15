@@ -9,8 +9,10 @@ import { BottomNav } from "./BottomNav";
 const RESIDENT_HOME_IDS = [
   "profile",
   "edit_profile",
+  "additional_info",
   "reservations",
   "parcels",
+  "warranties",
 ];
 
 const WARRANTY_HOME_IDS = ["warranties", "profile", "edit_profile"];

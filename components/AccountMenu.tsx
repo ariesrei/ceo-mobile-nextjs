@@ -27,6 +27,17 @@ const ICONS: Record<string, string> = {
     "M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8A2.5 2.5 0 0 1 17.5 16H8l-3.2 3.2A.8.8 0 0 1 3.5 18.6V5.5Z",
 };
 
+const HOME_LABELS: Record<string, string> = {
+  profile: "Profile",
+  edit_profile: "Edit Profile",
+  additional_info: "Additional Info",
+  warranties: "Warranty Claim",
+};
+
+function homeLabel(item: MenuItem): string {
+  return HOME_LABELS[item.id] || item.label.replace(/^My /, "");
+}
+
 function MenuIcon({ id }: { id: string }) {
   const d = ICONS[id] || ICONS.additional_info;
   return (
@@ -60,7 +71,7 @@ export function AccountMenu({
               <span className="ceo-home-tile__icon">
                 <MenuIcon id={item.id} />
               </span>
-              <span className="ceo-home-tile__label">{item.label}</span>
+              <span className="ceo-home-tile__label">{homeLabel(item)}</span>
             </Link>
           </li>
         ))}
