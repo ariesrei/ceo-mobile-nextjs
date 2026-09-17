@@ -10,6 +10,7 @@ import {
   getConnectConfig,
   saveConnectConfig,
 } from "@/lib/connect";
+import { clearBrowserTokens, loginFromProperty, saveBrowserTokens } from "@/lib/browser-wp";
 import { publicWpErrorMessage } from "@/lib/wp-error";
 
 type Props = {
@@ -69,6 +70,7 @@ export function LoginForm({
     setChangingProperty(true);
     setError("");
     clearConnectConfig();
+    clearBrowserTokens();
     try {
       await fetch("/api/connect", { method: "DELETE" });
     } catch {
@@ -84,16 +86,44 @@ export function LoginForm({
     setError("");
     setLoading(true);
     try {
+      const verified = await loginFromProperty(baseUrl, username, password);
+      if (!verified.ok && !verified.network) {
+        setError(verified.error || "Login failed.");
+        setLoading(false);
+        return;
+      }
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, baseUrl }),
+        body: JSON.stringify(
+          verified.ok
+            ? {
+                baseUrl,
+                browserVerified: true,
+                access_token: verified.data.access_token,
+                refresh_token: verified.data.refresh_token,
+                expires_in: verified.data.expires_in,
+                user: verified.data.user,
+              }
+            : { username, password, baseUrl }
+        ),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(publicWpErrorMessage(data.message, "Login failed."));
+        setError(
+          publicWpErrorMessage(
+            data.message || (!verified.ok ? verified.error : ""),
+            "Login failed."
+          )
+        );
         setLoading(false);
         return;
+      }
+      if (verified.ok) {
+        saveBrowserTokens(
+          verified.data.access_token,
+          verified.data.refresh_token
+        );
       }
       if (data.user?.client_name && baseUrl) {
         saveConnectConfig(

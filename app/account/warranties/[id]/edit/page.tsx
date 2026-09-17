@@ -1,6 +1,6 @@
+import { ClientWpRecord } from "@/components/ClientWpRecord";
 import { WarrantyForm } from "@/components/WarrantyForm";
 import { WarrantyShell } from "@/components/WarrantyShell";
-import { Card } from "@/components/ui/Card";
 import type { WarrantyItem } from "@/lib/warranties";
 import { wpFetchServer } from "@/lib/wp";
 
@@ -16,15 +16,13 @@ export default async function EditWarrantyPage({ params }: Props) {
       backHref={`/account/warranties/${id}`}
       showNav={false}
     >
-      {result.data ? (
-        <WarrantyForm record={result.data} sectioned />
-      ) : (
-        <Card>
-          <p className="text-sm text-[var(--danger)]">
-            {result.error || "Warranty not found."}
-          </p>
-        </Card>
-      )}
+      <ClientWpRecord<WarrantyItem>
+        path={`/warranties/${id}`}
+        initial={result.data}
+        error={result.error || "Warranty not found."}
+      >
+        {(record) => <WarrantyForm record={record} sectioned />}
+      </ClientWpRecord>
     </WarrantyShell>
   );
 }

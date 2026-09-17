@@ -6,6 +6,7 @@ import "@fontsource/manrope/700.css";
 import { getBuildAppProfile, productName } from "@/lib/app-profile";
 import "./globals.css";
 import { SplashGate } from "@/components/SplashGate";
+import { WpDirectFetch } from "@/components/WpDirectFetch";
 import { appBrand } from "@/lib/brand";
 
 const brand = appBrand();
@@ -36,6 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en" data-app-variant={brand.variant} suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
+        <WpDirectFetch />
         <SplashGate />
         {children}
       </body>

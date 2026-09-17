@@ -1,6 +1,6 @@
 import { AdditionalInfoLists } from "@/components/AdditionalInfoLists";
 import { AppShell } from "@/components/AppShell";
-import { Card } from "@/components/ui/Card";
+import { ClientWpRecord } from "@/components/ClientWpRecord";
 import type { AdditionalSections } from "@/lib/additional-info";
 import { getServerClientName, requireMenuPath } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
@@ -11,7 +11,6 @@ export default async function AdditionalInfoPage() {
     wpFetchServer<{ sections: AdditionalSections }>("/app/additional-info"),
     getServerClientName(),
   ]);
-  const sections = result.data?.sections;
 
   return (
     <AppShell
@@ -20,13 +19,13 @@ export default async function AdditionalInfoPage() {
       backHref="/account"
       clientName={clientName}
     >
-      {!sections ? (
-        <Card>
-          <p className="text-sm text-red-700">{result.error || "Unavailable."}</p>
-        </Card>
-      ) : (
-        <AdditionalInfoLists sections={sections} />
-      )}
+      <ClientWpRecord<{ sections: AdditionalSections }>
+        path="/additional-info"
+        initial={result.data}
+        error={result.error || "Unavailable."}
+      >
+        {(data) => <AdditionalInfoLists sections={data.sections} />}
+      </ClientWpRecord>
     </AppShell>
   );
 }

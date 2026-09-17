@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { COOKIE_APP_PROFILE, COOKIE_SITE_PROFILE } from "./app-profile";
 import { fetchErrorMessage, serverFetch } from "./server-fetch";
 import type { ConnectConfig } from "./types";
+import { publicWpErrorMessage } from "./wp-error";
 
 export const COOKIE_ACCESS = "ceo_access_token";
 export const COOKIE_REFRESH = "ceo_refresh_token";
@@ -107,12 +108,20 @@ async function wpFetchServerImpl<T>(
     return { error: fetchErrorMessage(err, url), status: 502 };
   }
 
-  const json = await res.json().catch(() => ({}));
+  const rawBody = await res.text();
+  const json = (() => {
+    try {
+      return rawBody ? JSON.parse(rawBody) : {};
+    } catch {
+      return { message: rawBody };
+    }
+  })() as { message?: string; error?: string };
+
   if (!res.ok) {
-    const message =
-      (json as { message?: string }).message ||
-      (json as { error?: string }).error ||
-      `Request failed (${res.status})`;
+    const message = publicWpErrorMessage(
+      json.message || json.error || rawBody,
+      `Request failed (${res.status})`
+    );
     return { error: message, status: res.status };
   }
 
@@ -148,12 +157,20 @@ export async function wpFetchClient<T>(
     cache: "no-store",
   });
 
-  const json = await res.json().catch(() => ({}));
+  const rawBody = await res.text();
+  const json = (() => {
+    try {
+      return rawBody ? JSON.parse(rawBody) : {};
+    } catch {
+      return { message: rawBody };
+    }
+  })() as { message?: string; error?: string };
+
   if (!res.ok) {
-    const message =
-      (json as { message?: string }).message ||
-      (json as { error?: string }).error ||
-      `Request failed (${res.status})`;
+    const message = publicWpErrorMessage(
+      json.message || json.error || rawBody,
+      `Request failed (${res.status})`
+    );
     return { error: message, status: res.status };
   }
 

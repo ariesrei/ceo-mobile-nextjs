@@ -161,42 +161,45 @@ Building Admin / Client Admin pass all access checks (same as desktop).
 
 Namespace: `onesource/v1`. Browser calls go through Next `/api/wp/{path}` (do **not** use `/api/wp/app/...`).
 
-| Method | Route | Auth |
-|--------|-------|------|
-| POST | `/mobile/verify-connect` | public (security key) |
-| POST | `/app/auth/login` | public |
-| POST | `/app/auth/refresh` | refresh token |
-| GET | `/app/me` | Bearer access |
-| GET | `/app/navigation` | Bearer access |
-| GET/PATCH | `/app/profile` | Bearer access |
-| POST | `/app/profile/media` | Bearer access (photo for gatekeeper) |
-| GET | `/app/additional-info` | Bearer access |
-| GET | `/app/additional-info/options` | Bearer access |
-| POST/PATCH | `/app/additional-info/pets[/id]` | Bearer access |
-| POST/PATCH | `/app/additional-info/vehicles[/id]` | Bearer access |
-| POST/PATCH | `/app/additional-info/preferences[/id]` | Bearer access |
-| GET | `/app/reservations` | Bearer access |
-| GET | `/app/history` | Bearer access |
-| GET/POST | `/app/parcels` | Bearer access |
-| GET | `/app/parcels/options` | Bearer access |
-| POST | `/app/parcels/media` | Bearer access |
-| POST | `/app/parcels/{id}/signout` | Bearer access |
-| GET/PATCH | `/app/parcels/{id}` | Bearer access |
-| GET/POST | `/app/warranties` | Bearer access |
-| GET | `/app/warranties/options` | Bearer access (`unit_id` returns unit resident contact) |
-| POST | `/app/warranties/media` | Bearer access |
-| POST | `/app/warranties/{id}/assign` | Bearer access |
-| POST | `/app/warranties/{id}/status` | Bearer access |
-| GET/PATCH | `/app/warranties/{id}` | Bearer access |
-| GET/POST | `/app/maintenance` | Bearer access |
-| GET | `/app/maintenance/options` | Bearer access |
-| POST | `/app/maintenance/media` | Bearer access |
-| GET/PATCH | `/app/maintenance/{id}` | Bearer access |
-| GET/POST | `/app/guests` | Bearer access |
-| GET | `/app/guests/options` | Bearer access |
-| POST | `/app/guests/media` | Bearer access |
-| POST | `/app/guests/{id}/checkout` | Bearer access |
-| GET/PATCH | `/app/guests/{id}` | Bearer access |
+Host WAF (nginx, Cloudflare, AWS, or similar) must **allow** every route below. Blocking `/wp-json/onesource/v1/*` returns HTML `403 Forbidden` and breaks Connect, Login, and in-app data — including requests from Vercel, Capacitor, and the phone browser.
+
+| Method | Route | Auth | WAF |
+|--------|-------|------|-----|
+| POST | `/mobile/verify-connect` | public (security key) | Don't Block |
+| GET | `/mobile/branding` | public | Don't Block |
+| POST | `/app/auth/login` | public | Don't Block |
+| POST | `/app/auth/refresh` | refresh token | Don't Block |
+| GET | `/app/me` | Bearer access | Don't Block |
+| GET | `/app/navigation` | Bearer access | Don't Block |
+| GET/PATCH | `/app/profile` | Bearer access | Don't Block |
+| POST | `/app/profile/media` | Bearer access (photo for gatekeeper) | Don't Block |
+| GET | `/app/additional-info` | Bearer access | Don't Block |
+| GET | `/app/additional-info/options` | Bearer access | Don't Block |
+| POST/PATCH | `/app/additional-info/pets[/id]` | Bearer access | Don't Block |
+| POST/PATCH | `/app/additional-info/vehicles[/id]` | Bearer access | Don't Block |
+| POST/PATCH | `/app/additional-info/preferences[/id]` | Bearer access | Don't Block |
+| GET | `/app/reservations` | Bearer access | Don't Block |
+| GET | `/app/history` | Bearer access | Don't Block |
+| GET/POST | `/app/parcels` | Bearer access | Don't Block |
+| GET | `/app/parcels/options` | Bearer access | Don't Block |
+| POST | `/app/parcels/media` | Bearer access | Don't Block |
+| POST | `/app/parcels/{id}/signout` | Bearer access | Don't Block |
+| GET/PATCH | `/app/parcels/{id}` | Bearer access | Don't Block |
+| GET/POST | `/app/warranties` | Bearer access | Don't Block |
+| GET | `/app/warranties/options` | Bearer access (`unit_id` returns unit resident contact) | Don't Block |
+| POST | `/app/warranties/media` | Bearer access | Don't Block |
+| POST | `/app/warranties/{id}/assign` | Bearer access | Don't Block |
+| POST | `/app/warranties/{id}/status` | Bearer access | Don't Block |
+| GET/PATCH | `/app/warranties/{id}` | Bearer access | Don't Block |
+| GET/POST | `/app/maintenance` | Bearer access | Don't Block |
+| GET | `/app/maintenance/options` | Bearer access | Don't Block |
+| POST | `/app/maintenance/media` | Bearer access | Don't Block |
+| GET/PATCH | `/app/maintenance/{id}` | Bearer access | Don't Block |
+| GET/POST | `/app/guests` | Bearer access | Don't Block |
+| GET | `/app/guests/options` | Bearer access | Don't Block |
+| POST | `/app/guests/media` | Bearer access | Don't Block |
+| POST | `/app/guests/{id}/checkout` | Bearer access | Don't Block |
+| GET/PATCH | `/app/guests/{id}` | Bearer access | Don't Block | |
 
 PHP lives under:
 

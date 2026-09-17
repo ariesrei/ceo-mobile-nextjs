@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { COOKIE_SITE_PROFILE, normalizeAppProfile } from "@/lib/app-profile";
+import { applyAuthCookies, siteProfileFromUser, tokensFromBody } from "@/lib/auth-session";
 import { fetchErrorMessage, serverFetch } from "@/lib/server-fetch";
 import {
   apiUrl,
@@ -16,9 +18,31 @@ const cookieOpts = {
   path: "/",
 };
 
-export async function POST() {
+export async function POST(request: Request) {
   const jar = await cookies();
   const baseUrl = jar.get(COOKIE_BASE_URL)?.value;
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const browserTokens = tokensFromBody(body);
+
+  if (body.browserVerified === true && browserTokens.access_token && browserTokens.refresh_token) {
+    if (!baseUrl) {
+      return NextResponse.json({ message: "Not authenticated." }, { status: 401 });
+    }
+    const response = NextResponse.json({ success: true, user: browserTokens.user || null });
+    applyAuthCookies(response, {
+      baseUrl,
+      access_token: browserTokens.access_token,
+      refresh_token: browserTokens.refresh_token,
+      expires_in: browserTokens.expires_in,
+      user: browserTokens.user,
+      siteProfile:
+        normalizeAppProfile(browserTokens.user?.app_profile) ||
+        normalizeAppProfile(jar.get(COOKIE_SITE_PROFILE)?.value) ||
+        siteProfileFromUser(browserTokens.user),
+    });
+    return response;
+  }
+
   const refresh = jar.get(COOKIE_REFRESH)?.value;
 
   if (!baseUrl || !refresh) {

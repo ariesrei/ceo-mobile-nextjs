@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
+import { ClientWpRecord } from "@/components/ClientWpRecord";
 import { EditProfileForm } from "@/components/EditProfileForm";
 import { getServerClientName, requireMenuPath } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
@@ -19,15 +20,17 @@ export default async function EditProfilePage() {
       backHref="/account/profile"
       clientName={clientName}
     >
-      {!result.data ? (
-        <Card>
-          <p className="text-sm text-[var(--danger)]">{result.error || "Profile unavailable."}</p>
-        </Card>
-      ) : (
-        <Card>
-          <EditProfileForm profile={result.data} />
-        </Card>
-      )}
+      <ClientWpRecord<Profile>
+        path="/profile"
+        initial={result.data}
+        error={result.error || "Profile unavailable."}
+      >
+        {(profile) => (
+          <Card>
+            <EditProfileForm profile={profile} />
+          </Card>
+        )}
+      </ClientWpRecord>
     </AppShell>
   );
 }

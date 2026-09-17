@@ -9,6 +9,7 @@ import {
   type AppProfile,
 } from "@/lib/app-profile";
 import { applyNavVisibility } from "@/lib/navigation";
+import { clearBrowserTokens } from "@/lib/browser-session";
 import type { MenuItem, NavigationResponse } from "@/lib/types";
 
 const ICONS: Record<string, string> = {
@@ -173,6 +174,7 @@ export function BottomNav({
       ];
 
   async function logout() {
+    clearBrowserTokens();
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
     router.refresh();

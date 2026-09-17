@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/AppShell";
+import { ClientWpRecord } from "@/components/ClientWpRecord";
 import { ReservationList } from "@/components/ReservationList";
-import { Card } from "@/components/ui/Card";
 import { getServerClientName, requireMenuPath } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
 import type { ReservationItem } from "@/lib/types";
@@ -13,7 +13,6 @@ export default async function ReservationsPage() {
     wpFetchServer<ResResponse>("/app/reservations?type=upcoming"),
     getServerClientName(),
   ]);
-  const items = result.data?.items || [];
 
   return (
     <AppShell
@@ -22,13 +21,13 @@ export default async function ReservationsPage() {
       backHref="/account"
       clientName={clientName}
     >
-      {!result.data && result.error ? (
-        <Card>
-          <p className="text-sm text-red-700">{result.error}</p>
-        </Card>
-      ) : (
-        <ReservationList items={items} />
-      )}
+      <ClientWpRecord<ResResponse>
+        path="/reservations?type=upcoming"
+        initial={result.data}
+        error={result.error}
+      >
+        {(data) => <ReservationList items={data.items || []} />}
+      </ClientWpRecord>
     </AppShell>
   );
 }

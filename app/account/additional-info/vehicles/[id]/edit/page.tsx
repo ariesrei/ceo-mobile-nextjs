@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
+import { ClientWpRecord } from "@/components/ClientWpRecord";
 import { VehicleForm } from "@/components/VehicleForm";
 import type { VehicleItem } from "@/lib/additional-info";
 import { getServerClientName, requireMenuPath } from "@/lib/server-nav";
@@ -22,17 +23,17 @@ export default async function EditVehiclePage({ params }: Props) {
       backHref="/account/additional-info"
       clientName={clientName}
     >
-      {!result.data ? (
-        <Card>
-          <p className="text-sm text-red-700">
-            {result.error || "Vehicle not found."}
-          </p>
-        </Card>
-      ) : (
-        <Card>
-          <VehicleForm vehicle={result.data} />
-        </Card>
-      )}
+      <ClientWpRecord<VehicleItem>
+        path={`/additional-info/vehicles/${id}`}
+        initial={result.data}
+        error={result.error || "Vehicle not found."}
+      >
+        {(vehicle) => (
+          <Card>
+            <VehicleForm vehicle={vehicle} />
+          </Card>
+        )}
+      </ClientWpRecord>
     </AppShell>
   );
 }

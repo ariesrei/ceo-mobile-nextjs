@@ -47,6 +47,8 @@ export type NavigationResponse = {
   modules?: Record<string, boolean>;
   plan_key?: string;
   app_profile?: AppProfile | string;
+  /** Host WAF blocked Vercel → WordPress; client should load menus instead. */
+  upstream_blocked?: boolean;
 };
 
 export type AuthTokens = {

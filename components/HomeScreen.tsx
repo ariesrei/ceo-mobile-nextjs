@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { isWarrantyProfile, type AppProfile } from "@/lib/app-profile";
-import type { MenuItem } from "@/lib/types";
+import { applyNavVisibility } from "@/lib/navigation";
+import type { MenuItem, NavigationResponse } from "@/lib/types";
 import { AccountMenu } from "./AccountMenu";
 import { BottomNav } from "./BottomNav";
 
@@ -80,8 +81,24 @@ export function HomeScreen({
 }) {
   const [showNotes, setShowNotes] = useState(false);
   const [greeting, setGreeting] = useState("Good morning,");
+  const [liveMenus, setLiveMenus] = useState(menus);
   const brand = splitPropertyName(clientName);
   const name = firstNameFrom(displayName, firstName);
+
+  useEffect(() => {
+    setLiveMenus(menus);
+  }, [menus]);
+
+  useEffect(() => {
+    if (menus.length) return;
+    fetch("/api/wp/navigation")
+      .then((r) => r.json())
+      .then((data: NavigationResponse) => {
+        const filtered = applyNavVisibility(data, appProfile);
+        setLiveMenus(filtered?.menus || []);
+      })
+      .catch(() => undefined);
+  }, [menus.length, appProfile]);
 
   useEffect(() => {
     setGreeting(greetingLabel());
@@ -178,7 +195,7 @@ export function HomeScreen({
       <section className="ceo-home-sheet relative z-20 -mt-8 px-4 pb-8 md:px-6">
         <div className="rounded-t-[28px] bg-[var(--bg)] px-3 pb-6 pt-5 md:px-5 md:pt-6">
           <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/15" />
-          <AccountMenu menus={homeMenus(menus, appProfile)} variant="home" />
+          <AccountMenu menus={homeMenus(liveMenus, appProfile)} variant="home" />
         </div>
       </section>
       <BottomNav

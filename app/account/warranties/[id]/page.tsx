@@ -1,6 +1,6 @@
+import { ClientWpRecord } from "@/components/ClientWpRecord";
 import { WarrantyClaimDetail } from "@/components/WarrantyClaimDetail";
 import { WarrantyShell } from "@/components/WarrantyShell";
-import { Card } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { WarrantyItem } from "@/lib/warranties";
 import { getNavigation, isStaffMenuPath } from "@/lib/server-nav";
@@ -28,19 +28,19 @@ export default async function WarrantyDetailPage({ params }: Props) {
         ) : undefined
       }
     >
-      {result.data ? (
-        <WarrantyClaimDetail
-          record={result.data}
-          canEdit={Boolean(result.data.can_edit)}
-          isStaff={isStaff}
-        />
-      ) : (
-        <Card>
-          <p className="text-sm text-[var(--danger)]">
-            {result.error || "Warranty not found."}
-          </p>
-        </Card>
-      )}
+      <ClientWpRecord<WarrantyItem>
+        path={`/warranties/${id}`}
+        initial={result.data}
+        error={result.error || "Warranty not found."}
+      >
+        {(record) => (
+          <WarrantyClaimDetail
+            record={record}
+            canEdit={Boolean(record.can_edit)}
+            isStaff={isStaff}
+          />
+        )}
+      </ClientWpRecord>
     </WarrantyShell>
   );
 }

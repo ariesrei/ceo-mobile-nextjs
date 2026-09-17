@@ -74,6 +74,7 @@ export function isPathAllowed(
   path: string,
   profile?: AppProfile | null
 ): boolean {
+  if (nav?.upstream_blocked) return true;
   const filtered = applyNavVisibility(nav, profile);
   if (!filtered?.menus?.length) return false;
   return filtered.menus.some((m) => m.enabled && m.path === path);

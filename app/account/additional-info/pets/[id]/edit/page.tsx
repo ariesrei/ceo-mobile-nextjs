@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
+import { ClientWpRecord } from "@/components/ClientWpRecord";
 import { PetForm } from "@/components/PetForm";
 import type { PetItem } from "@/lib/additional-info";
 import { getServerClientName, requireMenuPath } from "@/lib/server-nav";
@@ -22,15 +23,17 @@ export default async function EditPetPage({ params }: Props) {
       backHref="/account/additional-info"
       clientName={clientName}
     >
-      {!result.data ? (
-        <Card>
-          <p className="text-sm text-red-700">{result.error || "Pet not found."}</p>
-        </Card>
-      ) : (
-        <Card>
-          <PetForm pet={result.data} />
-        </Card>
-      )}
+      <ClientWpRecord<PetItem>
+        path={`/additional-info/pets/${id}`}
+        initial={result.data}
+        error={result.error || "Pet not found."}
+      >
+        {(pet) => (
+          <Card>
+            <PetForm pet={pet} />
+          </Card>
+        )}
+      </ClientWpRecord>
     </AppShell>
   );
 }

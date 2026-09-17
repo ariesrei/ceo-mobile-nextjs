@@ -15,6 +15,7 @@ import {
 import { COOKIE_APP_PROFILE, getBuildAppProfile, normalizeAppProfile } from "./app-profile";
 import { applyNavVisibility, isPathAllowed } from "./navigation";
 import { serverFetch } from "./server-fetch";
+import { isWafBlockedResult } from "./wp-error";
 
 export async function getServerAppProfile() {
   const jar = await cookies();
@@ -149,18 +150,31 @@ export async function requireAuth() {
   }
 }
 
+function blockedNav(): NavigationResponse {
+  return { role_primary: "", roles: [], menus: [], upstream_blocked: true };
+}
+
 export async function getNavigation(): Promise<NavigationResponse | null> {
   const [result, profile] = await Promise.all([
     wpFetchServer<NavigationResponse>("/app/navigation"),
     getServerAppProfile(),
   ]);
+  if (isWafBlockedResult(result)) {
+    return blockedNav();
+  }
   return applyNavVisibility(result.data || null, profile);
 }
 
 export async function requireMenuPath(path: string) {
   await requireAuth();
-  const nav = await getNavigation();
-  const profile = await getServerAppProfile();
+  const [result, profile] = await Promise.all([
+    wpFetchServer<NavigationResponse>("/app/navigation"),
+    getServerAppProfile(),
+  ]);
+  if (isWafBlockedResult(result)) {
+    return blockedNav();
+  }
+  const nav = applyNavVisibility(result.data || null, profile);
   if (!isPathAllowed(nav, path, profile)) {
     redirect("/account");
   }
@@ -171,6 +185,7 @@ export function isStaffMenuPath(
   nav: NavigationResponse | null | undefined,
   path: string
 ): boolean {
+  if (nav?.upstream_blocked) return true;
   return Boolean(
     nav?.menus?.some(
       (m) => m.enabled && m.path === path && m.group === "staff"

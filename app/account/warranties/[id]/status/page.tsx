@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
+import { ClientWpRecord } from "@/components/ClientWpRecord";
 import { WarrantyShell } from "@/components/WarrantyShell";
 import { WarrantyStatusForm } from "@/components/WarrantyStatusForm";
-import { Card } from "@/components/ui/Card";
 import type { WarrantyItem } from "@/lib/warranties";
 import { getNavigation, isStaffMenuPath } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
@@ -22,15 +22,13 @@ export default async function WarrantyStatusPage({ params }: Props) {
       backHref={`/account/warranties/${id}`}
       showNav={false}
     >
-      {result.data ? (
-        <WarrantyStatusForm record={result.data} />
-      ) : (
-        <Card>
-          <p className="text-sm text-[var(--danger)]">
-            {result.error || "Warranty not found."}
-          </p>
-        </Card>
-      )}
+      <ClientWpRecord<WarrantyItem>
+        path={`/warranties/${id}`}
+        initial={result.data}
+        error={result.error || "Warranty not found."}
+      >
+        {(record) => <WarrantyStatusForm record={record} />}
+      </ClientWpRecord>
     </WarrantyShell>
   );
 }
