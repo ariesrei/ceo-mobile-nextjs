@@ -58,18 +58,22 @@ export function saveConnectConfig(
   clientTagline?: string,
   extras?: { planKey?: string; appProfile?: AppProfile | string }
 ): ConnectConfig {
+  const nextUrl = normalizeBaseUrl(baseUrl);
   const existing = getConnectConfig();
+  const sameProperty =
+    Boolean(existing?.baseUrl) &&
+    normalizeBaseUrl(existing?.baseUrl || "") === nextUrl;
+  const prior = sameProperty ? existing : undefined;
   const config: ConnectConfig = {
-    baseUrl: normalizeBaseUrl(baseUrl),
+    baseUrl: nextUrl,
     verifiedAt: new Date().toISOString(),
-    clientName: (clientName || existing?.clientName || "").trim() || undefined,
-    clientLogo: (clientLogo || existing?.clientLogo || "").trim() || undefined,
-    clientHero: (clientHero || existing?.clientHero || "").trim() || undefined,
+    clientName: (clientName || prior?.clientName || "").trim() || undefined,
+    clientLogo: (clientLogo || prior?.clientLogo || "").trim() || undefined,
+    clientHero: (clientHero || prior?.clientHero || "").trim() || undefined,
     clientTagline:
-      (clientTagline || existing?.clientTagline || "").trim() || undefined,
-    planKey: extras?.planKey || existing?.planKey,
-    appProfile:
-      normalizeAppProfile(extras?.appProfile) || existing?.appProfile,
+      (clientTagline || prior?.clientTagline || "").trim() || undefined,
+    planKey: extras?.planKey || prior?.planKey,
+    appProfile: normalizeAppProfile(extras?.appProfile) || prior?.appProfile,
   };
   window.localStorage.setItem(CONNECT_STORAGE_KEY, JSON.stringify(config));
   return config;

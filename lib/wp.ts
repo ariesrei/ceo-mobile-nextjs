@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
+import { COOKIE_APP_PROFILE, COOKIE_SITE_PROFILE } from "./app-profile";
 import { fetchErrorMessage, serverFetch } from "./server-fetch";
 import type { ConnectConfig } from "./types";
 
@@ -11,7 +12,51 @@ export const COOKIE_CLIENT_LOGO = "ceo_client_logo";
 export const COOKIE_CLIENT_HERO = "ceo_client_hero";
 export const COOKIE_CLIENT_TAGLINE = "ceo_client_tagline";
 export const COOKIE_FIRST_NAME = "ceo_first_name";
-export { COOKIE_APP_PROFILE, COOKIE_SITE_PROFILE } from "./app-profile";
+export { COOKIE_APP_PROFILE, COOKIE_SITE_PROFILE };
+
+const expireCookieOpts = {
+  path: "/",
+  maxAge: 0,
+  sameSite: "lax" as const,
+  secure: process.env.NODE_ENV === "production",
+};
+
+type CookieResponse = {
+  cookies: {
+    set: (
+      name: string,
+      value: string,
+      options?: {
+        httpOnly?: boolean;
+        path?: string;
+        maxAge?: number;
+        sameSite?: "lax" | "strict" | "none";
+        secure?: boolean;
+      }
+    ) => void;
+  };
+};
+
+/** Drop connect + auth cookies so Change property can start a new site. */
+export function clearSessionCookies(response: CookieResponse) {
+  const httpOnlyNames = [
+    COOKIE_ACCESS,
+    COOKIE_REFRESH,
+    COOKIE_BASE_URL,
+    COOKIE_CLIENT_NAME,
+    COOKIE_CLIENT_LOGO,
+    COOKIE_CLIENT_HERO,
+    COOKIE_CLIENT_TAGLINE,
+    COOKIE_FIRST_NAME,
+  ];
+  const readableNames = [COOKIE_APP_PROFILE, COOKIE_SITE_PROFILE];
+  for (const name of httpOnlyNames) {
+    response.cookies.set(name, "", { ...expireCookieOpts, httpOnly: true });
+  }
+  for (const name of readableNames) {
+    response.cookies.set(name, "", { ...expireCookieOpts, httpOnly: false });
+  }
+}
 
 export function apiUrl(baseUrl: string, path: string): string {
   const root = baseUrl.replace(/\/+$/, "");

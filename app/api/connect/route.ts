@@ -10,6 +10,7 @@ import {
 } from "@/lib/app-profile";
 import { fetchErrorMessage, serverFetch } from "@/lib/server-fetch";
 import {
+  clearSessionCookies,
   COOKIE_BASE_URL,
   COOKIE_CLIENT_HERO,
   COOKIE_CLIENT_LOGO,
@@ -111,18 +112,10 @@ export async function POST(request: Request) {
       ...cookieOpts,
       httpOnly: false,
     });
-    if (clientName) {
-      response.cookies.set(COOKIE_CLIENT_NAME, clientName, cookieOpts);
-    }
-    if (clientLogo) {
-      response.cookies.set(COOKIE_CLIENT_LOGO, clientLogo, cookieOpts);
-    }
-    if (clientHero) {
-      response.cookies.set(COOKIE_CLIENT_HERO, clientHero, cookieOpts);
-    }
-    if (clientTagline) {
-      response.cookies.set(COOKIE_CLIENT_TAGLINE, clientTagline, cookieOpts);
-    }
+    setOrClearCookie(response, COOKIE_CLIENT_NAME, clientName);
+    setOrClearCookie(response, COOKIE_CLIENT_LOGO, clientLogo);
+    setOrClearCookie(response, COOKIE_CLIENT_HERO, clientHero);
+    setOrClearCookie(response, COOKIE_CLIENT_TAGLINE, clientTagline);
     return response;
   } catch (err) {
     return NextResponse.json(
@@ -136,4 +129,22 @@ export async function POST(request: Request) {
       { status: 502 }
     );
   }
+}
+
+export async function DELETE() {
+  const response = NextResponse.json({ success: true });
+  clearSessionCookies(response);
+  return response;
+}
+
+function setOrClearCookie(
+  response: NextResponse,
+  name: string,
+  value: string
+) {
+  if (value) {
+    response.cookies.set(name, value, cookieOpts);
+    return;
+  }
+  response.cookies.set(name, "", { ...cookieOpts, maxAge: 0 });
 }

@@ -2589,6 +2589,19 @@ div.ceo-accordion__row {
   text-align: center;
 }
 
+.ceo-login__card-head--button {
+  width: 100%;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  appearance: none;
+}
+
+.ceo-login__card-head--button:disabled {
+  cursor: wait;
+  opacity: 0.75;
+}
+
 .ceo-login__card-label {
   font-size: 0.72rem;
   font-weight: 500;
@@ -2605,10 +2618,17 @@ div.ceo-accordion__row {
 .ceo-login__change {
   align-self: center;
   margin-bottom: 1.2rem;
+  border: 0;
   background: transparent;
+  cursor: pointer;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--accent);
+}
+
+.ceo-login__change:disabled {
+  cursor: wait;
+  opacity: 0.75;
 }
 
 /* Floating panel: inset on all sides so its rounded corners are fully visible

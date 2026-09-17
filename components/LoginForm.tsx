@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "./ui/Button";
 import { EyeIcon, EyeOffIcon, LockIcon, UserIcon } from "./ui/Icons";
 import { appBrand, postLoginPath } from "@/lib/brand";
-import { getConnectConfig, saveConnectConfig } from "@/lib/connect";
+import {
+  clearConnectConfig,
+  getConnectConfig,
+  saveConnectConfig,
+} from "@/lib/connect";
 import { publicWpErrorMessage } from "@/lib/wp-error";
 
 type Props = {
@@ -34,6 +38,7 @@ export function LoginForm({
   const [tagline, setTagline] = useState(fallbackTagline);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [changingProperty, setChangingProperty] = useState(false);
 
   useEffect(() => {
     const cfg = getConnectConfig();
@@ -58,6 +63,21 @@ export function LoginForm({
       );
     }
   }, [router, fallbackHero, fallbackTagline]);
+
+  async function onChangeProperty() {
+    if (changingProperty) return;
+    setChangingProperty(true);
+    setError("");
+    clearConnectConfig();
+    try {
+      await fetch("/api/connect", { method: "DELETE" });
+    } catch {
+      /* Still leave so a failed reset cannot trap the user on login. */
+    }
+    // Full load so Capacitor WebView and leftover RSC state cannot keep
+    // the previous property on screen.
+    window.location.assign("/connect");
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -152,22 +172,29 @@ export function LoginForm({
       <div className="ceo-login__card">
         {/* Static, not a picker: a user must never be able to browse other
             properties, so the device stores only the one it connected to. */}
-        <div className="ceo-login__card-head">
+        <button
+          type="button"
+          className="ceo-login__card-head ceo-login__card-head--button"
+          onClick={onChangeProperty}
+          disabled={changingProperty}
+          aria-label="Change property"
+        >
           <p className="ceo-login__card-label">Property</p>
           <p className="ceo-login__card-value">
             {propertyName || "Your property"}
           </p>
-        </div>
+        </button>
 
-        {/* Returns to the connect form, which asks for the URL and secret key
-            again. It never lists properties, so it cannot be used to discover
+        {/* Clears this device's property cookies, then returns to Connect.
+            It never lists properties, so it cannot be used to discover
             one the user was not given credentials for. */}
         <button
           type="button"
           className="ceo-login__change"
-          onClick={() => router.push("/connect")}
+          onClick={onChangeProperty}
+          disabled={changingProperty}
         >
-          Change property
+          {changingProperty ? "Changing property…" : "Change property"}
         </button>
 
         <form onSubmit={onSubmit} className="ceo-login__form">
