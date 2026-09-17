@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   WarrantyChoice,
@@ -15,13 +14,7 @@ import { Card } from "./ui/Card";
 import { PaginatedList } from "./ui/PaginatedList";
 import { StatusBadge } from "./ui/StatusBadge";
 import { MenuSelect } from "./ui/MenuSelect";
-import {
-  CalendarIcon,
-  ChevronRightIcon,
-  FilterIcon,
-  PlusIcon,
-  SearchIcon,
-} from "./ui/Icons";
+import { CalendarIcon, FilterIcon, PlusIcon, SearchIcon } from "./ui/Icons";
 
 type Tab = "open" | "progress" | "closed" | "assigned" | "expiring";
 
@@ -342,49 +335,35 @@ export function WarrantyList({
               : "No claims yet."
           }
           getKey={(w) => w.id}
-            renderItem={(w) => (
-              <div className="ceo-list-card">
-                <div className="flex min-w-0 flex-1 items-start gap-3">
-                  {w.photos?.[0]?.url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={w.photos[0].url}
-                      alt=""
-                      className="h-12 w-12 shrink-0 rounded-lg object-cover"
-                    />
+          renderItem={(w) => {
+            const title =
+              w.warranty_describe_the_request ||
+              w.warranty_describe_the_request_single ||
+              w.unit_title ||
+              "Warranty claim";
+            const contact = claimContactName(w);
+            const meta = claimMetaLines(w, title);
+            return (
+              <FastLink
+                href={`/account/warranties/${w.id}`}
+                className="ceo-claim-card"
+              >
+                <ClaimThumb src={claimThumbSrc(w)} name={contact} />
+                <div className="min-w-0 flex-1">
+                  <p className="ceo-claim-card__id">#{w.id}</p>
+                  <p className="ceo-claim-card__title">{title}</p>
+                  {meta.length ? (
+                    <div className="ceo-claim-card__meta">
+                      {meta.map((line) => (
+                        <p key={line}>{line}</p>
+                      ))}
+                    </div>
                   ) : null}
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-[var(--accent)]">
-                      #{w.id}
-                    </p>
-                    <p className="mt-0.5 font-semibold">
-                      {w.warranty_describe_the_request ||
-                        w.warranty_describe_the_request_single ||
-                        w.unit_title ||
-                        "Warranty claim"}
-                    </p>
-                    <p className="mt-1 text-xs text-[var(--muted)]">
-                      {[
-                        w.location_labels,
-                        w.unit_title,
-                        w.resident_name ||
-                          [w.warranty_first_name, w.warranty_last_name]
-                            .filter(Boolean)
-                            .join(" "),
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
-                    {isStaff && w.status_label ? (
-                      <div className="mt-2">
-                        <StatusBadge label={w.status_label} />
-                      </div>
-                    ) : null}
-                  </div>
+                </div>
+                {w.status_label ? (
+                  <StatusBadge label={w.status_label} short />
                 ) : null}
-              </div>
-              <StatusBadge label={w.status_label} short />
-            </Link>
+              </FastLink>
             );
           }}
         />
@@ -400,11 +379,35 @@ export function WarrantyList({
   );
 }
 
-      {canCreate ? (
-        <Link href="/account/warranties/new" className="ceo-fab">
-          + New Warranty
-        </Link>
-      ) : null}
+function FilterRow({
+  label,
+  value,
+  placeholder,
+  options,
+  onChange,
+  trailing = false,
+}: {
+  label: string;
+  value: string;
+  placeholder: string;
+  options: { id: string | number; label: string }[];
+  onChange: (value: string) => void;
+  trailing?: boolean;
+}) {
+  return (
+    <div className="ceo-claim-filter">
+      <span className="ceo-claim-filter__label">{label}</span>
+      <div className="ceo-claim-filter__value">
+        <MenuSelect
+          value={value}
+          onChange={onChange}
+          options={options}
+          placeholder={placeholder}
+          variant="inline"
+          aria-label={label}
+        />
+        {trailing ? <CalendarIcon className="ceo-claim-filter__cal" /> : null}
+      </div>
     </div>
   );
 }
