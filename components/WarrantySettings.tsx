@@ -2,6 +2,12 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import type { WarrantyChoice, WarrantyOptions } from "@/lib/warranties";
+import {
+  DEFAULT_WARRANTY_SETTINGS,
+  readWarrantySettings,
+  writeWarrantySettings,
+  type WarrantySettingsState,
+} from "@/lib/warranty-settings";
 import { MenuSelect } from "./ui/MenuSelect";
 import {
   BellIcon,
@@ -13,42 +19,16 @@ import {
   UsersIcon,
 } from "./ui/Icons";
 
-const STORE_KEY = "ceo_warranty_settings_v1";
-
-type Settings = {
-  claimUpdates: boolean;
-  subcontractorUpdates: boolean;
-  dailySummary: boolean;
-  defaultStatus: string;
-  defaultAssignee: string;
-};
-
-const DEFAULTS: Settings = {
-  claimUpdates: true,
-  subcontractorUpdates: true,
-  dailySummary: false,
-  defaultStatus: "",
-  defaultAssignee: "",
-};
-
-function read(): Settings {
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (!raw) return DEFAULTS;
-    return { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Settings>) };
-  } catch {
-    return DEFAULTS;
-  }
-}
-
 export function WarrantySettings() {
-  const [settings, setSettings] = useState<Settings>(DEFAULTS);
+  const [settings, setSettings] = useState<WarrantySettingsState>(
+    DEFAULT_WARRANTY_SETTINGS
+  );
   const [statuses, setStatuses] = useState<WarrantyChoice[]>([]);
   const [subcontractors, setSubcontractors] = useState<WarrantyChoice[]>([]);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setSettings(read());
+    setSettings(readWarrantySettings());
     setReady(true);
     fetch("/api/wp/warranties/options?lite=1")
       .then((r) => r.json())
@@ -59,16 +39,8 @@ export function WarrantySettings() {
       .catch(() => undefined);
   }, []);
 
-  function update(patch: Partial<Settings>) {
-    setSettings((prev) => {
-      const next = { ...prev, ...patch };
-      try {
-        localStorage.setItem(STORE_KEY, JSON.stringify(next));
-      } catch {
-        /* private mode */
-      }
-      return next;
-    });
+  function update(patch: Partial<WarrantySettingsState>) {
+    setSettings((prev) => writeWarrantySettings({ ...prev, ...patch }));
   }
 
   return (
@@ -126,7 +98,7 @@ export function WarrantySettings() {
               <SettingsIcon className="h-[18px] w-[18px]" />
             </span>
             <span className="ceo-warranty-menu__label">Custom Fields</span>
-            <ChevronRightIcon className="ceo-warranty-menu__chev" />
+            <span className="ceo-warranty-menu__meta">Desktop</span>
           </div>
         </div>
       </section>

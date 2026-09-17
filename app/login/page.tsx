@@ -1,9 +1,19 @@
+import { cookies } from "next/headers";
 import { LoginForm } from "@/components/LoginForm";
-import { getServerClientBranding, requireConnected } from "@/lib/server-nav";
+import {
+  getServerAppProfile,
+  getServerClientBranding,
+  requireConnected,
+} from "@/lib/server-nav";
+import { COOKIE_BASE_URL } from "@/lib/wp";
 
 export default async function LoginPage() {
   await requireConnected();
-  const branding = await getServerClientBranding();
+  const [branding, appProfile, jar] = await Promise.all([
+    getServerClientBranding(),
+    getServerAppProfile(),
+    cookies(),
+  ]);
 
   return (
     <main className="ceo-login-page">
@@ -12,6 +22,8 @@ export default async function LoginPage() {
         fallbackName={branding?.name ?? ""}
         fallbackHero={branding?.hero ?? ""}
         fallbackTagline={branding?.tagline ?? ""}
+        fallbackBaseUrl={jar.get(COOKIE_BASE_URL)?.value?.trim() || ""}
+        appProfile={appProfile}
       />
     </main>
   );

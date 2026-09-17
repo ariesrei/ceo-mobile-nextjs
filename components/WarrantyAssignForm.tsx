@@ -7,6 +7,7 @@ import type {
   WarrantyItem,
   WarrantyOptions,
 } from "@/lib/warranties";
+import { readWarrantySettings } from "@/lib/warranty-settings";
 import { ClaimThumb, claimContactName, claimMetaLines, claimThumbSrc } from "./ClaimThumb";
 import { DateField } from "./ui/DateField";
 import { SearchIcon } from "./ui/Icons";
@@ -30,7 +31,13 @@ export function WarrantyAssignForm({ record }: { record: WarrantyItem }) {
     fetch("/api/wp/warranties/options?lite=1")
       .then((r) => r.json())
       .then((data: WarrantyOptions) => {
-        setSubcontractors(data.subcontractors || []);
+        const vendors = data.subcontractors || [];
+        setSubcontractors(vendors);
+        const preferred = readWarrantySettings().defaultAssignee;
+        if (record.warranty_sources_subcontractors || !preferred) return;
+        if (vendors.some((v) => String(v.id) === preferred)) {
+          setForm((f) => ({ ...f, warranty_sources_subcontractors: preferred }));
+        }
       })
       .catch(() => undefined);
   }, []);

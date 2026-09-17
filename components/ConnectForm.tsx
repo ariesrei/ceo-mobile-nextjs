@@ -2,18 +2,18 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "./ui/Button";
-import { EyeIcon, EyeOffIcon, GlobeIcon, LockIcon } from "./ui/Icons";
-import {
-  normalizeBaseUrl,
-  normalizeSecurityKey,
-  saveConnectConfig,
-} from "@/lib/connect";
+import { useBusyState } from "@/hooks/useBusyState";
+import { useConnectSession } from "@/hooks/useConnectSession";
+import { normalizeBaseUrl, normalizeSecurityKey } from "@/lib/connect";
+import type { ConnectResult } from "@/lib/connect-verify";
 import {
   connectVerifyErrorMessage,
   parseConnectVerifyBody,
   verifyConnectUrl,
 } from "@/lib/verify-connect";
+import { AuthField } from "./auth/AuthField";
+import { Button } from "./ui/Button";
+import { GlobeIcon, LockIcon } from "./ui/Icons";
 
 async function verifyFromProperty(baseUrl: string, securityKey: string) {
   try {
@@ -49,16 +49,15 @@ async function verifyFromProperty(baseUrl: string, securityKey: string) {
 
 export function ConnectForm() {
   const router = useRouter();
+  const { rememberConnect, afterConnectPath } = useConnectSession();
+  const busy = useBusyState();
   const [baseUrl, setBaseUrl] = useState("");
   const [securityKey, setSecurityKey] = useState("");
   const [showKey, setShowKey] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setError("");
-    setLoading(true);
+    busy.start();
     try {
       const normalized = normalizeBaseUrl(baseUrl);
       const key = normalizeSecurityKey(securityKey);
@@ -81,92 +80,55 @@ export function ConnectForm() {
             : { baseUrl: normalized, securityKey: key }
         ),
       });
-      const data = await res.json();
+      const data = (await res.json()) as ConnectResult & { message?: string };
       if (!res.ok || !data.valid) {
-        setError(
+        busy.fail(
           data.message ||
             verified.error ||
             "Could not connect to this property."
         );
-        setLoading(false);
         return;
       }
-      saveConnectConfig(
-        normalized,
-        data.clientName || "",
-        data.clientLogo || "",
-        data.clientHero || "",
-        data.clientTagline || "",
-        { planKey: data.planKey, appProfile: data.appProfile }
-      );
-      /* Same reasoning as the login form: keep the button busy until the next
-         screen actually arrives, rather than re-enabling it mid-navigation. */
-      router.push("/login");
+      rememberConnect(data);
+      router.push(afterConnectPath(data));
       router.refresh();
     } catch {
-      setError("Network error. Check the property URL and try again.");
-      setLoading(false);
+      busy.fail("Network error. Check the property URL and try again.");
     }
   }
 
   return (
     <form onSubmit={onSubmit} className="ceo-login__form">
-      <div className="ceo-field">
-        <GlobeIcon className="ceo-field__icon" />
-        <input
-          className="ceo-field__input"
-          name="baseUrl"
-          inputMode="url"
-          autoCapitalize="none"
-          aria-label="Property URL"
-          placeholder="Property URL"
-          value={baseUrl}
-          onChange={(e) => setBaseUrl(e.target.value)}
-          required
-          autoComplete="url"
-        />
-      </div>
-
-      <div className="ceo-field">
-        <LockIcon className="ceo-field__icon" />
-        <input
-          className="ceo-field__input ceo-field__input--password"
-          name="ceo_mobile_connect_key"
-          type={showKey ? "text" : "password"}
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          aria-label="Secret key"
-          placeholder="Secret key"
-          value={securityKey}
-          onChange={(e) => setSecurityKey(e.target.value)}
-          required
-          autoComplete="off"
-          data-lpignore="true"
-          data-1p-ignore="true"
-          data-form-type="other"
-        />
-        <button
-          type="button"
-          className="ceo-field__eye"
-          onClick={() => setShowKey((v) => !v)}
-          aria-label={showKey ? "Hide secret key" : "Show secret key"}
-          aria-pressed={showKey}
-        >
-          {showKey ? (
-            <EyeOffIcon className="ceo-field__eye-svg" />
-          ) : (
-            <EyeIcon className="ceo-field__eye-svg" />
-          )}
-        </button>
-      </div>
-
-      {error ? <p className="ceo-login__error">{error}</p> : null}
-
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Connecting…" : "Continue"}
+      <AuthField
+        icon={<GlobeIcon className="ceo-field__icon" />}
+        name="baseUrl"
+        inputMode="url"
+        autoCapitalize="none"
+        aria-label="Property URL"
+        placeholder="Property URL"
+        value={baseUrl}
+        onChange={(e) => setBaseUrl(e.target.value)}
+        required
+        autoComplete="url"
+      />
+      <AuthField
+        icon={<LockIcon className="ceo-field__icon" />}
+        secret
+        revealed={showKey}
+        onRevealChange={setShowKey}
+        name="securityKey"
+        autoCapitalize="none"
+        aria-label="Secret key"
+        placeholder="Secret key"
+        value={securityKey}
+        onChange={(e) => setSecurityKey(e.target.value)}
+        required
+        autoComplete="off"
+      />
+      {busy.error ? <p className="ceo-login__error">{busy.error}</p> : null}
+      <Button type="submit" className="w-full" disabled={busy.loading}>
+        {busy.loading ? "Connecting…" : "Continue"}
       </Button>
-
       <p className="ceo-login__hint">
         Your property manager provides the URL and secret key.
       </p>

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
+import type { AppProfile } from "@/lib/app-profile";
 import {
-  appBrand,
+  brandForProfile,
   COMPANY_MARK,
   COMPANY_SPLASH,
   COMPANY_TAGLINE,
@@ -17,8 +18,6 @@ const FADE_MS = 420;
  * is inlined at build time, so it cannot change while the app is running. The
  * two app builds differ only in what this returns.
  */
-const brand = appBrand();
-
 type Props = {
   /**
    * Whether the device has already connected to a property. Resolved on the
@@ -26,14 +25,14 @@ type Props = {
    * reading it from localStorage here would mismatch the server HTML.
    */
   connected?: boolean;
+  appProfile?: AppProfile | null;
 };
 
-export function SplashScreen({ connected = false }: Props) {
+export function SplashScreen({ connected = false, appProfile = null }: Props) {
+  const brand = brandForProfile(appProfile);
   /**
-   * Shows on every app open and every refresh. Starting visible rather than
-   * revealing it from an effect avoids a flash of the page underneath. It lives
-   * in the root layout, which only mounts on a full page load, so moving
-   * between screens inside the app never re-triggers it.
+   * Shows on every app open, every refresh, and after sign-in (full load).
+   * Starting visible avoids a flash of the page underneath.
    */
   const [visible, setVisible] = useState(true);
   const [leaving, setLeaving] = useState(false);

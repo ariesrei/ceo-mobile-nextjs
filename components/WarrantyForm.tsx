@@ -8,9 +8,11 @@ import type {
   WarrantyOptions,
   WarrantyPhoto,
 } from "@/lib/warranties";
+import { readWarrantySettings } from "@/lib/warranty-settings";
 import { CameraCapturePhotos } from "./CameraCapturePhotos";
 import { FastLink } from "./FastLink";
 import { Button } from "./ui/Button";
+import { ChoiceChips } from "./ui/ChoiceChips";
 import { DateField } from "./ui/DateField";
 import { Input } from "./ui/Input";
 import { Select } from "./ui/Select";
@@ -63,6 +65,7 @@ export function WarrantyForm({
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
+  const [contactHint, setContactHint] = useState("");
 
   useEffect(() => {
     const q = form.warranty_type
@@ -75,10 +78,14 @@ export function WarrantyForm({
         setUnits(data.units || []);
         setLocations(data.locations || []);
         setIsStaff(Boolean(data.is_staff));
-        if (!record?.status_label && data.default_status_id) {
-          const match = (data.statuses || []).find(
-            (s) => String(s.id) === String(data.default_status_id)
-          );
+        if (!record?.status_label) {
+          const preferred = readWarrantySettings().defaultStatus;
+          const match =
+            (preferred &&
+              (data.statuses || []).find((s) => String(s.id) === preferred)) ||
+            (data.statuses || []).find(
+              (s) => String(s.id) === String(data.default_status_id)
+            );
           if (match?.label) setStatusLabel(match.label);
         }
         setForm((f) => {
@@ -109,6 +116,7 @@ export function WarrantyForm({
   useEffect(() => {
     if (isEdit || !isStaff) return;
     if (!form.warranty_unit) {
+      setContactHint("");
       setForm((f) => ({
         ...f,
         warranty_first_name: "",
@@ -119,6 +127,7 @@ export function WarrantyForm({
       return;
     }
     let cancelled = false;
+    setContactHint("Looking up the unit resident…");
     fetch(
       `/api/wp/warranties/options?unit_id=${encodeURIComponent(form.warranty_unit)}`
     )
@@ -126,15 +135,24 @@ export function WarrantyForm({
       .then((data: WarrantyOptions) => {
         if (cancelled) return;
         const c = data.unit_contact;
+        const first = c?.first_name || "";
+        const last = c?.last_name || "";
         setForm((f) => ({
           ...f,
-          warranty_first_name: c?.first_name || "",
-          warranty_last_name: c?.last_name || "",
+          warranty_first_name: first,
+          warranty_last_name: last,
           warranty_email_address: c?.email || "",
           warranty_tel_number: c?.phone || "",
         }));
+        setContactHint(
+          first || last || c?.email || c?.phone
+            ? "Filled from the unit’s resident."
+            : "No resident on this unit yet."
+        );
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (!cancelled) setContactHint("Could not load the unit resident.");
+      });
     return () => {
       cancelled = true;
     };
@@ -271,46 +289,22 @@ export function WarrantyForm({
           }
         />
       </div>
+      {isStaff && contactHint ? (
+        <p className="text-xs text-[var(--muted)]">{contactHint}</p>
+      ) : null}
     </>
   );
 
   const description = (
     <>
-      <label className="block space-y-1.5">
-        <span className="text-sm font-medium text-[var(--muted)]">
-          Locations
-        </span>
-        <div className="max-h-48 space-y-2 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3">
-          {locations.length === 0 ? (
-            <p className="text-sm text-[var(--muted)]">No locations available.</p>
-          ) : (
-            locations.map((loc) => {
-              const id = String(loc.id);
-              const checked = form.warranty_location.includes(id);
-              return (
-                <label
-                  key={id}
-                  className="flex items-center gap-2 text-sm text-[var(--ink)]"
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(e) => {
-                      setForm((f) => ({
-                        ...f,
-                        warranty_location: e.target.checked
-                          ? [...f.warranty_location, id]
-                          : f.warranty_location.filter((x) => x !== id),
-                      }));
-                    }}
-                  />
-                  {loc.label}
-                </label>
-              );
-            })
-          )}
-        </div>
-      </label>
+      <ChoiceChips
+        label="Locations"
+        options={locations}
+        value={form.warranty_location}
+        onChange={(warranty_location) =>
+          setForm((f) => ({ ...f, warranty_location }))
+        }
+      />
       <label className="block space-y-1.5">
         <span className="text-sm font-medium text-[var(--muted)]">
           Describe your request

@@ -29,6 +29,75 @@ export function normalizeAppProfile(
   return null;
 }
 
+export function goPath(profile: AppProfile): `/go/${AppProfile}` {
+  return `/go/${profile}`;
+}
+
+function propertyUrlHaystack(baseUrl: string): string {
+  const raw = (baseUrl || "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    return `${url.hostname}${url.pathname}${url.search}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "");
+  } catch {
+    return raw.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  }
+}
+
+function propertyUrlQueryProfile(baseUrl: string): AppProfile | null {
+  try {
+    const url = new URL(
+      /^https?:\/\//i.test(baseUrl) ? baseUrl : `https://${baseUrl}`
+    );
+    return (
+      normalizeAppProfile(url.searchParams.get("app")) ||
+      normalizeAppProfile(url.searchParams.get("app_profile"))
+    );
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Robert (15 Sep): Hawaii / member buildings = Operations. Warranty =
+ * everyone else that is not members (Gorman, AR Homes, Fort Whipple,
+ * Pacific Vista 2 & 3). Pacific Vista 1 is Operations.
+ */
+export function profileFromPropertyUrl(baseUrl: string): AppProfile | null {
+  const fromQuery = propertyUrlQueryProfile(baseUrl);
+  if (fromQuery) return fromQuery;
+
+  const hay = propertyUrlHaystack(baseUrl);
+  if (!hay) return null;
+
+  if (
+    /pacificvista[23]|pv[23](?![0-9])|fortwhipple|whippleapart|gorman|arhomes/.test(
+      hay
+    )
+  ) {
+    return "warranty";
+  }
+
+  if (/waihonua|parklane|capitalplace|allure|pacificvista/.test(hay)) {
+    return "operations";
+  }
+
+  return null;
+}
+
+export function resolveSiteAppProfile(
+  wpProfile?: string | null,
+  propertyUrl?: string | null
+): AppProfile {
+  return (
+    normalizeAppProfile(wpProfile) ||
+    profileFromPropertyUrl(propertyUrl || "") ||
+    "operations"
+  );
+}
+
 /** Native / env product identity. Null on unlocked web (no flavor). */
 export function getBuildAppProfile(): AppProfile | null {
   return (

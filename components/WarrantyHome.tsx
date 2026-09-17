@@ -160,98 +160,112 @@ export function WarrantyHome() {
           <p className="mb-4 text-sm text-[var(--danger)]">{error}</p>
         ) : null}
 
-        <section className="ceo-warranty-overview">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold">Warranty Overview</p>
-            <span className="ceo-warranty-overview__period">This Month</span>
+        {loading ? (
+          <div
+            className="ceo-warranty-home-skel"
+            role="status"
+            aria-label="Loading warranty home"
+          >
+            <div className="ceo-skel h-[124px] rounded-[1.25rem]" />
+            <div className="ceo-skel h-[52px] rounded-[1.15rem]" />
+            <div className="ceo-skel h-[58px] rounded-2xl" />
+            <div className="ceo-skel h-[58px] rounded-2xl" />
+            <div className="ceo-skel h-[58px] rounded-2xl" />
           </div>
-          <div className="ceo-warranty-stats">
-            <FastLink
-              href="/account/warranties/claims?tab=open"
-              prefetch={false}
-              className="ceo-warranty-stat"
-            >
-              <span className="ceo-warranty-stat__n">{loading ? "—" : stats.open}</span>
-              <span className="ceo-warranty-stat__l">Open</span>
-            </FastLink>
-            <FastLink
-              href="/account/warranties/claims?tab=progress"
-              prefetch={false}
-              className="ceo-warranty-stat"
-            >
-              <span className="ceo-warranty-stat__n">
-                {loading ? "—" : stats.in_progress}
-              </span>
-              <span className="ceo-warranty-stat__l">In Progress</span>
-            </FastLink>
-            <FastLink
-              href="/account/warranties/claims?tab=closed"
-              prefetch={false}
-              className="ceo-warranty-stat"
-            >
-              <span className="ceo-warranty-stat__n">{loading ? "—" : stats.closed}</span>
-              <span className="ceo-warranty-stat__l">Closed</span>
-            </FastLink>
-          </div>
-        </section>
+        ) : (
+          <>
+            <section className="ceo-warranty-overview">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold">Warranty Overview</p>
+                <span className="ceo-warranty-overview__period">This Month</span>
+              </div>
+              <div className="ceo-warranty-stats">
+                <FastLink
+                  href="/account/warranties/claims?tab=open"
+                  prefetch={false}
+                  className="ceo-warranty-stat"
+                >
+                  <span className="ceo-warranty-stat__n">{stats.open}</span>
+                  <span className="ceo-warranty-stat__l">Open</span>
+                </FastLink>
+                <FastLink
+                  href="/account/warranties/claims?tab=progress"
+                  prefetch={false}
+                  className="ceo-warranty-stat"
+                >
+                  <span className="ceo-warranty-stat__n">{stats.in_progress}</span>
+                  <span className="ceo-warranty-stat__l">In Progress</span>
+                </FastLink>
+                <FastLink
+                  href="/account/warranties/claims?tab=closed"
+                  prefetch={false}
+                  className="ceo-warranty-stat"
+                >
+                  <span className="ceo-warranty-stat__n">{stats.closed}</span>
+                  <span className="ceo-warranty-stat__l">Closed</span>
+                </FastLink>
+              </div>
+            </section>
 
-        <FastLink href="/account/warranties/new" prefetch={false} className="ceo-warranty-new">
-          <PlusIcon className="h-4 w-4" />
-          New Claim
-        </FastLink>
+            <FastLink href="/account/warranties/new" prefetch={false} className="ceo-warranty-new">
+              <PlusIcon className="h-4 w-4" />
+              New Claim
+            </FastLink>
 
-        <nav className="ceo-warranty-menu ceo-warranty-menu--home">
-          <FastLink
-            href="/account/warranties/claims"
-            prefetch={false}
-            className="ceo-warranty-menu__row"
-          >
-            <span className="ceo-warranty-menu__icon">
-              <ClipboardIcon className="h-[18px] w-[18px]" />
-            </span>
-            <span className="ceo-warranty-menu__label">My Claims</span>
-          </FastLink>
-          <FastLink
-            href="/account/warranties/claims?tab=assigned"
-            prefetch={false}
-            className="ceo-warranty-menu__row"
-          >
-            <span className="ceo-warranty-menu__icon">
-              <UsersIcon className="h-[18px] w-[18px]" />
-            </span>
-            <span className="ceo-warranty-menu__label">Assigned to Subs</span>
-          </FastLink>
-          <FastLink
-            href="/account/warranties/claims?tab=expiring"
-            prefetch={false}
-            className="ceo-warranty-menu__row"
-          >
-            <span className="ceo-warranty-menu__icon">
-              <ClockIcon className="h-[18px] w-[18px]" />
-            </span>
-            <span className="ceo-warranty-menu__label">Expiring Warranties</span>
-          </FastLink>
-          <FastLink
-            href="/account/warranties/claims?filters=1"
-            prefetch={false}
-            className="ceo-warranty-menu__row"
-          >
-            <span className="ceo-warranty-menu__icon">
-              <FilterIcon className="h-[18px] w-[18px]" />
-            </span>
-            <span className="ceo-warranty-menu__label">Search & Filters</span>
-          </FastLink>
-          <FastLink
-            href="/account/warranties/reports"
-            prefetch={false}
-            className="ceo-warranty-menu__row"
-          >
-            <span className="ceo-warranty-menu__icon">
-              <ChartIcon className="h-[18px] w-[18px]" />
-            </span>
-            <span className="ceo-warranty-menu__label">Reports</span>
-          </FastLink>
-        </nav>
+            <nav className="ceo-warranty-menu ceo-warranty-menu--home">
+              <FastLink
+                href="/account/warranties/claims"
+                prefetch={false}
+                className="ceo-warranty-menu__row"
+              >
+                <span className="ceo-warranty-menu__icon">
+                  <ClipboardIcon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="ceo-warranty-menu__label">My Claims</span>
+              </FastLink>
+              <FastLink
+                href="/account/warranties/claims?tab=assigned"
+                prefetch={false}
+                className="ceo-warranty-menu__row"
+              >
+                <span className="ceo-warranty-menu__icon">
+                  <UsersIcon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="ceo-warranty-menu__label">Assigned to Subs</span>
+              </FastLink>
+              <FastLink
+                href="/account/warranties/claims?tab=expiring"
+                prefetch={false}
+                className="ceo-warranty-menu__row"
+              >
+                <span className="ceo-warranty-menu__icon">
+                  <ClockIcon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="ceo-warranty-menu__label">Expiring Warranties</span>
+              </FastLink>
+              <FastLink
+                href="/account/warranties/claims?filters=1"
+                prefetch={false}
+                className="ceo-warranty-menu__row"
+              >
+                <span className="ceo-warranty-menu__icon">
+                  <FilterIcon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="ceo-warranty-menu__label">Search & Filters</span>
+              </FastLink>
+              <FastLink
+                href="/account/warranties/reports"
+                prefetch={false}
+                className="ceo-warranty-menu__row"
+              >
+                <span className="ceo-warranty-menu__icon">
+                  <ChartIcon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="ceo-warranty-menu__label">Reports</span>
+              </FastLink>
+            </nav>
+          </>
+        )}
       </div>
 
       <BottomNav variant="warranty" />

@@ -1,3 +1,5 @@
+import type { AppProfile } from "./app-profile";
+
 /**
  * One code base, two app builds.
  *
@@ -82,6 +84,13 @@ export function appVariant(): AppVariant {
 
 export function appBrand(): AppBrand {
   return appVariant() === "operations" ? OPERATIONS : WARRANTY;
+}
+
+/** Splash/login after Connect: follow the property, not only the build env. */
+export function brandForProfile(profile?: AppProfile | null): AppBrand {
+  if (profile === "warranty") return WARRANTY;
+  if (profile === "operations") return OPERATIONS;
+  return appBrand();
 }
 
 /** Default after connect + login. /account then sends Warranty staff to ClaimTrack. */

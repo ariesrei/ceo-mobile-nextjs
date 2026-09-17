@@ -354,8 +354,8 @@ export function WarrantyList({
                   <p className="ceo-claim-card__title">{title}</p>
                   {meta.length ? (
                     <div className="ceo-claim-card__meta">
-                      {meta.map((line) => (
-                        <p key={line}>{line}</p>
+                      {meta.map((line, i) => (
+                        <span key={`${i}-${line}`}>{line}</span>
                       ))}
                     </div>
                   ) : null}

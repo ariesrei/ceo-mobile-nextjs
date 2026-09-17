@@ -6,13 +6,19 @@ import {
   apiUrl,
   COOKIE_ACCESS,
   COOKIE_BASE_URL,
+  COOKIE_REFRESH,
   COOKIE_CLIENT_HERO,
   COOKIE_CLIENT_LOGO,
   COOKIE_CLIENT_NAME,
   COOKIE_CLIENT_TAGLINE,
   wpFetchServer,
 } from "./wp";
-import { COOKIE_APP_PROFILE, getBuildAppProfile, normalizeAppProfile } from "./app-profile";
+import {
+  COOKIE_APP_PROFILE,
+  COOKIE_SITE_PROFILE,
+  getBuildAppProfile,
+  normalizeAppProfile,
+} from "./app-profile";
 import { applyNavVisibility, isPathAllowed } from "./navigation";
 import { serverFetch } from "./server-fetch";
 import { isWafBlockedResult } from "./wp-error";
@@ -20,6 +26,7 @@ import { isWafBlockedResult } from "./wp-error";
 export async function getServerAppProfile() {
   const jar = await cookies();
   return (
+    normalizeAppProfile(jar.get(COOKIE_SITE_PROFILE)?.value) ||
     normalizeAppProfile(jar.get(COOKIE_APP_PROFILE)?.value) ||
     getBuildAppProfile()
   );
@@ -145,7 +152,7 @@ export async function requireConnected() {
 export async function requireAuth() {
   await requireConnected();
   const jar = await cookies();
-  if (!jar.get(COOKIE_ACCESS)?.value) {
+  if (!jar.get(COOKIE_ACCESS)?.value && !jar.get(COOKIE_REFRESH)?.value) {
     redirect("/login");
   }
 }

@@ -805,6 +805,11 @@ a.ceo-btn-accent {
   padding: 0 var(--app-pad);
 }
 
+.ceo-warranty-home-skel {
+  display: grid;
+  gap: 1rem;
+}
+
 /* ---------- Warranty sub-page header ---------- */
 
 .ceo-warranty-topbar__row {
@@ -1377,6 +1382,70 @@ a.ceo-btn-accent {
 .ceo-menu-select__option:hover,
 .ceo-menu-select__option.is-active {
   background: rgba(46, 196, 182, 0.16);
+  color: #2ec4b6;
+}
+
+.ceo-menu-select--field > .ceo-choice-field,
+.ceo-choice-field {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 3rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--ink);
+  padding: 0.55rem 0.9rem;
+  font-size: 0.875rem;
+  text-align: left;
+  outline: none;
+}
+
+.ceo-choice-field__value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ceo-choice-field__value.is-ph {
+  color: var(--muted);
+}
+
+.ceo-choice-field__pills {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.ceo-choice-field__pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 0.22rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.ceo-choice-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ceo-choice-option__check {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
   color: #2ec4b6;
 }
 

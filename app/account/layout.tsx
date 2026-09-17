@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { ClientBrandProvider } from "@/components/ClientBrandProvider";
+import { SessionKeepAlive } from "@/components/SessionKeepAlive";
 import { getServerClientBranding, requireAuth } from "@/lib/server-nav";
 
 export default async function AccountLayout({
@@ -15,6 +16,7 @@ export default async function AccountLayout({
       name={branding?.name ?? ""}
       logo={branding?.logo ?? ""}
     >
+      <SessionKeepAlive />
       {children}
     </ClientBrandProvider>
   );

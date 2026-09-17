@@ -1,7 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import type { WarrantyItem, WarrantyListResponse } from "@/lib/warranties";
+import { useEffect, useState } from "react";
+import type { WarrantyItem } from "@/lib/warranties";
+import { isWarrantyClosed, isWarrantyInProgress } from "@/lib/warranties";
+import {
+  countBy,
+  expiringItems,
+  fetchAllWarrantyItems,
+} from "@/lib/warranty-reports";
 import { FastLink } from "./FastLink";
 import {
   BuildingIcon,
@@ -13,35 +19,6 @@ import {
   FolderOpenIcon,
   UsersIcon,
 } from "./ui/Icons";
-
-const ROWS = [
-  { label: "Claims Summary", href: "/account/warranties", Icon: ChartIcon },
-  {
-    label: "Open Claims",
-    href: "/account/warranties/claims?tab=open",
-    Icon: FolderOpenIcon,
-  },
-  {
-    label: "Closed Claims",
-    href: "/account/warranties/claims?tab=closed",
-    Icon: CheckCircleIcon,
-  },
-  {
-    label: "Claims by Subcontractor",
-    href: "/account/warranties/vendors",
-    Icon: UsersIcon,
-  },
-  {
-    label: "Claims by Unit",
-    href: "/account/warranties/claims",
-    Icon: BuildingIcon,
-  },
-  {
-    label: "Warranty Expirations",
-    href: "/account/warranties/claims?tab=expiring",
-    Icon: ClockIcon,
-  },
-];
 
 function csvCell(value: string) {
   if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
@@ -75,35 +52,31 @@ function toCsv(items: WarrantyItem[]) {
 }
 
 export function WarrantyReports() {
+  const [items, setItems] = useState<WarrantyItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
-  const [exportError, setExportError] = useState("");
+  const [error, setError] = useState("");
 
-  async function exportData() {
+  useEffect(() => {
+    let cancelled = false;
+    fetchAllWarrantyItems()
+      .then((next) => {
+        if (!cancelled) setItems(next);
+      })
+      .catch((err: Error) => {
+        if (!cancelled) setError(err.message || "Could not load reports.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function downloadCsv() {
     setExporting(true);
-    setExportError("");
     try {
-      const [openRes, closedRes] = await Promise.all([
-        fetch("/api/wp/warranties?status=open&per_page=50"),
-        fetch("/api/wp/warranties?status=closed&per_page=50"),
-      ]);
-      const open = (await openRes.json()) as WarrantyListResponse & {
-        message?: string;
-      };
-      const closed = (await closedRes.json()) as WarrantyListResponse & {
-        message?: string;
-      };
-      if (!openRes.ok) throw new Error(open.message || "Could not export open claims.");
-      if (!closedRes.ok) {
-        throw new Error(closed.message || "Could not export closed claims.");
-      }
-      const seen = new Set<number>();
-      const items = [...(open.items || []), ...(closed.items || [])].filter(
-        (w) => {
-          if (seen.has(w.id)) return false;
-          seen.add(w.id);
-          return true;
-        }
-      );
       const blob = new Blob([toCsv(items)], {
         type: "text/csv;charset=utf-8",
       });
@@ -113,30 +86,101 @@ export function WarrantyReports() {
       a.download = "warranty-claims.csv";
       a.click();
       URL.revokeObjectURL(url);
-    } catch (err) {
-      setExportError(err instanceof Error ? err.message : "Export failed.");
     } finally {
       setExporting(false);
     }
   }
 
+  const open = items.filter((w) => !isWarrantyClosed(w) && !isWarrantyInProgress(w));
+  const progress = items.filter((w) => isWarrantyInProgress(w));
+  const closed = items.filter((w) => isWarrantyClosed(w));
+  const expiring = expiringItems(items);
+  const byUnit = countBy(items, (w) => w.unit_title || "").slice(0, 6);
+  const byVendor = countBy(
+    items,
+    (w) => w.subcontractor_name || ""
+  ).slice(0, 6);
+
+  if (loading) {
+    return (
+      <div className="ceo-warranty-home-skel" role="status" aria-label="Loading reports">
+        <div className="ceo-skel h-[124px] rounded-[1.25rem]" />
+        <div className="ceo-skel h-[58px] rounded-2xl" />
+        <div className="ceo-skel h-[58px] rounded-2xl" />
+        <div className="ceo-skel h-[58px] rounded-2xl" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-3">
-      <nav className="ceo-warranty-menu ceo-warranty-menu--pills">
-        {ROWS.map(({ label, href, Icon }) => (
-          <FastLink key={label} href={href} className="ceo-warranty-menu__row">
-            <span className="ceo-warranty-menu__icon">
-              <Icon className="h-[18px] w-[18px]" />
-            </span>
-            <span className="ceo-warranty-menu__label">{label}</span>
-            <ChevronRightIcon className="ceo-warranty-menu__chev" />
+    <div className="space-y-4">
+      {error ? <p className="text-sm text-[var(--danger)]">{error}</p> : null}
+
+      <section className="ceo-warranty-overview">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-semibold">Claims Summary</p>
+          <span className="ceo-warranty-overview__period">
+            {items.length} total
+          </span>
+        </div>
+        <div className="ceo-warranty-stats">
+          <FastLink
+            href="/account/warranties/claims?tab=open"
+            className="ceo-warranty-stat"
+          >
+            <span className="ceo-warranty-stat__n">{open.length}</span>
+            <span className="ceo-warranty-stat__l">Open</span>
           </FastLink>
-        ))}
+          <FastLink
+            href="/account/warranties/claims?tab=progress"
+            className="ceo-warranty-stat"
+          >
+            <span className="ceo-warranty-stat__n">{progress.length}</span>
+            <span className="ceo-warranty-stat__l">In Progress</span>
+          </FastLink>
+          <FastLink
+            href="/account/warranties/claims?tab=closed"
+            className="ceo-warranty-stat"
+          >
+            <span className="ceo-warranty-stat__n">{closed.length}</span>
+            <span className="ceo-warranty-stat__l">Closed</span>
+          </FastLink>
+        </div>
+      </section>
+
+      <nav className="ceo-warranty-menu ceo-warranty-menu--pills">
+        <FastLink
+          href="/account/warranties/claims?tab=expiring"
+          className="ceo-warranty-menu__row"
+        >
+          <span className="ceo-warranty-menu__icon">
+            <ClockIcon className="h-[18px] w-[18px]" />
+          </span>
+          <span className="ceo-warranty-menu__label">Warranty Expirations</span>
+          <span className="ceo-warranty-menu__meta">{expiring.length}</span>
+          <ChevronRightIcon className="ceo-warranty-menu__chev" />
+        </FastLink>
+        <FastLink href="/account/warranties/claims?tab=open" className="ceo-warranty-menu__row">
+          <span className="ceo-warranty-menu__icon">
+            <FolderOpenIcon className="h-[18px] w-[18px]" />
+          </span>
+          <span className="ceo-warranty-menu__label">Open Claims</span>
+          <span className="ceo-warranty-menu__meta">{open.length}</span>
+          <ChevronRightIcon className="ceo-warranty-menu__chev" />
+        </FastLink>
+        <FastLink href="/account/warranties/claims?tab=closed" className="ceo-warranty-menu__row">
+          <span className="ceo-warranty-menu__icon">
+            <CheckCircleIcon className="h-[18px] w-[18px]" />
+          </span>
+          <span className="ceo-warranty-menu__label">Closed Claims</span>
+          <span className="ceo-warranty-menu__meta">{closed.length}</span>
+          <ChevronRightIcon className="ceo-warranty-menu__chev" />
+        </FastLink>
         <button
           type="button"
           className="ceo-warranty-menu__row w-full text-left"
-          disabled={exporting}
-          onClick={exportData}
+          disabled={exporting || !items.length}
+          onClick={downloadCsv}
         >
           <span className="ceo-warranty-menu__icon">
             <DownloadIcon className="h-[18px] w-[18px]" />
@@ -147,9 +191,56 @@ export function WarrantyReports() {
           <ChevronRightIcon className="ceo-warranty-menu__chev" />
         </button>
       </nav>
-      {exportError ? (
-        <p className="text-sm text-[var(--danger)]">{exportError}</p>
-      ) : null}
+
+      <section className="space-y-2">
+        <p className="ceo-section-label">Claims by Unit</p>
+        <div className="ceo-warranty-menu ceo-warranty-menu--pills">
+          {byUnit.length ? (
+            byUnit.map((row) => (
+              <FastLink
+                key={row.label}
+                href="/account/warranties/claims"
+                className="ceo-warranty-menu__row"
+              >
+                <span className="ceo-warranty-menu__icon">
+                  <BuildingIcon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="ceo-warranty-menu__label">{row.label}</span>
+                <span className="ceo-warranty-menu__meta">{row.count}</span>
+              </FastLink>
+            ))
+          ) : (
+            <p className="px-3 py-3 text-sm text-[var(--muted)]">No claims yet.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="space-y-2">
+        <p className="ceo-section-label">Claims by Subcontractor</p>
+        <div className="ceo-warranty-menu ceo-warranty-menu--pills">
+          {byVendor.length ? (
+            byVendor.map((row) => (
+              <FastLink
+                key={row.label}
+                href="/account/warranties/vendors"
+                className="ceo-warranty-menu__row"
+              >
+                <span className="ceo-warranty-menu__icon">
+                  {row.label === "Unassigned" ? (
+                    <ChartIcon className="h-[18px] w-[18px]" />
+                  ) : (
+                    <UsersIcon className="h-[18px] w-[18px]" />
+                  )}
+                </span>
+                <span className="ceo-warranty-menu__label">{row.label}</span>
+                <span className="ceo-warranty-menu__meta">{row.count}</span>
+              </FastLink>
+            ))
+          ) : (
+            <p className="px-3 py-3 text-sm text-[var(--muted)]">No claims yet.</p>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

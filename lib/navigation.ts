@@ -7,7 +7,7 @@ import {
 import type { MenuItem, NavigationResponse } from "./types";
 
 /** Temporary: hide these modules for staff and residents. */
-export const HIDDEN_MENU_IDS: string[] = ["messaging"];
+export const HIDDEN_MENU_IDS: string[] = [];
 
 function isHiddenMenu(item: MenuItem): boolean {
   return (
