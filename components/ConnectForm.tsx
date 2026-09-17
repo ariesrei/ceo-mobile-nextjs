@@ -4,7 +4,48 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/Button";
 import { EyeIcon, EyeOffIcon, GlobeIcon, LockIcon } from "./ui/Icons";
-import { normalizeBaseUrl, saveConnectConfig } from "@/lib/connect";
+import {
+  normalizeBaseUrl,
+  normalizeSecurityKey,
+  saveConnectConfig,
+} from "@/lib/connect";
+import {
+  connectVerifyErrorMessage,
+  parseConnectVerifyBody,
+  verifyConnectUrl,
+} from "@/lib/verify-connect";
+
+async function verifyFromProperty(baseUrl: string, securityKey: string) {
+  try {
+    const res = await fetch(verifyConnectUrl(baseUrl), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ security_key: securityKey }),
+    });
+    const rawBody = await res.text();
+    const data = parseConnectVerifyBody(rawBody);
+    if (!res.ok || !data.valid) {
+      return {
+        ok: false as const,
+        error: connectVerifyErrorMessage(res.status, rawBody, data),
+      };
+    }
+    return {
+      ok: true as const,
+      clientName: data.client_name || "",
+      clientLogo: data.client_logo || "",
+      clientHero: data.client_hero || "",
+      clientTagline: data.client_tagline || "",
+      planKey: data.plan_key || "",
+      appProfile: data.app_profile || "",
+    };
+  } catch {
+    return { ok: false as const, error: "" };
+  }
+}
 
 export function ConnectForm() {
   const router = useRouter();
@@ -20,14 +61,33 @@ export function ConnectForm() {
     setLoading(true);
     try {
       const normalized = normalizeBaseUrl(baseUrl);
+      const key = normalizeSecurityKey(securityKey);
+      const verified = await verifyFromProperty(normalized, key);
       const res = await fetch("/api/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ baseUrl: normalized, securityKey }),
+        body: JSON.stringify(
+          verified.ok
+            ? {
+                baseUrl: normalized,
+                browserVerified: true,
+                clientName: verified.clientName,
+                clientLogo: verified.clientLogo,
+                clientHero: verified.clientHero,
+                clientTagline: verified.clientTagline,
+                planKey: verified.planKey,
+                appProfile: verified.appProfile,
+              }
+            : { baseUrl: normalized, securityKey: key }
+        ),
       });
       const data = await res.json();
       if (!res.ok || !data.valid) {
-        setError(data.message || "Could not connect to this property.");
+        setError(
+          data.message ||
+            verified.error ||
+            "Could not connect to this property."
+        );
         setLoading(false);
         return;
       }
@@ -71,15 +131,20 @@ export function ConnectForm() {
         <LockIcon className="ceo-field__icon" />
         <input
           className="ceo-field__input ceo-field__input--password"
-          name="securityKey"
+          name="ceo_mobile_connect_key"
           type={showKey ? "text" : "password"}
           autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
           aria-label="Secret key"
           placeholder="Secret key"
           value={securityKey}
           onChange={(e) => setSecurityKey(e.target.value)}
           required
           autoComplete="off"
+          data-lpignore="true"
+          data-1p-ignore="true"
+          data-form-type="other"
         />
         <button
           type="button"

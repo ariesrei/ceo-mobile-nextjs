@@ -3,6 +3,10 @@ import type { ConnectConfig } from "./types";
 
 export const CONNECT_STORAGE_KEY = "ceo_app_connect";
 
+export function normalizeSecurityKey(input: string): string {
+  return input.replace(/[\u200B-\u200D\uFEFF]/g, "").replace(/\s+/g, "").trim();
+}
+
 export function normalizeBaseUrl(input: string): string {
   let url = input.trim();
   if (!url) return "";

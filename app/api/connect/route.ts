@@ -8,7 +8,14 @@ import {
   profileMismatchMessage,
   type AppProfile,
 } from "@/lib/app-profile";
+import { normalizeSecurityKey } from "@/lib/connect";
 import { fetchErrorMessage, serverFetch } from "@/lib/server-fetch";
+import {
+  connectVerifyErrorMessage,
+  parseConnectVerifyBody,
+  verifyConnectUrl,
+  type ConnectVerifyResult,
+} from "@/lib/verify-connect";
 import {
   clearSessionCookies,
   COOKIE_BASE_URL,
@@ -34,12 +41,84 @@ async function resolveBuildProfile(): Promise<AppProfile | null> {
   );
 }
 
-export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({}));
-  const baseUrl = String(body.baseUrl || "").replace(/\/+$/, "");
-  const securityKey = String(body.securityKey || "");
+function brandingFromBody(body: Record<string, unknown>): ConnectVerifyResult {
+  return {
+    valid: true,
+    client_name: String(body.clientName || body.client_name || ""),
+    client_logo: String(body.clientLogo || body.client_logo || ""),
+    client_hero: String(body.clientHero || body.client_hero || ""),
+    client_tagline: String(body.clientTagline || body.client_tagline || ""),
+    plan_key: String(body.planKey || body.plan_key || ""),
+    app_profile: String(body.appProfile || body.app_profile || ""),
+  };
+}
 
-  if (!baseUrl || !securityKey) {
+async function finishConnect(baseUrl: string, data: ConnectVerifyResult) {
+  const siteProfile = normalizeAppProfile(data.app_profile) || "operations";
+  const buildProfile = await resolveBuildProfile();
+  if (buildProfile && buildProfile !== siteProfile) {
+    return NextResponse.json(
+      {
+        valid: false,
+        message: profileMismatchMessage(buildProfile),
+        appProfile: siteProfile,
+        planKey: data.plan_key || "",
+      },
+      { status: 403 }
+    );
+  }
+
+  const clientName = String(data.client_name || "").trim();
+  const clientLogo = String(data.client_logo || "").trim();
+  const clientHero = String(data.client_hero || "").trim();
+  const clientTagline = String(data.client_tagline || "").trim();
+  const planKey = String(data.plan_key || "").trim();
+  const response = NextResponse.json({
+    valid: true,
+    baseUrl,
+    clientName,
+    clientLogo,
+    clientHero,
+    clientTagline,
+    planKey,
+    appProfile: siteProfile,
+  });
+  response.cookies.set(COOKIE_BASE_URL, baseUrl, cookieOpts);
+  response.cookies.set(COOKIE_SITE_PROFILE, siteProfile, {
+    ...cookieOpts,
+    httpOnly: false,
+  });
+  setOrClearCookie(response, COOKIE_CLIENT_NAME, clientName);
+  setOrClearCookie(response, COOKIE_CLIENT_LOGO, clientLogo);
+  setOrClearCookie(response, COOKIE_CLIENT_HERO, clientHero);
+  setOrClearCookie(response, COOKIE_CLIENT_TAGLINE, clientTagline);
+  return response;
+}
+
+export async function POST(request: Request) {
+  const body = (await request.json().catch(() => ({}))) as Record<
+    string,
+    unknown
+  >;
+  const baseUrl = String(body.baseUrl || "").replace(/\/+$/, "");
+  const securityKey = normalizeSecurityKey(
+    String(body.securityKey || body.ceo_mobile_connect_key || "")
+  );
+  const browserVerified = body.browserVerified === true;
+
+  if (!baseUrl) {
+    return NextResponse.json(
+      { message: "URL and security key are required." },
+      { status: 400 }
+    );
+  }
+
+  // Phone/browser already talked to WordPress (Vercel IPs are often WAF-blocked).
+  if (browserVerified) {
+    return finishConnect(baseUrl, brandingFromBody(body));
+  }
+
+  if (!securityKey) {
     return NextResponse.json(
       { message: "URL and security key are required." },
       { status: 400 }
@@ -47,84 +126,37 @@ export async function POST(request: Request) {
   }
 
   try {
-    const res = await serverFetch(
-      `${baseUrl}/wp-json/onesource/v1/mobile/verify-connect`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ security_key: securityKey }),
-        cache: "no-store",
-      }
-    );
+    const res = await serverFetch(verifyConnectUrl(baseUrl), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "User-Agent": "CE-OneSource-Mobile/1.0",
+      },
+      body: JSON.stringify({ security_key: securityKey }),
+      cache: "no-store",
+    });
 
-    const data = (await res.json().catch(() => ({}))) as {
-      valid?: boolean;
-      message?: string;
-      client_name?: string;
-      client_logo?: string;
-      client_hero?: string;
-      client_tagline?: string;
-      plan_key?: string;
-      app_profile?: string;
-    };
+    const rawBody = await res.text();
+    const data = parseConnectVerifyBody(rawBody);
 
     if (!res.ok || !data.valid) {
       return NextResponse.json(
-        { valid: false, message: data.message || "Invalid security key." },
-        { status: 403 }
-      );
-    }
-
-    const siteProfile = normalizeAppProfile(data.app_profile) || "operations";
-    const buildProfile = await resolveBuildProfile();
-    if (buildProfile && buildProfile !== siteProfile) {
-      return NextResponse.json(
         {
           valid: false,
-          message: profileMismatchMessage(buildProfile),
-          appProfile: siteProfile,
-          planKey: data.plan_key || "",
+          message: connectVerifyErrorMessage(res.status, rawBody, data),
+          code: data.code || "",
         },
-        { status: 403 }
+        { status: res.status >= 400 ? res.status : 403 }
       );
     }
 
-    const clientName = String(data.client_name || "").trim();
-    const clientLogo = String(data.client_logo || "").trim();
-    const clientHero = String(data.client_hero || "").trim();
-    const clientTagline = String(data.client_tagline || "").trim();
-    const planKey = String(data.plan_key || "").trim();
-    const response = NextResponse.json({
-      valid: true,
-      baseUrl,
-      clientName,
-      clientLogo,
-      clientHero,
-      clientTagline,
-      planKey,
-      appProfile: siteProfile,
-    });
-    response.cookies.set(COOKIE_BASE_URL, baseUrl, cookieOpts);
-    response.cookies.set(COOKIE_SITE_PROFILE, siteProfile, {
-      ...cookieOpts,
-      httpOnly: false,
-    });
-    setOrClearCookie(response, COOKIE_CLIENT_NAME, clientName);
-    setOrClearCookie(response, COOKIE_CLIENT_LOGO, clientLogo);
-    setOrClearCookie(response, COOKIE_CLIENT_HERO, clientHero);
-    setOrClearCookie(response, COOKIE_CLIENT_TAGLINE, clientTagline);
-    return response;
+    return finishConnect(baseUrl, data);
   } catch (err) {
     return NextResponse.json(
       {
         valid: false,
-        message: fetchErrorMessage(
-          err,
-          `${baseUrl}/wp-json/onesource/v1/mobile/verify-connect`
-        ),
+        message: fetchErrorMessage(err, verifyConnectUrl(baseUrl)),
       },
       { status: 502 }
     );
