@@ -6,6 +6,7 @@ import "@fontsource/manrope/700.css";
 import { getBuildAppProfile, productName } from "@/lib/app-profile";
 import "./globals.css";
 import { SplashGate } from "@/components/SplashGate";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { WpDirectFetch } from "@/components/WpDirectFetch";
 import { appBrand } from "@/lib/brand";
 
@@ -35,11 +36,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-app-variant={brand.variant} suppressHydrationWarning>
+    <html lang="en" className="dark" data-app-variant={brand.variant} suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
-        <WpDirectFetch />
-        <SplashGate />
-        {children}
+        <ThemeProvider>
+          <WpDirectFetch />
+          <SplashGate />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
