@@ -185,8 +185,8 @@ export function HomeScreen({
         </header>
 
         <div className="relative z-10 flex flex-1 flex-col justify-end px-5 pb-16 pt-20 md:px-8 md:pb-20 md:pt-24">
-          <p className="text-[20px] font-normal text-white/90 md:text-[24px]">{greeting}</p>
-          <p className="mt-1 text-[34px] font-semibold leading-none tracking-tight text-white md:text-[48px]">
+          <p className="text-[clamp(1rem,4.2vw,1.25rem)] font-normal text-white/90 md:text-[24px]">{greeting}</p>
+          <p className="mt-1 text-[clamp(1.65rem,8vw,2.125rem)] font-semibold leading-none tracking-tight text-white md:text-[48px]">
             {name} <span aria-hidden>👋</span>
           </p>
         </div>

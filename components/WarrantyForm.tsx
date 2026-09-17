@@ -337,7 +337,7 @@ export function WarrantyForm({
         value={form.warranty_entry_date}
         onChange={(value) => setForm((f) => ({ ...f, warranty_entry_date: value }))}
       />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="ceo-form-row ceo-form-row--times">
         <Input
           label="Start time"
           name="warranty_entry_start_time"

@@ -55,6 +55,7 @@ html {
   -webkit-text-size-adjust: 100%;
   color-scheme: dark;
   -webkit-tap-highlight-color: transparent;
+  overflow-x: clip;
 }
 
 select {
@@ -74,11 +75,14 @@ body {
   font-family: "Manrope", "Segoe UI", sans-serif;
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
+  overflow-x: clip;
+  overflow-wrap: break-word;
 }
 
 .ceo-app {
   width: 100%;
   max-width: var(--app-max);
+  overflow-x: clip;
 }
 
 .ceo-app--narrow {
@@ -243,6 +247,11 @@ a.ceo-btn-accent {
 .ceo-form-row {
   display: grid;
   gap: 1rem;
+}
+
+.ceo-form-row--times {
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
 }
 
 .ceo-list {
@@ -746,11 +755,13 @@ a.ceo-btn-accent {
 }
 
 .ceo-warranty-hero__property {
-  font-size: 0.8rem;
+  font-size: clamp(0.68rem, 2.8vw, 0.8rem);
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   color: #fff;
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .ceo-warranty-hero__property-sub {
@@ -764,6 +775,20 @@ a.ceo-btn-accent {
   position: relative;
   z-index: 1;
   padding: 3.5rem var(--app-pad) 3rem;
+}
+
+.ceo-warranty-hero__hello {
+  font-size: clamp(0.95rem, 4.2vw, 1.125rem);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.ceo-warranty-hero__name {
+  margin-top: 0.15rem;
+  font-size: clamp(1.65rem, 8vw, 2.125rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: #fff;
 }
 
 /*
@@ -1263,14 +1288,16 @@ a.ceo-btn-accent {
 .ceo-claim-filter__label {
   display: inline-flex;
   align-items: center;
-  flex: 0 0 38%;
-  min-width: 6.4rem;
+  flex: 0 1 38%;
+  min-width: 0;
   padding: 0.78rem 1rem;
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--ink);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ceo-claim-filter__value {
@@ -2219,6 +2246,11 @@ div.ceo-accordion__row {
 }
 
 .ceo-accordion__meta {
+  min-width: 0;
+  max-width: 42%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.78rem;
   color: var(--muted);
 }
@@ -2869,6 +2901,129 @@ div.ceo-accordion__row {
     margin: 1.5rem auto 0;
     width: 100%;
     max-width: 28rem;
+  }
+}
+
+@media (max-width: 380px) {
+  :root {
+    --app-pad: 0.75rem;
+  }
+
+  .ceo-claim-tabs {
+    gap: 0.15rem;
+    padding: 0.2rem;
+  }
+
+  .ceo-claim-tab {
+    gap: 0.18rem;
+    padding: 0.42rem 0.2rem;
+    font-size: 0.64rem;
+  }
+
+  .ceo-claim-tab__count {
+    min-width: 1rem;
+    height: 1rem;
+    font-size: 0.58rem;
+  }
+
+  .ceo-claim-filter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.4rem;
+  }
+
+  .ceo-claim-filter__label,
+  .ceo-claim-filter__value {
+    flex: none;
+    width: 100%;
+  }
+
+  .ceo-warranty-stat {
+    padding: 0.3rem 0.15rem;
+  }
+
+  .ceo-warranty-stat__n {
+    font-size: 1.45rem;
+  }
+
+  .ceo-warranty-stat__l {
+    font-size: 0.6rem;
+  }
+
+  .ceo-warranty-hero__greeting {
+    padding: 2.4rem var(--app-pad) 2.4rem;
+  }
+
+  .ceo-login {
+    max-width: 100%;
+  }
+
+  .ceo-login__card {
+    margin-inline: 0.65rem;
+    padding: calc(1.15rem + 28px) 0.95rem;
+  }
+
+  .ceo-login__property-name {
+    font-size: clamp(1.15rem, 7.2vw, 1.55rem);
+  }
+
+  .ceo-bottom-nav a,
+  .ceo-bottom-nav button {
+    min-height: 2.85rem;
+    font-size: 0.5rem;
+  }
+
+  .ceo-form-row--times {
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 340px) {
+  .ceo-form-row--times {
+    grid-template-columns: 1fr;
+  }
+
+  .ceo-claim-card {
+    gap: 0.55rem;
+    padding: 0.65rem;
+  }
+
+  .ceo-claim-card__thumb {
+    width: 2.7rem;
+    height: 2.7rem;
+  }
+}
+
+@media (max-height: 540px) and (orientation: landscape) {
+  .ceo-login {
+    min-height: auto;
+    overflow: auto;
+    padding-block: 1rem;
+  }
+
+  .ceo-login__card {
+    margin: 0.75rem auto;
+    padding: 1.25rem 1rem;
+  }
+
+  .ceo-warranty-hero {
+    min-height: 22dvh;
+  }
+
+  .ceo-splash {
+    padding-block: 4vh 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ceo-claim-list {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ceo-warranty-home .ceo-warranty-sheet {
+    max-width: 40rem;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 

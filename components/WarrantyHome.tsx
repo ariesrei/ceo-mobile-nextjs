@@ -148,10 +148,8 @@ export function WarrantyHome() {
         </header>
 
         <div className="ceo-warranty-hero__greeting">
-          <p className="text-[18px] text-white/85">{greeting}</p>
-          <p className="mt-0.5 text-[34px] font-medium leading-none tracking-tight text-white">
-            {name}
-          </p>
+          <p className="ceo-warranty-hero__hello">{greeting}</p>
+          <p className="ceo-warranty-hero__name">{name}</p>
         </div>
       </section>
 
