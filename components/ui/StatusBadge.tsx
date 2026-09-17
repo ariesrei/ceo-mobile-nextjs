@@ -41,6 +41,7 @@ export function shortStatusLabel(label?: string): string {
   const s = raw.toLowerCase();
   if (!raw) return "";
   if (s.includes("progress")) return "In Progress";
+  if (s.includes("await") || s.includes("assign")) return "Awaiting";
   if (s.includes("hold")) return "On Hold";
   if (s.includes("denied") || s.includes("deny")) return "Denied";
   if (s.includes("complete")) return "Completed";
