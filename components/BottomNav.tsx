@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { appVariant } from "@/lib/brand";
 import {
+  getBuildAppProfile,
   isWarrantyProfile,
   type AppProfile,
 } from "@/lib/app-profile";
@@ -156,7 +156,7 @@ export function BottomNav({
 
   const warranty = variant === "warranty";
   const moreItems =
-    warranty && appVariant() === "warranty"
+    warranty && getBuildAppProfile() !== "operations"
       ? []
       : warranty
         ? enabled.filter((m) => !m.path.startsWith("/account/warranties"))
@@ -229,7 +229,7 @@ export function BottomNav({
             <ul className="space-y-2">
               {warranty ? (
                 <>
-                  {appVariant() === "operations" ? (
+                  {getBuildAppProfile() === "operations" ? (
                     <li>
                       <Link
                         href="/account"

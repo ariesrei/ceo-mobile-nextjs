@@ -80,6 +80,7 @@ export type WarrantyOptions = {
     last_name?: string;
     email?: string;
     phone?: string;
+    mobile?: string;
   };
   unit_contact?: {
     first_name?: string;

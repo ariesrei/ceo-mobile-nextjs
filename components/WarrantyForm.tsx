@@ -38,6 +38,7 @@ function applyLoggedInSubmitter<T extends {
     email?: string;
     ceo_email?: string;
     phone?: string;
+    mobile?: string;
   }
 ) {
   if (!profile) return next;
@@ -53,8 +54,8 @@ function applyLoggedInSubmitter<T extends {
   ) {
     next.warranty_email_address = profile.email || profile.ceo_email || "";
   }
-  if (!next.warranty_tel_number && profile.phone) {
-    next.warranty_tel_number = profile.phone;
+  if (!next.warranty_tel_number && (profile.phone || profile.mobile)) {
+    next.warranty_tel_number = profile.phone || profile.mobile || "";
   }
   return next;
 }
@@ -137,6 +138,21 @@ export function WarrantyForm({
       })
       .catch(() => undefined);
   }, [form.warranty_type, isEdit, record?.status_label]);
+
+  useEffect(() => {
+    if (isEdit) return;
+    let cancelled = false;
+    fetch("/api/wp/profile")
+      .then((r) => r.json())
+      .then((profile) => {
+        if (cancelled) return;
+        setForm((f) => applyLoggedInSubmitter({ ...f }, profile));
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [isEdit]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();

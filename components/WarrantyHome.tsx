@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { appVariant } from "@/lib/brand";
+import { getBuildAppProfile } from "@/lib/app-profile";
 import type { WarrantySummary } from "@/lib/warranties";
 import { BottomNav } from "./BottomNav";
 import { FastLink } from "./FastLink";
@@ -96,7 +96,7 @@ export function WarrantyHome() {
 
   const name = (brand.firstName || "").trim() || "there";
   const property = splitPropertyName(brand.name);
-  const fromOperations = appVariant() === "operations";
+  const fromOperations = getBuildAppProfile() === "operations";
 
   return (
     <div className="ceo-app ceo-warranty ceo-warranty-home mx-auto min-h-dvh w-full pb-28">
