@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { ClientWpRecord } from "@/components/ClientWpRecord";
-import { WarrantyAssignForm } from "@/components/WarrantyAssignForm";
 import { WarrantyShell } from "@/components/WarrantyShell";
+import { WarrantyAssignView } from "@/components/wp-record-views";
 import type { WarrantyItem } from "@/lib/warranties";
 import { getNavigation, isStaffMenuPath } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
@@ -23,13 +23,12 @@ export default async function AssignWarrantyPage({ params }: Props) {
       dismiss
       showNav={false}
     >
-      <ClientWpRecord<WarrantyItem>
+      <ClientWpRecord
         path={`/warranties/${id}`}
         initial={result.data}
         error={result.error || "Warranty not found."}
-      >
-        {(record) => <WarrantyAssignForm record={record} />}
-      </ClientWpRecord>
+        as={WarrantyAssignView}
+      />
     </WarrantyShell>
   );
 }

@@ -73,13 +73,13 @@ const OPERATIONS: AppBrand = {
 };
 
 /**
- * Operations ships first; Warranty is the second app build. Set
- * NEXT_PUBLIC_CEO_APP_VARIANT=warranty on that build.
+ * Warranty is the default build. Set NEXT_PUBLIC_CEO_APP_VARIANT=operations
+ * on the Operations app.
  */
 export function appVariant(): AppVariant {
-  return process.env.NEXT_PUBLIC_CEO_APP_VARIANT === "warranty"
-    ? "warranty"
-    : "operations";
+  return process.env.NEXT_PUBLIC_CEO_APP_VARIANT === "operations"
+    ? "operations"
+    : "warranty";
 }
 
 export function appBrand(): AppBrand {

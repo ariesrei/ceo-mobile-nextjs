@@ -1,21 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { WarrantyItem } from "@/lib/warranties";
-import { isWarrantyClosed, isWarrantyInProgress } from "@/lib/warranties";
-import {
-  countBy,
-  expiringItems,
-  fetchAllWarrantyItems,
-} from "@/lib/warranty-reports";
+import { fetchAllWarrantyItems } from "@/lib/warranty-reports";
 import { FastLink } from "./FastLink";
 import {
   BuildingIcon,
-  ChartIcon,
-  CheckCircleIcon,
   ChevronRightIcon,
   ClockIcon,
   DownloadIcon,
+  FileIcon,
   FolderOpenIcon,
   UsersIcon,
 } from "./ui/Icons";
@@ -91,20 +85,10 @@ export function WarrantyReports() {
     }
   }
 
-  const open = items.filter((w) => !isWarrantyClosed(w) && !isWarrantyInProgress(w));
-  const progress = items.filter((w) => isWarrantyInProgress(w));
-  const closed = items.filter((w) => isWarrantyClosed(w));
-  const expiring = expiringItems(items);
-  const byUnit = countBy(items, (w) => w.unit_title || "").slice(0, 6);
-  const byVendor = countBy(
-    items,
-    (w) => w.subcontractor_name || ""
-  ).slice(0, 6);
-
   if (loading) {
     return (
       <div className="ceo-warranty-home-skel" role="status" aria-label="Loading reports">
-        <div className="ceo-skel h-[124px] rounded-[1.25rem]" />
+        <div className="ceo-skel h-[58px] rounded-2xl" />
         <div className="ceo-skel h-[58px] rounded-2xl" />
         <div className="ceo-skel h-[58px] rounded-2xl" />
         <div className="ceo-skel h-[58px] rounded-2xl" />
@@ -115,67 +99,37 @@ export function WarrantyReports() {
   return (
     <div className="space-y-4">
       {error ? <p className="text-sm text-[var(--danger)]">{error}</p> : null}
-
-      <section className="ceo-warranty-overview">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-semibold">Claims Summary</p>
-          <span className="ceo-warranty-overview__period">
-            {items.length} total
-          </span>
-        </div>
-        <div className="ceo-warranty-stats">
-          <FastLink
-            href="/account/warranties/claims?tab=open"
-            className="ceo-warranty-stat"
-          >
-            <span className="ceo-warranty-stat__n">{open.length}</span>
-            <span className="ceo-warranty-stat__l">Open</span>
-          </FastLink>
-          <FastLink
-            href="/account/warranties/claims?tab=progress"
-            className="ceo-warranty-stat"
-          >
-            <span className="ceo-warranty-stat__n">{progress.length}</span>
-            <span className="ceo-warranty-stat__l">In Progress</span>
-          </FastLink>
-          <FastLink
-            href="/account/warranties/claims?tab=closed"
-            className="ceo-warranty-stat"
-          >
-            <span className="ceo-warranty-stat__n">{closed.length}</span>
-            <span className="ceo-warranty-stat__l">Closed</span>
-          </FastLink>
-        </div>
-      </section>
-
       <nav className="ceo-warranty-menu ceo-warranty-menu--pills">
-        <FastLink
+        <ReportLink
+          href="/account/warranties"
+          icon={<FileIcon className="h-[18px] w-[18px]" />}
+          label="Claims Summary"
+        />
+        <ReportLink
+          href="/account/warranties/claims?tab=open"
+          icon={<FolderOpenIcon className="h-[18px] w-[18px]" />}
+          label="Open Claims"
+        />
+        <ReportLink
+          href="/account/warranties/claims?tab=closed"
+          icon={<FileIcon className="h-[18px] w-[18px]" />}
+          label="Closed Claims"
+        />
+        <ReportLink
+          href="/account/warranties/vendors"
+          icon={<UsersIcon className="h-[18px] w-[18px]" />}
+          label="Claims by Subcontractor"
+        />
+        <ReportLink
+          href="/account/warranties/claims"
+          icon={<BuildingIcon className="h-[18px] w-[18px]" />}
+          label="Claims by Unit"
+        />
+        <ReportLink
           href="/account/warranties/claims?tab=expiring"
-          className="ceo-warranty-menu__row"
-        >
-          <span className="ceo-warranty-menu__icon">
-            <ClockIcon className="h-[18px] w-[18px]" />
-          </span>
-          <span className="ceo-warranty-menu__label">Warranty Expirations</span>
-          <span className="ceo-warranty-menu__meta">{expiring.length}</span>
-          <ChevronRightIcon className="ceo-warranty-menu__chev" />
-        </FastLink>
-        <FastLink href="/account/warranties/claims?tab=open" className="ceo-warranty-menu__row">
-          <span className="ceo-warranty-menu__icon">
-            <FolderOpenIcon className="h-[18px] w-[18px]" />
-          </span>
-          <span className="ceo-warranty-menu__label">Open Claims</span>
-          <span className="ceo-warranty-menu__meta">{open.length}</span>
-          <ChevronRightIcon className="ceo-warranty-menu__chev" />
-        </FastLink>
-        <FastLink href="/account/warranties/claims?tab=closed" className="ceo-warranty-menu__row">
-          <span className="ceo-warranty-menu__icon">
-            <CheckCircleIcon className="h-[18px] w-[18px]" />
-          </span>
-          <span className="ceo-warranty-menu__label">Closed Claims</span>
-          <span className="ceo-warranty-menu__meta">{closed.length}</span>
-          <ChevronRightIcon className="ceo-warranty-menu__chev" />
-        </FastLink>
+          icon={<ClockIcon className="h-[18px] w-[18px]" />}
+          label="Warranty Expirations"
+        />
         <button
           type="button"
           className="ceo-warranty-menu__row w-full text-left"
@@ -191,56 +145,24 @@ export function WarrantyReports() {
           <ChevronRightIcon className="ceo-warranty-menu__chev" />
         </button>
       </nav>
-
-      <section className="space-y-2">
-        <p className="ceo-section-label">Claims by Unit</p>
-        <div className="ceo-warranty-menu ceo-warranty-menu--pills">
-          {byUnit.length ? (
-            byUnit.map((row) => (
-              <FastLink
-                key={row.label}
-                href="/account/warranties/claims"
-                className="ceo-warranty-menu__row"
-              >
-                <span className="ceo-warranty-menu__icon">
-                  <BuildingIcon className="h-[18px] w-[18px]" />
-                </span>
-                <span className="ceo-warranty-menu__label">{row.label}</span>
-                <span className="ceo-warranty-menu__meta">{row.count}</span>
-              </FastLink>
-            ))
-          ) : (
-            <p className="px-3 py-3 text-sm text-[var(--muted)]">No claims yet.</p>
-          )}
-        </div>
-      </section>
-
-      <section className="space-y-2">
-        <p className="ceo-section-label">Claims by Subcontractor</p>
-        <div className="ceo-warranty-menu ceo-warranty-menu--pills">
-          {byVendor.length ? (
-            byVendor.map((row) => (
-              <FastLink
-                key={row.label}
-                href="/account/warranties/vendors"
-                className="ceo-warranty-menu__row"
-              >
-                <span className="ceo-warranty-menu__icon">
-                  {row.label === "Unassigned" ? (
-                    <ChartIcon className="h-[18px] w-[18px]" />
-                  ) : (
-                    <UsersIcon className="h-[18px] w-[18px]" />
-                  )}
-                </span>
-                <span className="ceo-warranty-menu__label">{row.label}</span>
-                <span className="ceo-warranty-menu__meta">{row.count}</span>
-              </FastLink>
-            ))
-          ) : (
-            <p className="px-3 py-3 text-sm text-[var(--muted)]">No claims yet.</p>
-          )}
-        </div>
-      </section>
     </div>
+  );
+}
+
+function ReportLink({
+  href,
+  icon,
+  label,
+}: {
+  href: string;
+  icon: ReactNode;
+  label: string;
+}) {
+  return (
+    <FastLink href={href} className="ceo-warranty-menu__row">
+      <span className="ceo-warranty-menu__icon">{icon}</span>
+      <span className="ceo-warranty-menu__label">{label}</span>
+      <ChevronRightIcon className="ceo-warranty-menu__chev" />
+    </FastLink>
   );
 }

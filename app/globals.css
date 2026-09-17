@@ -1087,6 +1087,7 @@ a.ceo-btn-accent {
 .ceo-chips,
 .ceo-claim-search,
 .ceo-claim-search__filter,
+.ceo-claim-filter,
 .ceo-claim-filter__label,
 .ceo-claim-filter__value,
 .ceo-warranty-menu--pills .ceo-warranty-menu__row,
@@ -1253,18 +1254,17 @@ a.ceo-btn-accent {
 }
 
 .ceo-claim-filter {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.55rem;
+  display: flex;
   align-items: center;
+  gap: 0.65rem;
+  min-height: 2.85rem;
+  padding: 0.15rem 0.35rem 0.15rem 1.05rem;
+  border-radius: 999px;
 }
 
 .ceo-claim-filter__label {
   display: inline-flex;
   align-items: center;
-  min-height: 2.85rem;
-  padding: 0.55rem 1.05rem;
-  border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--ink);
@@ -1275,9 +1275,9 @@ a.ceo-btn-accent {
   display: flex;
   align-items: center;
   min-width: 0;
-  min-height: 2.85rem;
-  padding-right: 0.85rem;
-  border-radius: 999px;
+  flex: 1;
+  justify-content: flex-end;
+  padding-right: 0.5rem;
 }
 
 .ceo-menu-select {

@@ -1,10 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import {
-  COOKIE_APP_PROFILE,
-  COOKIE_SITE_PROFILE,
   getBuildAppProfile,
-  normalizeAppProfile,
   profileMismatchMessage,
 } from "@/lib/app-profile";
 import {
@@ -28,12 +25,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Session tokens are required." }, { status: 400 });
   }
 
-  const siteProfile =
-    normalizeAppProfile(tokens.user?.app_profile) ||
-    normalizeAppProfile(jar.get(COOKIE_SITE_PROFILE)?.value) ||
-    siteProfileFromUser(tokens.user);
-  const buildProfile =
-    normalizeAppProfile(jar.get(COOKIE_APP_PROFILE)?.value) || getBuildAppProfile();
+  const siteProfile = siteProfileFromUser(tokens.user, baseUrl);
+  const buildProfile = getBuildAppProfile();
   if (buildProfile && buildProfile !== siteProfile) {
     return NextResponse.json(
       { message: profileMismatchMessage(buildProfile) },

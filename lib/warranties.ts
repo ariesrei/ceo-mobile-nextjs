@@ -90,6 +90,37 @@ export type WarrantyOptions = {
   };
 };
 
+/** Native time input value (HH:mm) from ACF "g:i a" or other stored times. */
+export function toTimeInputValue(value?: string): string {
+  const raw = (value || "").trim();
+  if (!raw) return "";
+  const match12 = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*([ap]m)$/i);
+  if (match12) {
+    let hour = Number(match12[1]);
+    const minute = match12[2];
+    const pm = match12[3].toLowerCase() === "pm";
+    if (pm && hour < 12) hour += 12;
+    if (!pm && hour === 12) hour = 0;
+    return `${String(hour).padStart(2, "0")}:${minute}`;
+  }
+  const match24 = raw.match(/^(\d{1,2}):(\d{2})/);
+  if (!match24) return "";
+  return `${String(Number(match24[1])).padStart(2, "0")}:${match24[2]}`;
+}
+
+/** ACF time_picker format: 9:00 am */
+export function fromTimeInputValue(value?: string): string {
+  const raw = (value || "").trim();
+  if (!raw) return "";
+  const match = raw.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return raw;
+  let hour = Number(match[1]);
+  const minute = match[2];
+  const suffix = hour >= 12 ? "pm" : "am";
+  hour = hour % 12 || 12;
+  return `${hour}:${minute} ${suffix}`;
+}
+
 export function isWarrantyClosed(w: WarrantyItem): boolean {
   if (w.is_closed) return true;
   const s = (w.status_label || "").toLowerCase();

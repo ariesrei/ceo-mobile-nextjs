@@ -3,7 +3,7 @@ import { SplashScreen } from "@/components/SplashScreen";
 import {
   COOKIE_APP_PROFILE,
   COOKIE_SITE_PROFILE,
-  normalizeAppProfile,
+  resolveDisplayAppProfile,
 } from "@/lib/app-profile";
 import { COOKIE_BASE_URL } from "@/lib/wp";
 
@@ -14,13 +14,16 @@ import { COOKIE_BASE_URL } from "@/lib/wp";
  */
 export async function SplashGate() {
   let connected = false;
-  let appProfile = null;
+  let appProfile = resolveDisplayAppProfile({});
   try {
     const jar = await cookies();
-    connected = Boolean(jar.get(COOKIE_BASE_URL)?.value?.trim());
-    appProfile =
-      normalizeAppProfile(jar.get(COOKIE_SITE_PROFILE)?.value) ||
-      normalizeAppProfile(jar.get(COOKIE_APP_PROFILE)?.value);
+    const baseUrl = jar.get(COOKIE_BASE_URL)?.value?.trim() || "";
+    connected = Boolean(baseUrl);
+    appProfile = resolveDisplayAppProfile({
+      propertyUrl: baseUrl,
+      siteCookie: jar.get(COOKIE_SITE_PROFILE)?.value,
+      appCookie: jar.get(COOKIE_APP_PROFILE)?.value,
+    });
   } catch {
     connected = false;
   }

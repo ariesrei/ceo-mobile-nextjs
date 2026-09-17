@@ -92,9 +92,26 @@ export function resolveSiteAppProfile(
   propertyUrl?: string | null
 ): AppProfile {
   return (
-    normalizeAppProfile(wpProfile) ||
     profileFromPropertyUrl(propertyUrl || "") ||
-    "operations"
+    normalizeAppProfile(wpProfile) ||
+    "warranty"
+  );
+}
+
+/** Splash/login: URL first so leftover ops cookies cannot paint Fort Whipple green. */
+export function resolveDisplayAppProfile(input: {
+  wpProfile?: string | null;
+  propertyUrl?: string | null;
+  siteCookie?: string | null;
+  appCookie?: string | null;
+}): AppProfile {
+  return (
+    profileFromPropertyUrl(input.propertyUrl || "") ||
+    normalizeAppProfile(input.wpProfile) ||
+    normalizeAppProfile(input.siteCookie) ||
+    normalizeAppProfile(input.appCookie) ||
+    getBuildAppProfile() ||
+    "warranty"
   );
 }
 
@@ -107,7 +124,9 @@ export function getBuildAppProfile(): AppProfile | null {
 }
 
 export function productName(profile: AppProfile | null | undefined): string {
-  return profile === "warranty" ? "ClaimTrack" : "CE OneSource Operations";
+  return profile === "operations"
+    ? "CE OneSource Operations"
+    : "ClaimTrack";
 }
 
 export function otherProductName(profile: AppProfile): string {

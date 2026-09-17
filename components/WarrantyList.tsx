@@ -14,7 +14,13 @@ import { Card } from "./ui/Card";
 import { PaginatedList } from "./ui/PaginatedList";
 import { StatusBadge } from "./ui/StatusBadge";
 import { MenuSelect } from "./ui/MenuSelect";
-import { CalendarIcon, FilterIcon, PlusIcon, SearchIcon } from "./ui/Icons";
+import {
+  CalendarIcon,
+  ChevronRightIcon,
+  FilterIcon,
+  PlusIcon,
+  SearchIcon,
+} from "./ui/Icons";
 
 type Tab = "open" | "progress" | "closed" | "assigned" | "expiring";
 
@@ -406,7 +412,11 @@ function FilterRow({
           variant="inline"
           aria-label={label}
         />
-        {trailing ? <CalendarIcon className="ceo-claim-filter__cal" /> : null}
+        {trailing ? (
+          <CalendarIcon className="ceo-claim-filter__cal" />
+        ) : (
+          <ChevronRightIcon className="ceo-claim-filter__chev" />
+        )}
       </div>
     </div>
   );

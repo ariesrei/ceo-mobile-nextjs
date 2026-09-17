@@ -1,5 +1,7 @@
 import { ConnectForm } from "@/components/ConnectForm";
-import { COMPANY_MARK, COMPANY_TAGLINE, LANDING_BG } from "@/lib/brand";
+import { appBrand, LANDING_BG } from "@/lib/brand";
+
+const brand = appBrand();
 
 export default function ConnectPage() {
   return (
@@ -13,23 +15,16 @@ export default function ConnectPage() {
           aria-hidden
         />
 
-        {/* Company branding, not the app variant: no property has been chosen
-            yet, so there is nothing property-specific to show. The login screen
-            switches to the Operations/Warranty badge once it knows. */}
         <header className="ceo-login__brand">
           <div className="ceo-login__lockup">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={COMPANY_MARK}
-              alt=""
-              className="ceo-login__company-mark"
-            />
-            <div>
+            <img src={brand.logo} alt="" className="ceo-login__badge-mark" />
+            <div className="ceo-login__lockup-text">
               <p className="ceo-login__company-name">
                 <span className="ceo-login__company-name-bold">CE</span>{" "}
                 ONESOURCE
               </p>
-              <p className="ceo-login__company-tagline">{COMPANY_TAGLINE}</p>
+              <p className="ceo-login__company-variant">{brand.wordmark}</p>
             </div>
           </div>
         </header>

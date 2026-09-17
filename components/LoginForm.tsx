@@ -35,7 +35,7 @@ export function LoginForm({
   appProfile = null,
 }: Props) {
   const router = useRouter();
-  const brand = brandForProfile(appProfile);
+  const brand = brandForProfile(appProfile || "warranty");
   const { config, remember } = useConnectSession();
   const busy = useBusyState();
   const [username, setUsername] = useState("");

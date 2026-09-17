@@ -1,7 +1,6 @@
 import { AppShell } from "@/components/AppShell";
-import { Card } from "@/components/ui/Card";
 import { ClientWpRecord } from "@/components/ClientWpRecord";
-import { PetForm } from "@/components/PetForm";
+import { PetEditView } from "@/components/wp-record-views";
 import type { PetItem } from "@/lib/additional-info";
 import { getServerClientName, requireMenuPath } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
@@ -23,17 +22,12 @@ export default async function EditPetPage({ params }: Props) {
       backHref="/account/additional-info"
       clientName={clientName}
     >
-      <ClientWpRecord<PetItem>
+      <ClientWpRecord
         path={`/additional-info/pets/${id}`}
         initial={result.data}
         error={result.error || "Pet not found."}
-      >
-        {(pet) => (
-          <Card>
-            <PetForm pet={pet} />
-          </Card>
-        )}
-      </ClientWpRecord>
+        as={PetEditView}
+      />
     </AppShell>
   );
 }

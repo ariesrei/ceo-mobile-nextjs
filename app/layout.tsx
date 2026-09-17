@@ -17,9 +17,9 @@ const product = productName(buildProfile);
 export const metadata: Metadata = {
   title: product,
   description:
-    buildProfile === "warranty"
-      ? "ClaimTrack warranty app for CE OneSource properties"
-      : "Operations mobile app for CE OneSource (headless WordPress)",
+    buildProfile === "operations"
+      ? "Operations mobile app for CE OneSource (headless WordPress)"
+      : "ClaimTrack warranty app for CE OneSource properties",
 };
 
 export const viewport: Viewport = {

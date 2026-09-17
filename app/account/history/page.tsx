@@ -1,28 +1,8 @@
 import { AppShell } from "@/components/AppShell";
 import { ClientWpRecord } from "@/components/ClientWpRecord";
-import { HistoryLists } from "@/components/HistoryLists";
+import { HistoryView, type HistoryResponse } from "@/components/wp-record-views";
 import { getServerClientName, requireMenuPath } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
-import type { ReservationItem } from "@/lib/types";
-
-type HistoryResponse = {
-  tabs: {
-    guests?: {
-      enabled: boolean;
-      items: Array<{
-        id: number;
-        names: string;
-        phone: string;
-        check_in: string;
-        check_out: string;
-      }>;
-    };
-    reservations?: {
-      enabled: boolean;
-      items: ReservationItem[];
-    };
-  };
-};
 
 export default async function HistoryPage() {
   await requireMenuPath("/account/history");
@@ -33,18 +13,12 @@ export default async function HistoryPage() {
 
   return (
     <AppShell title="History" backHref="/account" clientName={clientName}>
-      <ClientWpRecord<HistoryResponse>
+      <ClientWpRecord
         path="/history"
         initial={result.data}
         error={result.error || "Unavailable."}
-      >
-        {(data) => (
-          <HistoryLists
-            guests={data.tabs?.guests}
-            reservations={data.tabs?.reservations}
-          />
-        )}
-      </ClientWpRecord>
+        as={HistoryView}
+      />
     </AppShell>
   );
 }

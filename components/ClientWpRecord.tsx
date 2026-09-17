@@ -1,19 +1,24 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import { publicWpErrorMessage } from "@/lib/wp-error";
 import { Card } from "./ui/Card";
 
-export function ClientWpRecord<T>({
+export function ClientWpRecord<
+  T,
+  E extends Record<string, unknown> = Record<string, never>,
+>({
   path,
   initial,
   error,
-  children,
+  as: View,
+  extra,
 }: {
   path: string;
   initial?: T | null;
   error?: string;
-  children: (data: T) => ReactNode;
+  as: ComponentType<{ data: T } & E>;
+  extra?: E;
 }) {
   const [data, setData] = useState<T | null>(initial ?? null);
   const [err, setErr] = useState(initial ? "" : error || "");
@@ -57,7 +62,10 @@ export function ClientWpRecord<T>({
     };
   }, [path, initial]);
 
-  if (data) return <>{children(data)}</>;
+  if (data) {
+    const props = { data, ...(extra ?? ({} as E)) } as { data: T } & E;
+    return <View {...props} />;
+  }
   if (loading) {
     return (
       <Card>

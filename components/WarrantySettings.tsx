@@ -9,15 +9,7 @@ import {
   type WarrantySettingsState,
 } from "@/lib/warranty-settings";
 import { MenuSelect } from "./ui/MenuSelect";
-import {
-  BellIcon,
-  CalendarIcon,
-  ChevronRightIcon,
-  ClipboardIcon,
-  SettingsIcon,
-  UserCheckIcon,
-  UsersIcon,
-} from "./ui/Icons";
+import { BellIcon, ChevronRightIcon } from "./ui/Icons";
 
 export function WarrantySettings() {
   const [settings, setSettings] = useState<WarrantySettingsState>(
@@ -57,7 +49,7 @@ export function WarrantySettings() {
           />
           <ToggleRow
             label="Subcontractor Updates"
-            icon={<UsersIcon className="h-[18px] w-[18px]" />}
+            icon={<BellIcon className="h-[18px] w-[18px]" />}
             checked={settings.subcontractorUpdates}
             disabled={!ready}
             onChange={(subcontractorUpdates) =>
@@ -66,7 +58,7 @@ export function WarrantySettings() {
           />
           <ToggleRow
             label="Daily Summary"
-            icon={<CalendarIcon className="h-[18px] w-[18px]" />}
+            icon={<BellIcon className="h-[18px] w-[18px]" />}
             checked={settings.dailySummary}
             disabled={!ready}
             onChange={(dailySummary) => update({ dailySummary })}
@@ -79,7 +71,6 @@ export function WarrantySettings() {
         <div className="ceo-warranty-menu ceo-warranty-menu--pills">
           <SelectRow
             label="Default Status"
-            icon={<ClipboardIcon className="h-[18px] w-[18px]" />}
             value={settings.defaultStatus}
             placeholder={statuses[0]?.label || "New Warranty Approved"}
             options={statuses}
@@ -87,18 +78,14 @@ export function WarrantySettings() {
           />
           <SelectRow
             label="Default Assignee"
-            icon={<UserCheckIcon className="h-[18px] w-[18px]" />}
             value={settings.defaultAssignee}
             placeholder="Unassigned"
             options={subcontractors}
             onChange={(defaultAssignee) => update({ defaultAssignee })}
           />
           <div className="ceo-warranty-menu__row ceo-warranty-menu__row--static">
-            <span className="ceo-warranty-menu__icon">
-              <SettingsIcon className="h-[18px] w-[18px]" />
-            </span>
             <span className="ceo-warranty-menu__label">Custom Fields</span>
-            <span className="ceo-warranty-menu__meta">Desktop</span>
+            <ChevronRightIcon className="ceo-warranty-menu__chev" />
           </div>
         </div>
       </section>
@@ -140,14 +127,12 @@ function ToggleRow({
 
 function SelectRow({
   label,
-  icon,
   value,
   placeholder,
   options,
   onChange,
 }: {
   label: string;
-  icon: ReactNode;
   value: string;
   placeholder: string;
   options: WarrantyChoice[];
@@ -155,7 +140,6 @@ function SelectRow({
 }) {
   return (
     <label className="ceo-warranty-menu__row ceo-warranty-menu__row--static">
-      <span className="ceo-warranty-menu__icon">{icon}</span>
       <span className="ceo-warranty-menu__label">{label}</span>
       <MenuSelect
         variant="inline"

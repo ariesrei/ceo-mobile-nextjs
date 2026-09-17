@@ -16,8 +16,7 @@ import {
 import {
   COOKIE_APP_PROFILE,
   COOKIE_SITE_PROFILE,
-  getBuildAppProfile,
-  normalizeAppProfile,
+  resolveDisplayAppProfile,
 } from "./app-profile";
 import { applyNavVisibility, isPathAllowed } from "./navigation";
 import { serverFetch } from "./server-fetch";
@@ -25,11 +24,11 @@ import { isWafBlockedResult } from "./wp-error";
 
 export async function getServerAppProfile() {
   const jar = await cookies();
-  return (
-    normalizeAppProfile(jar.get(COOKIE_SITE_PROFILE)?.value) ||
-    normalizeAppProfile(jar.get(COOKIE_APP_PROFILE)?.value) ||
-    getBuildAppProfile()
-  );
+  return resolveDisplayAppProfile({
+    propertyUrl: jar.get(COOKIE_BASE_URL)?.value,
+    siteCookie: jar.get(COOKIE_SITE_PROFILE)?.value,
+    appCookie: jar.get(COOKIE_APP_PROFILE)?.value,
+  });
 }
 
 export type ClientBranding = {

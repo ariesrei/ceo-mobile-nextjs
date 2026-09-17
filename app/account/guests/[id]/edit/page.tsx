@@ -1,7 +1,6 @@
 import { AppShell } from "@/components/AppShell";
-import { Card } from "@/components/ui/Card";
 import { ClientWpRecord } from "@/components/ClientWpRecord";
-import { GuestForm } from "@/components/GuestForm";
+import { GuestEditView } from "@/components/wp-record-views";
 import type { GuestItem } from "@/lib/guests";
 import { getServerClientBranding, requireMenuPath } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
@@ -24,17 +23,12 @@ export default async function EditGuestPage({ params }: Props) {
       clientName={branding.name}
       clientLogo={branding.logo}
     >
-      <ClientWpRecord<GuestItem>
+      <ClientWpRecord
         path={`/guests/${id}`}
         initial={result.data}
         error={result.error || "Guest not found."}
-      >
-        {(guest) => (
-          <Card>
-            <GuestForm guest={guest} />
-          </Card>
-        )}
-      </ClientWpRecord>
+        as={GuestEditView}
+      />
     </AppShell>
   );
 }

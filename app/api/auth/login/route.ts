@@ -3,9 +3,7 @@ import { NextResponse } from "next/server";
 import { fetchErrorMessage, serverFetch } from "@/lib/server-fetch";
 import { publicWpErrorMessage } from "@/lib/wp-error";
 import {
-  COOKIE_APP_PROFILE,
   getBuildAppProfile,
-  normalizeAppProfile,
   profileMismatchMessage,
 } from "@/lib/app-profile";
 import {
@@ -30,7 +28,7 @@ function finishLogin(
     return NextResponse.json({ message: "Login failed." }, { status: 502 });
   }
 
-  const siteProfile = siteProfileFromUser(tokens.user);
+  const siteProfile = siteProfileFromUser(tokens.user, baseUrl);
   if (buildProfile && buildProfile !== siteProfile) {
     return NextResponse.json(
       { message: profileMismatchMessage(buildProfile) },
@@ -64,8 +62,7 @@ export async function POST(request: Request) {
     ""
   );
   const browserVerified = body.browserVerified === true;
-  const buildProfile =
-    normalizeAppProfile(jar.get(COOKIE_APP_PROFILE)?.value) || getBuildAppProfile();
+  const buildProfile = getBuildAppProfile();
 
   if (browserVerified) {
     const tokens = tokensFromBody(body);

@@ -4,9 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import type { AppProfile } from "@/lib/app-profile";
 import {
   brandForProfile,
-  COMPANY_MARK,
   COMPANY_SPLASH,
-  COMPANY_TAGLINE,
   LANDING_BG,
 } from "@/lib/brand";
 
@@ -29,7 +27,7 @@ type Props = {
 };
 
 export function SplashScreen({ connected = false, appProfile = null }: Props) {
-  const brand = brandForProfile(appProfile);
+  const brand = brandForProfile(appProfile || "warranty");
   /**
    * Shows on every app open, every refresh, and after sign-in (full load).
    * Starting visible avoids a flash of the page underneath.
@@ -48,24 +46,17 @@ export function SplashScreen({ connected = false, appProfile = null }: Props) {
 
   if (!visible) return null;
 
-  /*
-   * Before a property is chosen the app is still company-level, so it shows the
-   * CE OneSource mark. Once connected it belongs to a property and switches to
-   * the Operations (or Warranty) badge, matching the connect and login screens.
-   */
-  const splash = connected
-    ? {
-        from: brand.splashFrom || COMPANY_SPLASH.from,
-        to: brand.splashTo || COMPANY_SPLASH.to,
-        glow: brand.glow || COMPANY_SPLASH.glow,
-      }
-    : COMPANY_SPLASH;
+  const splash = {
+    from: brand.splashFrom || COMPANY_SPLASH.from,
+    to: brand.splashTo || COMPANY_SPLASH.to,
+    glow: brand.glow || COMPANY_SPLASH.glow,
+  };
 
   return (
     <div
       className={`ceo-splash${leaving ? " is-leaving" : ""}`}
       role="status"
-      aria-label={`${connected ? brand.appName : "CE OneSource"} loading`}
+      aria-label={`${brand.appName} loading`}
       style={
         {
           "--splash-from": splash.from,
@@ -81,21 +72,12 @@ export function SplashScreen({ connected = false, appProfile = null }: Props) {
       />
 
       <div className="ceo-splash__lockup">
-        {connected ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={brand.logo} alt="" className="ceo-splash__badge" />
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={COMPANY_MARK} alt="" className="ceo-splash__mark" />
-        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={brand.logo} alt="" className="ceo-splash__badge" />
         <p className="ceo-splash__title">
           <span className="ceo-splash__title-bold">CE</span> ONESOURCE
         </p>
-        {connected ? (
-          <p className="ceo-splash__wordmark">{brand.wordmark}</p>
-        ) : (
-          <p className="ceo-splash__tagline">{COMPANY_TAGLINE}</p>
-        )}
+        <p className="ceo-splash__wordmark">{brand.wordmark}</p>
       </div>
 
       <div className="ceo-splash__foot">

@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { ClientWpRecord } from "@/components/ClientWpRecord";
-import { MaintenanceForm } from "@/components/MaintenanceForm";
+import { MaintenanceView } from "@/components/wp-record-views";
 import type { MaintenanceItem } from "@/lib/maintenance";
 import { getServerClientBranding, requireMenuPath } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
@@ -23,13 +23,12 @@ export default async function EditMaintenancePage({ params }: Props) {
       clientName={branding.name}
       clientLogo={branding.logo}
     >
-      <ClientWpRecord<MaintenanceItem>
+      <ClientWpRecord
         path={`/maintenance/${id}`}
         initial={result.data}
         error={result.error || "Maintenance record not found."}
-      >
-        {(record) => <MaintenanceForm record={record} />}
-      </ClientWpRecord>
+        as={MaintenanceView}
+      />
     </AppShell>
   );
 }

@@ -1,7 +1,7 @@
 import { ClientWpRecord } from "@/components/ClientWpRecord";
-import { WarrantyClaimDetail } from "@/components/WarrantyClaimDetail";
 import { WarrantyShell } from "@/components/WarrantyShell";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { WarrantyClaimView } from "@/components/wp-record-views";
 import type { WarrantyItem } from "@/lib/warranties";
 import { getNavigation, isStaffMenuPath } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
@@ -28,19 +28,13 @@ export default async function WarrantyDetailPage({ params }: Props) {
         ) : undefined
       }
     >
-      <ClientWpRecord<WarrantyItem>
+      <ClientWpRecord<WarrantyItem, { isStaff: boolean }>
         path={`/warranties/${id}`}
         initial={result.data}
         error={result.error || "Warranty not found."}
-      >
-        {(record) => (
-          <WarrantyClaimDetail
-            record={record}
-            canEdit={Boolean(record.can_edit)}
-            isStaff={isStaff}
-          />
-        )}
-      </ClientWpRecord>
+        as={WarrantyClaimView}
+        extra={{ isStaff }}
+      />
     </WarrantyShell>
   );
 }

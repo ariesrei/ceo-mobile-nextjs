@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   COOKIE_SITE_PROFILE,
-  normalizeAppProfile,
+  resolveSiteAppProfile,
   type AppProfile,
 } from "./app-profile";
 import { serverFetch } from "./server-fetch";
@@ -142,8 +142,11 @@ export function tokensFromBody(body: Record<string, unknown>): {
   };
 }
 
-export function siteProfileFromUser(user?: Partial<AppUser> | null): AppProfile {
-  return normalizeAppProfile(user?.app_profile) || "operations";
+export function siteProfileFromUser(
+  user?: Partial<AppUser> | null,
+  propertyUrl?: string | null
+): AppProfile {
+  return resolveSiteAppProfile(user?.app_profile, propertyUrl);
 }
 
 export async function refreshWpTokens(

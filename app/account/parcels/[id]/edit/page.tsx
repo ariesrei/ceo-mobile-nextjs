@@ -1,7 +1,6 @@
 import { AppShell } from "@/components/AppShell";
-import { Card } from "@/components/ui/Card";
 import { ClientWpRecord } from "@/components/ClientWpRecord";
-import { ParcelForm } from "@/components/ParcelForm";
+import { ParcelEditView } from "@/components/wp-record-views";
 import type { ParcelItem } from "@/lib/parcels";
 import {
   getServerClientBranding,
@@ -32,17 +31,12 @@ export default async function EditParcelPage({ params }: Props) {
       clientName={branding.name}
       clientLogo={branding.logo}
     >
-      <ClientWpRecord<ParcelItem>
+      <ClientWpRecord
         path={`/parcels/${id}`}
         initial={result.data}
         error={result.error || "Parcel not found."}
-      >
-        {(parcel) => (
-          <Card>
-            <ParcelForm parcel={parcel} />
-          </Card>
-        )}
-      </ClientWpRecord>
+        as={ParcelEditView}
+      />
     </AppShell>
   );
 }
