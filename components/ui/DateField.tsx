@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { DayPicker } from "react-day-picker";
 import { format, isValid, parse } from "date-fns";
 import "react-day-picker/style.css";
+import { FieldLabel } from "./FieldLabel";
 
 /** ACF / project date storage format: m/d/Y */
 const DATE_FORMAT = "MM/dd/yyyy";
@@ -73,10 +74,7 @@ export function DateField({
 
   return (
     <div className="relative block space-y-1.5" ref={rootRef}>
-      <span className="text-sm font-medium text-[var(--muted)]" id={`${id}-label`}>
-        {label}
-        {required ? " *" : ""}
-      </span>
+      <FieldLabel label={label} required={required} id={`${id}-label`} />
       <div className="flex gap-2">
         <button
           type="button"

@@ -6,23 +6,30 @@ import {
   apiUrl,
   COOKIE_ACCESS,
   COOKIE_BASE_URL,
+  COOKIE_REFRESH,
   COOKIE_CLIENT_HERO,
   COOKIE_CLIENT_LOGO,
   COOKIE_CLIENT_NAME,
   COOKIE_CLIENT_TAGLINE,
   wpFetchServer,
 } from "./wp";
-import { COOKIE_APP_PROFILE, getBuildAppProfile, normalizeAppProfile } from "./app-profile";
+import {
+  COOKIE_APP_PROFILE,
+  COOKIE_SITE_PROFILE,
+  getBuildAppProfile,
+  resolveDisplayAppProfile,
+} from "./app-profile";
 import { applyNavVisibility, isPathAllowed } from "./navigation";
 import { serverFetch } from "./server-fetch";
 import { isWafBlockedResult } from "./wp-error";
 
 export async function getServerAppProfile() {
   const jar = await cookies();
-  return (
-    normalizeAppProfile(jar.get(COOKIE_APP_PROFILE)?.value) ||
-    getBuildAppProfile()
-  );
+  return resolveDisplayAppProfile({
+    propertyUrl: jar.get(COOKIE_BASE_URL)?.value,
+    siteCookie: jar.get(COOKIE_SITE_PROFILE)?.value,
+    appCookie: jar.get(COOKIE_APP_PROFILE)?.value,
+  });
 }
 
 export type ClientBranding = {
@@ -145,7 +152,7 @@ export async function requireConnected() {
 export async function requireAuth() {
   await requireConnected();
   const jar = await cookies();
-  if (!jar.get(COOKIE_ACCESS)?.value) {
+  if (!jar.get(COOKIE_ACCESS)?.value && !jar.get(COOKIE_REFRESH)?.value) {
     redirect("/login");
   }
 }
@@ -175,7 +182,8 @@ export async function requireMenuPath(path: string) {
     return blockedNav();
   }
   const nav = applyNavVisibility(result.data || null, profile);
-  if (!isPathAllowed(nav, path, profile)) {
+  // Unlocked Chrome is one app. Only the Play Store warranty build hides ops.
+  if (getBuildAppProfile() === "warranty" && !isPathAllowed(nav, path, profile)) {
     redirect("/account");
   }
   return nav;

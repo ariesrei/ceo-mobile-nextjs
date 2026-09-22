@@ -59,7 +59,13 @@ function splitDeliveredOn(value?: string): { date: string; time: string } {
   };
 }
 
-export function ParcelForm({ parcel }: { parcel?: ParcelItem | null }) {
+export function ParcelForm({
+  parcel,
+  afterSaveHref = "/account/parcels",
+}: {
+  parcel?: ParcelItem | null;
+  afterSaveHref?: string;
+}) {
   const router = useRouter();
   const isEdit = Boolean(parcel?.id);
   const split = splitDeliveredOn(parcel?.parcel_delivered_on);
@@ -154,7 +160,7 @@ export function ParcelForm({ parcel }: { parcel?: ParcelItem | null }) {
       }
       setMessage(data.message || "Saved.");
       setTimeout(() => {
-        router.push("/account/parcels");
+        router.push(afterSaveHref);
         router.refresh();
       }, 700);
     } catch {

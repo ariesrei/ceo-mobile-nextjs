@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import {
   COOKIE_SITE_PROFILE,
-  normalizeAppProfile,
+  resolveSiteAppProfile,
   type AppProfile,
 } from "./app-profile";
-import type { AppUser } from "./types";
+import { serverFetch } from "./server-fetch";
+import type { AppUser, AuthTokens } from "./types";
 import {
+  apiUrl,
   COOKIE_ACCESS,
   COOKIE_BASE_URL,
   COOKIE_CLIENT_HERO,
@@ -23,17 +25,45 @@ const cookieOpts = {
   path: "/",
 };
 
+type SessionCookieInput = {
+  baseUrl: string;
+  access_token: string;
+  refresh_token: string;
+  expires_in?: number;
+  user?: Partial<AppUser> | null;
+  siteProfile: AppProfile;
+};
+
+function isSessionCookieInput(
+  input: SessionCookieInput | AuthTokens
+): input is SessionCookieInput {
+  return "baseUrl" in input && "siteProfile" in input;
+}
+
 export function applyAuthCookies(
   response: NextResponse,
-  input: {
-    baseUrl: string;
-    access_token: string;
-    refresh_token: string;
-    expires_in?: number;
-    user?: Partial<AppUser> | null;
-    siteProfile: AppProfile;
-  }
+  input: SessionCookieInput
+): NextResponse;
+export function applyAuthCookies(
+  response: NextResponse,
+  input: AuthTokens
+): NextResponse;
+export function applyAuthCookies(
+  response: NextResponse,
+  input: SessionCookieInput | AuthTokens
 ) {
+  if (!isSessionCookieInput(input)) {
+    response.cookies.set(COOKIE_ACCESS, input.access_token, {
+      ...cookieOpts,
+      maxAge: 60 * 60 * 24 * 30,
+    });
+    response.cookies.set(COOKIE_REFRESH, input.refresh_token, {
+      ...cookieOpts,
+      maxAge: 60 * 60 * 24 * 30,
+    });
+    return response;
+  }
+
   const maxAccess = input.expires_in || 3600;
   response.cookies.set(COOKIE_BASE_URL, input.baseUrl.replace(/\/+$/, ""), {
     ...cookieOpts,
@@ -112,6 +142,31 @@ export function tokensFromBody(body: Record<string, unknown>): {
   };
 }
 
-export function siteProfileFromUser(user?: Partial<AppUser> | null): AppProfile {
-  return normalizeAppProfile(user?.app_profile) || "operations";
+export function siteProfileFromUser(
+  user?: Partial<AppUser> | null,
+  propertyUrl?: string | null
+): AppProfile {
+  return resolveSiteAppProfile(user?.app_profile, propertyUrl);
+}
+
+export async function refreshWpTokens(
+  baseUrl: string,
+  refreshToken: string
+): Promise<AuthTokens | null> {
+  const res = await serverFetch(apiUrl(baseUrl, "/app/auth/refresh"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+    cache: "no-store",
+  });
+  const data = (await res.json().catch(() => ({}))) as AuthTokens & {
+    message?: string;
+  };
+  if (!res.ok || !data.access_token || !data.refresh_token) {
+    return null;
+  }
+  return data;
 }

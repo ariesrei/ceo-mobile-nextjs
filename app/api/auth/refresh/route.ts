@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { COOKIE_SITE_PROFILE, normalizeAppProfile } from "@/lib/app-profile";
 import { applyAuthCookies, siteProfileFromUser, tokensFromBody } from "@/lib/auth-session";
 import { fetchErrorMessage, serverFetch } from "@/lib/server-fetch";
 import {
@@ -35,10 +34,7 @@ export async function POST(request: Request) {
       refresh_token: browserTokens.refresh_token,
       expires_in: browserTokens.expires_in,
       user: browserTokens.user,
-      siteProfile:
-        normalizeAppProfile(browserTokens.user?.app_profile) ||
-        normalizeAppProfile(jar.get(COOKIE_SITE_PROFILE)?.value) ||
-        siteProfileFromUser(browserTokens.user),
+      siteProfile: siteProfileFromUser(browserTokens.user, baseUrl),
     });
     return response;
   }

@@ -1,5 +1,7 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { normalizeAppProfile } from "@/lib/app-profile";
+import { COOKIE_ACCESS, COOKIE_BASE_URL } from "@/lib/wp";
 
 export default async function GoProfilePage({
   params,
@@ -11,5 +13,13 @@ export default async function GoProfilePage({
   if (!normalized) {
     redirect("/connect");
   }
-  redirect("/");
+
+  const jar = await cookies();
+  if (jar.get(COOKIE_ACCESS)?.value) {
+    redirect("/account");
+  }
+  if (jar.get(COOKIE_BASE_URL)?.value) {
+    redirect("/login");
+  }
+  redirect("/connect");
 }

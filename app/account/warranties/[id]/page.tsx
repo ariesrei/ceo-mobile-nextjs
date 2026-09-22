@@ -1,8 +1,10 @@
+import { redirect } from "next/navigation";
 import { ClientWpRecord } from "@/components/ClientWpRecord";
-import { WarrantyClaimDetail } from "@/components/WarrantyClaimDetail";
 import { WarrantyShell } from "@/components/WarrantyShell";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { WarrantyClaimView } from "@/components/wp-record-views";
 import type { WarrantyItem } from "@/lib/warranties";
+import { ACCOUNT_MODULE_PATHS } from "@/lib/navigation";
 import { getNavigation, isStaffMenuPath } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
 
@@ -10,6 +12,9 @@ type Props = { params: Promise<{ id: string }> };
 
 export default async function WarrantyDetailPage({ params }: Props) {
   const { id } = await params;
+  const modulePath = ACCOUNT_MODULE_PATHS[id];
+  if (modulePath) redirect(modulePath);
+  if (!/^\d+$/.test(id)) redirect("/account/warranties");
   const [result, nav] = await Promise.all([
     wpFetchServer<WarrantyItem>(`/app/warranties/${id}`),
     getNavigation(),
@@ -28,19 +33,13 @@ export default async function WarrantyDetailPage({ params }: Props) {
         ) : undefined
       }
     >
-      <ClientWpRecord<WarrantyItem>
+      <ClientWpRecord<WarrantyItem, { isStaff: boolean }>
         path={`/warranties/${id}`}
         initial={result.data}
         error={result.error || "Warranty not found."}
-      >
-        {(record) => (
-          <WarrantyClaimDetail
-            record={record}
-            canEdit={Boolean(record.can_edit)}
-            isStaff={isStaff}
-          />
-        )}
-      </ClientWpRecord>
+        as={WarrantyClaimView}
+        extra={{ isStaff }}
+      />
     </WarrantyShell>
   );
 }

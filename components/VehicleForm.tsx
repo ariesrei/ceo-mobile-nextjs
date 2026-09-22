@@ -3,12 +3,19 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Choice, VehicleItem } from "@/lib/additional-info";
+import { ProfileAvatarField } from "./ProfileAvatarField";
 import { Button } from "./ui/Button";
 import { DateField } from "./ui/DateField";
 import { Input } from "./ui/Input";
 import { Select } from "./ui/Select";
 
-export function VehicleForm({ vehicle }: { vehicle?: VehicleItem | null }) {
+export function VehicleForm({
+  vehicle,
+  afterSaveHref = "/account/additional-info",
+}: {
+  vehicle?: VehicleItem | null;
+  afterSaveHref?: string;
+}) {
   const router = useRouter();
   const isEdit = Boolean(vehicle?.id);
   const [years, setYears] = useState<Choice[]>([]);
@@ -26,6 +33,7 @@ export function VehicleForm({ vehicle }: { vehicle?: VehicleItem | null }) {
     electric_vehicle: Boolean(vehicle?.electric_vehicle),
     active: vehicle?.active !== false,
   });
+  const [photoId, setPhotoId] = useState(vehicle?.photo_id || 0);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -65,7 +73,10 @@ export function VehicleForm({ vehicle }: { vehicle?: VehicleItem | null }) {
       const res = await fetch(url, {
         method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          ...(photoId > 0 ? { photo_id: photoId } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -74,7 +85,7 @@ export function VehicleForm({ vehicle }: { vehicle?: VehicleItem | null }) {
       }
       setMessage(data.message || "Saved.");
       setTimeout(() => {
-        router.push("/account/additional-info");
+        router.push(afterSaveHref);
         router.refresh();
       }, 700);
     } catch {
@@ -86,6 +97,21 @@ export function VehicleForm({ vehicle }: { vehicle?: VehicleItem | null }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
+      <ProfileAvatarField
+        avatar={vehicle?.photo}
+        initials={(form.make || "V").slice(0, 1).toUpperCase()}
+        uploadUrl="/api/wp/additional-info/media"
+        parentId={vehicle?.id}
+        title="Vehicle photo"
+        subtitle={
+          isEdit
+            ? "This is the picture on the vehicle card. Save the form after you change it."
+            : "Add a picture for the vehicle card."
+        }
+        onPendingChange={(next) => {
+          if (next?.id) setPhotoId(next.id);
+        }}
+      />
       <Select
         label="Year"
         options={years}

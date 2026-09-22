@@ -1,7 +1,6 @@
 import { AppShell } from "@/components/AppShell";
-import { Card } from "@/components/ui/Card";
 import { ClientWpRecord } from "@/components/ClientWpRecord";
-import { VehicleForm } from "@/components/VehicleForm";
+import { VehicleEditView } from "@/components/wp-record-views";
 import type { VehicleItem } from "@/lib/additional-info";
 import { getServerClientName, requireMenuPath } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
@@ -23,17 +22,12 @@ export default async function EditVehiclePage({ params }: Props) {
       backHref="/account/additional-info"
       clientName={clientName}
     >
-      <ClientWpRecord<VehicleItem>
+      <ClientWpRecord
         path={`/additional-info/vehicles/${id}`}
         initial={result.data}
         error={result.error || "Vehicle not found."}
-      >
-        {(vehicle) => (
-          <Card>
-            <VehicleForm vehicle={vehicle} />
-          </Card>
-        )}
-      </ClientWpRecord>
+        as={VehicleEditView}
+      />
     </AppShell>
   );
 }

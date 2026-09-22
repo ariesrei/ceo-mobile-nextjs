@@ -3,6 +3,9 @@ import type { ConnectConfig } from "./types";
 
 export const CONNECT_STORAGE_KEY = "ceo_app_connect";
 
+let cachedRaw: string | null | undefined;
+let cachedConfig: ConnectConfig | null = null;
+
 export function normalizeSecurityKey(input: string): string {
   return input.replace(/[\u200B-\u200D\uFEFF]/g, "").replace(/\s+/g, "").trim();
 }
@@ -20,40 +23,54 @@ export function getConnectConfig(): ConnectConfig | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(CONNECT_STORAGE_KEY);
-    if (!raw) return null;
+    if (raw === cachedRaw) return cachedConfig;
+    cachedRaw = raw;
+    if (!raw) {
+      cachedConfig = null;
+      return null;
+    }
     const parsed = JSON.parse(raw) as ConnectConfig;
-    if (!parsed?.baseUrl) return null;
-    return parsed;
+    cachedConfig = parsed?.baseUrl ? parsed : null;
+    return cachedConfig;
   } catch {
+    cachedRaw = undefined;
+    cachedConfig = null;
     return null;
   }
 }
 
-export function getClientName(): string {
-  const cfg = getConnectConfig();
-  const name = (cfg?.clientName || "").trim();
-  return name || "Client";
+export function writeConnectConfig(
+  patch: Partial<ConnectConfig> & { baseUrl: string }
+): ConnectConfig {
+  const nextUrl = normalizeBaseUrl(patch.baseUrl);
+  const existing = getConnectConfig();
+  const sameProperty =
+    Boolean(existing?.baseUrl) &&
+    normalizeBaseUrl(existing?.baseUrl || "") === nextUrl;
+  const prior = sameProperty ? existing : undefined;
+  const config: ConnectConfig = {
+    baseUrl: nextUrl,
+    verifiedAt: patch.verifiedAt || new Date().toISOString(),
+    clientName: pick(patch.clientName, prior?.clientName),
+    clientLogo: pick(patch.clientLogo, prior?.clientLogo),
+    clientHero: pick(patch.clientHero, prior?.clientHero),
+    clientTagline: pick(patch.clientTagline, prior?.clientTagline),
+    planKey: patch.planKey || prior?.planKey,
+    appProfile: normalizeAppProfile(patch.appProfile) || prior?.appProfile,
+  };
+  const raw = JSON.stringify(config);
+  window.localStorage.setItem(CONNECT_STORAGE_KEY, raw);
+  cachedRaw = raw;
+  cachedConfig = config;
+  return config;
 }
 
-export function getClientLogo(): string {
-  const cfg = getConnectConfig();
-  return (cfg?.clientLogo || "").trim();
+function pick(next?: string, prev?: string) {
+  const value = (next || prev || "").trim();
+  return value || undefined;
 }
 
-export function getClientHero(): string {
-  const cfg = getConnectConfig();
-  return (cfg?.clientHero || "").trim();
-}
-
-export function getClientTagline(): string {
-  const cfg = getConnectConfig();
-  return (cfg?.clientTagline || "").trim();
-}
-
-/**
- * Only the property this device connected to is stored. We deliberately keep no
- * list of properties, so a user can never browse or pick another one.
- */
+/** @deprecated Prefer writeConnectConfig({ baseUrl, clientName, ... }) */
 export function saveConnectConfig(
   baseUrl: string,
   clientName?: string,
@@ -62,27 +79,35 @@ export function saveConnectConfig(
   clientTagline?: string,
   extras?: { planKey?: string; appProfile?: AppProfile | string }
 ): ConnectConfig {
-  const nextUrl = normalizeBaseUrl(baseUrl);
-  const existing = getConnectConfig();
-  const sameProperty =
-    Boolean(existing?.baseUrl) &&
-    normalizeBaseUrl(existing?.baseUrl || "") === nextUrl;
-  const prior = sameProperty ? existing : undefined;
-  const config: ConnectConfig = {
-    baseUrl: nextUrl,
-    verifiedAt: new Date().toISOString(),
-    clientName: (clientName || prior?.clientName || "").trim() || undefined,
-    clientLogo: (clientLogo || prior?.clientLogo || "").trim() || undefined,
-    clientHero: (clientHero || prior?.clientHero || "").trim() || undefined,
-    clientTagline:
-      (clientTagline || prior?.clientTagline || "").trim() || undefined,
-    planKey: extras?.planKey || prior?.planKey,
-    appProfile: normalizeAppProfile(extras?.appProfile) || prior?.appProfile,
-  };
-  window.localStorage.setItem(CONNECT_STORAGE_KEY, JSON.stringify(config));
-  return config;
+  return writeConnectConfig({
+    baseUrl,
+    clientName,
+    clientLogo,
+    clientHero,
+    clientTagline,
+    planKey: extras?.planKey,
+    appProfile: normalizeAppProfile(extras?.appProfile) || undefined,
+  });
+}
+
+export function getClientName(): string {
+  return (getConnectConfig()?.clientName || "").trim() || "Client";
+}
+
+export function getClientLogo(): string {
+  return (getConnectConfig()?.clientLogo || "").trim();
+}
+
+export function getClientHero(): string {
+  return (getConnectConfig()?.clientHero || "").trim();
+}
+
+export function getClientTagline(): string {
+  return (getConnectConfig()?.clientTagline || "").trim();
 }
 
 export function clearConnectConfig(): void {
   window.localStorage.removeItem(CONNECT_STORAGE_KEY);
+  cachedRaw = null;
+  cachedConfig = null;
 }

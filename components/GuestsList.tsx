@@ -1,12 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import type { GuestItem, GuestListResponse } from "@/lib/guests";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { GuestChoice, GuestItem } from "@/lib/guests";
+import {
+  checkoutGuest,
+  countGuests,
+  listGuests,
+  loadGuestOptions,
+} from "@/lib/helpers/guests";
+import { ClaimThumb } from "./ClaimThumb";
 import { Card } from "./ui/Card";
+import {
+  ClaimSearch,
+  activeFilterCount,
+  availableChoices,
+  dateRangeField,
+  inDateRange,
+} from "./ui/ClaimSearch";
 import { PaginatedList } from "./ui/PaginatedList";
+import { StatusBadge } from "./ui/StatusBadge";
+import { PlusIcon } from "./ui/Icons";
 
 type Tab = "checked_in" | "checked_out";
+
+const EMPTY_FILTERS = { unit: "", vehicle: "", range: "" };
 
 export function GuestsList() {
   const [status, setStatus] = useState<Tab>("checked_in");
@@ -14,12 +32,17 @@ export function GuestsList() {
   const [canEdit, setCanEdit] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [units, setUnits] = useState<GuestChoice[]>([]);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [draft, setDraft] = useState(EMPTY_FILTERS);
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [reloadKey, setReloadKey] = useState(0);
   const [checkoutId, setCheckoutId] = useState<number | null>(null);
   const [checkingOut, setCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+  const [counts, setCounts] = useState({ checked_in: 0, checked_out: 0 });
 
   useEffect(() => {
     const t = window.setTimeout(() => setSearch(searchInput.trim()), 350);
@@ -29,27 +52,16 @@ export function GuestsList() {
   const loadList = useCallback(() => {
     setLoading(true);
     setError("");
-    const params = new URLSearchParams({
-      status,
-      per_page: "50",
-    });
-    if (search) params.set("search", search);
-    fetch(`/api/wp/guests?${params.toString()}`)
-      .then(async (r) => {
-        const data = (await r.json()) as GuestListResponse & {
-          message?: string;
-        };
-        if (!r.ok) {
+    listGuests({ status, search })
+      .then((data) => {
+        if (!data.ok) {
           setError(data.message || "Could not load guests.");
           setItems([]);
           return;
         }
-        setItems(data.items || []);
-        setCanEdit(Boolean(data.can_edit));
-      })
-      .catch(() => {
-        setError("Network error.");
-        setItems([]);
+        setItems(data.items);
+        setCanEdit(data.can_edit);
+        setCounts((prev) => ({ ...prev, [status]: data.total }));
       })
       .finally(() => setLoading(false));
   }, [status, search]);
@@ -58,133 +70,196 @@ export function GuestsList() {
     loadList();
   }, [loadList, reloadKey]);
 
+  useEffect(() => {
+    countGuests(search).then(setCounts);
+  }, [search, reloadKey]);
+
+  useEffect(() => {
+    loadGuestOptions().then((data) => {
+      if (data?.units?.length) setUnits(data.units);
+    });
+  }, []);
+
   async function confirmCheckout() {
     if (!checkoutId) return;
     setCheckingOut(true);
     setCheckoutError("");
     try {
-      const res = await fetch(`/api/wp/guests/${checkoutId}/checkout`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: "{}",
-      });
-      const data = (await res.json()) as { message?: string };
-      if (!res.ok) {
-        setCheckoutError(data.message || "Could not check out guest.");
+      const data = await checkoutGuest(checkoutId);
+      if (!data.ok) {
+        setCheckoutError(data.message);
         return;
       }
       setCheckoutId(null);
       setReloadKey((k) => k + 1);
-    } catch {
-      setCheckoutError("Network error.");
     } finally {
       setCheckingOut(false);
     }
   }
 
+  const unitOptions = useMemo(
+    () =>
+      availableChoices(
+        units,
+        items.map((item) => ({
+          id: item.guest_unit,
+          label: item.unit_title,
+        }))
+      ),
+    [units, items]
+  );
+  const filterFields = useMemo(
+    () => [
+      ...(unitOptions.length
+        ? [
+            {
+              key: "unit",
+              label: "Unit",
+              placeholder: "All Units",
+              options: unitOptions,
+            },
+          ]
+        : []),
+      {
+        key: "vehicle",
+        label: "Vehicle",
+        placeholder: "All",
+        options: [
+          { id: "yes", label: "Has vehicle" },
+          { id: "no", label: "No vehicle" },
+        ],
+      },
+      dateRangeField(),
+    ],
+    [unitOptions]
+  );
+
+  const visible = useMemo(
+    () =>
+      items.filter((item) => {
+        if (filters.unit && String(item.guest_unit) !== filters.unit) return false;
+        if (filters.vehicle === "yes" && !item.guest_have_vehicle) return false;
+        if (filters.vehicle === "no" && item.guest_have_vehicle) return false;
+        return inDateRange(item.guest_check_in, filters.range);
+      }),
+    [items, filters]
+  );
+  const filterCount = activeFilterCount(filters);
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex rounded-xl border border-[var(--border)] bg-white p-1">
+      <div className="ceo-claim-tabs">
+        {(
+          [
+            { id: "checked_in", label: "Checked in" },
+            { id: "checked_out", label: "Checked out" },
+          ] as const
+        ).map((tab) => (
           <button
+            key={tab.id}
             type="button"
-            className={`rounded-lg px-3 py-2 text-sm font-semibold ${
-              status === "checked_in"
-                ? "bg-[var(--accent)] text-white"
-                : "text-[var(--muted)]"
-            }`}
-            onClick={() => setStatus("checked_in")}
+            className={`ceo-claim-tab${status === tab.id ? " is-active" : ""}`}
+            onClick={() => setStatus(tab.id)}
           >
-            Checked in
+            {tab.label}
+            <span className="ceo-claim-tab__count">
+              {loading && status === tab.id ? "…" : counts[tab.id]}
+            </span>
           </button>
-          <button
-            type="button"
-            className={`rounded-lg px-3 py-2 text-sm font-semibold ${
-              status === "checked_out"
-                ? "bg-[var(--accent)] text-white"
-                : "text-[var(--muted)]"
-            }`}
-            onClick={() => setStatus("checked_out")}
-          >
-            Checked out
-          </button>
-        </div>
-        {canEdit ? (
-          <Link
-            href="/account/guests/new"
-            className="ceo-btn-accent rounded-lg bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-white"
-          >
-            New guest
-          </Link>
-        ) : null}
+        ))}
       </div>
 
-      <label className="block space-y-1.5">
-        <span className="sr-only">Search guests</span>
-        <input
-          type="search"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search name, unit, phone, plate…"
-          className="w-full rounded-xl border border-[var(--border)] bg-white px-3.5 py-3 text-sm text-[var(--ink)] outline-none ring-[var(--accent)] focus:ring-2"
-        />
-      </label>
+      <ClaimSearch
+        query={searchInput}
+        onQuery={setSearchInput}
+        placeholder="Search name, unit, phone, plate…"
+        ariaLabel="Search guests"
+        fields={filterFields}
+        draft={draft}
+        onDraft={(next) => setDraft({ ...EMPTY_FILTERS, ...next })}
+        applied={filters}
+        open={showFilters}
+        onOpenChange={(next) => {
+          if (next) setDraft(filters);
+          setShowFilters(next);
+        }}
+        onClear={() => {
+          setDraft(EMPTY_FILTERS);
+          setFilters(EMPTY_FILTERS);
+        }}
+        onApply={() => {
+          setFilters(draft);
+          setShowFilters(false);
+        }}
+      />
 
-      {loading ? (
-        <Card>
-          <p className="text-sm text-[var(--muted)]">Loading guests…</p>
-        </Card>
+      {showFilters ? null : loading ? (
+        <div className="space-y-3">
+          <div className="ceo-skel h-[92px] rounded-2xl" />
+          <div className="ceo-skel h-[92px] rounded-2xl" />
+        </div>
       ) : error ? (
         <Card>
-          <p className="text-sm text-red-700">{error}</p>
+          <p className="text-sm text-[var(--danger)]">{error}</p>
         </Card>
       ) : (
-        <Card>
-          <PaginatedList
-            items={items}
-            pageSize={5}
-            emptyMessage={
-              search
-                ? "No guests match your search."
-                : status === "checked_in"
-                  ? "No guests currently checked in."
-                  : "No checked-out guests."
-            }
-            getKey={(g) => g.id}
-            renderItem={(g) => (
-              <div className="flex items-start justify-between gap-3 rounded-xl bg-[var(--surface-2)] p-3">
-                <div className="flex min-w-0 flex-1 items-start gap-3">
-                  {g.photos?.[0]?.url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={g.photos[0].url}
-                      alt=""
-                      className="h-12 w-12 shrink-0 rounded-lg object-cover"
-                    />
-                  ) : null}
-                  <div className="min-w-0">
-                    <p className="font-medium">
-                      {g.guest_names || g.title || "Guest"} ·{" "}
-                      {g.unit_title || "Unit"}
-                    </p>
-                    <p className="text-sm text-[var(--muted)]">
-                      {[
-                        g.guest_phone,
-                        g.guest_number > 1 ? `×${g.guest_number}` : "",
-                        g.guest_check_in,
-                        g.guest_license_plate,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
-                  </div>
+        <PaginatedList
+          items={visible}
+          listClassName="ceo-claim-list"
+          emptyIcon={search || filterCount ? "search" : "pass"}
+          emptyMessage={
+            search || filterCount
+              ? "No matching guests"
+              : status === "checked_in"
+                ? "No guests checked in"
+                : "No checked-out guests"
+          }
+          emptySubtitle={
+            search || filterCount
+              ? "Try another search or filter."
+              : status === "checked_in"
+                ? "Active guest passes will show up here."
+                : "Past guests will show up here."
+          }
+          getKey={(g) => g.id}
+          renderItem={(g) => (
+            <div className="ceo-claim-card">
+              <ClaimThumb
+                src={g.photos?.[0]?.url}
+                name={g.guest_names || g.resident_name || g.title}
+              />
+              <div className="min-w-0 flex-1">
+                <p className="ceo-claim-card__title">
+                  {g.guest_names || g.title || "Guest"}
+                </p>
+                <div className="ceo-claim-card__meta">
+                  <span>
+                    {[g.unit_title, g.resident_name].filter(Boolean).join(" · ") ||
+                      "Unit"}
+                  </span>
+                  <span>
+                    {[
+                      g.guest_phone,
+                      g.guest_number > 1 ? `×${g.guest_number}` : "",
+                      g.guest_check_in,
+                      g.guest_license_plate,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
                 </div>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-2">
+                <StatusBadge
+                  label={status === "checked_out" ? "Checked out" : "Checked in"}
+                  short
+                />
                 {canEdit ? (
-                  <div className="flex shrink-0 flex-col items-end gap-2">
+                  <>
                     {status === "checked_in" && !g.guest_check_out ? (
                       <button
                         type="button"
-                        className="text-sm font-semibold text-[var(--accent)]"
+                        className="text-xs font-semibold text-[var(--accent)]"
                         onClick={() => {
                           setCheckoutError("");
                           setCheckoutId(g.id);
@@ -195,16 +270,23 @@ export function GuestsList() {
                     ) : null}
                     <Link
                       href={`/account/guests/${g.id}/edit`}
-                      className="text-sm font-semibold text-[var(--accent)]"
+                      className="text-xs font-semibold text-[var(--accent)]"
                     >
                       Edit
                     </Link>
-                  </div>
+                  </>
                 ) : null}
               </div>
-            )}
-          />
-        </Card>
+            </div>
+          )}
+        />
+      )}
+
+      {showFilters || !canEdit ? null : (
+        <Link href="/account/guests/new" className="ceo-fab">
+          <PlusIcon className="h-4 w-4" />
+          New guest
+        </Link>
       )}
 
       {checkoutId ? (
@@ -213,8 +295,11 @@ export function GuestsList() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="guest-checkout-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setCheckoutId(null);
+          }}
         >
-          <div className="w-full max-w-md space-y-4 rounded-2xl bg-white p-4 shadow-lg">
+          <div className="w-full max-w-md space-y-4 rounded-2xl bg-[var(--surface)] p-4">
             <h2
               id="guest-checkout-title"
               className="font-display text-lg font-semibold"
@@ -225,7 +310,7 @@ export function GuestsList() {
               Set Check Out to now and move this visit to Checked out.
             </p>
             {checkoutError ? (
-              <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="rounded-xl bg-[#3a1c1c] px-3 py-2 text-sm text-[var(--danger)]">
                 {checkoutError}
               </p>
             ) : null}
@@ -240,7 +325,7 @@ export function GuestsList() {
               </button>
               <button
                 type="button"
-                className="ceo-btn-accent flex-1 rounded-xl bg-[var(--accent)] px-3 py-3 text-sm font-semibold text-white disabled:opacity-60"
+                className="ceo-btn-accent flex-1 rounded-xl bg-[var(--accent)] px-3 py-3 text-sm font-semibold disabled:opacity-60"
                 disabled={checkingOut}
                 onClick={confirmCheckout}
               >

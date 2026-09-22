@@ -55,9 +55,9 @@ export const PLAY_STORE_URL = storeLinksForProfile("operations").playUrl;
 export const APP_STORE_URL = storeLinksForProfile("operations").iosUrl;
 
 export function isPlayStoreLive(profile?: AppProfile | null): boolean {
-  return storeLinksForProfile(profile || "operations").playLive;
+  return storeLinksForProfile(profile || "warranty").playLive;
 }
 
 export function isAppStoreLive(profile?: AppProfile | null): boolean {
-  return storeLinksForProfile(profile || "operations").iosLive;
+  return storeLinksForProfile(profile || "warranty").iosLive;
 }

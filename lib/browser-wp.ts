@@ -148,6 +148,12 @@ async function fetchWordPress(
   });
 }
 
+function isLocalAppOrigin(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  return host === "localhost" || host === "127.0.0.1" || host.endsWith(".local");
+}
+
 /** Send /api/wp/* from the phone/browser to WordPress so Vercel IPs are not WAF-blocked. */
 export function installWpDirectFetch() {
   if (typeof window === "undefined" || nativeFetch) return;
@@ -160,17 +166,22 @@ export function installWpDirectFetch() {
 
     const baseUrl = getConnectConfig()?.baseUrl;
     const access = getBrowserAccessToken();
-    if (!baseUrl || !access) {
+    // Local Next can reach *.local WordPress. Direct browser calls hit CORS.
+    if (!baseUrl || !access || isLocalAppOrigin()) {
       return nativeFetch!(input, init);
     }
 
     const wpPath = `/app${target.path}${target.search}`;
-    const res = await fetchWordPress(baseUrl, wpPath, access, input, init);
-    if (res.status !== 401) return res;
+    try {
+      const res = await fetchWordPress(baseUrl, wpPath, access, input, init);
+      if (res.status !== 401) return res;
 
-    const nextAccess = await refreshBrowserSession(baseUrl);
-    if (!nextAccess) return res;
-    return fetchWordPress(baseUrl, wpPath, nextAccess, input, init);
+      const nextAccess = await refreshBrowserSession(baseUrl);
+      if (!nextAccess) return res;
+      return fetchWordPress(baseUrl, wpPath, nextAccess, input, init);
+    } catch {
+      return nativeFetch!(input, init);
+    }
   };
 }
 

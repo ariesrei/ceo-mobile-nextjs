@@ -6,6 +6,7 @@ import "@fontsource/manrope/700.css";
 import { getBuildAppProfile, productName } from "@/lib/app-profile";
 import "./globals.css";
 import { SplashGate } from "@/components/SplashGate";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { WpDirectFetch } from "@/components/WpDirectFetch";
 import { appBrand } from "@/lib/brand";
 
@@ -17,15 +18,16 @@ const product = productName(buildProfile);
 export const metadata: Metadata = {
   title: product,
   description:
-    buildProfile === "warranty"
-      ? "ClaimTrack warranty app for CE OneSource properties"
-      : "Operations mobile app for CE OneSource (headless WordPress)",
+    buildProfile === "operations"
+      ? "Operations mobile app for CE OneSource (headless WordPress)"
+      : "ClaimTrack warranty app for CE OneSource properties",
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  interactiveWidget: "resizes-content",
   themeColor: brand.splashTo,
 };
 
@@ -35,11 +37,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-app-variant={brand.variant} suppressHydrationWarning>
+    <html lang="en" className="dark" data-app-variant={brand.variant} suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
-        <WpDirectFetch />
-        <SplashGate />
-        {children}
+        <ThemeProvider>
+          <WpDirectFetch />
+          <SplashGate />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

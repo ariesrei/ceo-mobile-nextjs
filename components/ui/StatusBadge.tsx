@@ -11,6 +11,7 @@ export function statusTone(
     s.includes("complete") ||
     s.includes("closed") ||
     s.includes("claimed") ||
+    s.includes("checked out") ||
     s.includes("done")
   ) {
     return "done";
@@ -23,6 +24,7 @@ export function statusTone(
     s.includes("pending") ||
     s.includes("open") ||
     s.includes("storage") ||
+    s.includes("checked in") ||
     s.includes("new") ||
     s.includes("approved")
   ) {
@@ -41,6 +43,7 @@ export function shortStatusLabel(label?: string): string {
   const s = raw.toLowerCase();
   if (!raw) return "";
   if (s.includes("progress")) return "In Progress";
+  if (s.includes("await") || s.includes("assign")) return "Awaiting";
   if (s.includes("hold")) return "On Hold";
   if (s.includes("denied") || s.includes("deny")) return "Denied";
   if (s.includes("complete")) return "Completed";

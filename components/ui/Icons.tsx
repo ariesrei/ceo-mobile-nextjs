@@ -114,6 +114,15 @@ export function ChevronRightIcon({ className }: IconProps) {
   );
 }
 
+export function RefreshIcon({ className }: IconProps) {
+  return (
+    <svg {...svgProps} className={className}>
+      <path d="M20 12a8 8 0 1 1-2.2-5.5" />
+      <path d="M20 5v5h-5" />
+    </svg>
+  );
+}
+
 export function ArrowLeftIcon({ className }: IconProps) {
   return (
     <svg {...svgProps} className={className}>

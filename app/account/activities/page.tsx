@@ -5,7 +5,8 @@ export default function ActivitiesPage() {
     <StaffModulePlaceholder
       path="/account/activities"
       title="Activities"
-      accessKey="activities_access"
+      subtitle="Building events"
+      description="Activities is not in the mobile API yet. This screen will list the same events as desktop Activities."
     />
   );
 }

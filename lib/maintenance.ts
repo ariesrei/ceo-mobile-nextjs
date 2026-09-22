@@ -61,5 +61,6 @@ export type MaintenanceOptions = {
   can_edit: boolean;
   current_user: number;
   show_completed_tab?: boolean;
+  is_staff?: boolean;
   default_status_id?: number;
 };

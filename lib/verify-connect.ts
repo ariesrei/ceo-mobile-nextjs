@@ -27,12 +27,21 @@ export function connectVerifyErrorMessage(
   rawBody: string,
   data: ConnectVerifyResult
 ): string {
-  if (data.message) return data.message;
+  if (data.message) return withMobileKeyHint(data.message);
   if (/<!DOCTYPE|<html/i.test(rawBody)) {
     return `Could not reach this property’s connect API (HTTP ${status}). The site blocked the request.`;
   }
   if (status === 404) {
     return "This property URL has no mobile connect API. Include the site path (example: https://demo.ceonesource.com/pacificvista).";
   }
-  return "Invalid security key for this property. Copy the Mobile App Secret Key from that property’s Options → Mobile App tab, then save.";
+  return withMobileKeyHint(
+    "Invalid security key for this property."
+  );
+}
+
+function withMobileKeyHint(message: string): string {
+  if (!/invalid security key/i.test(message) || /Mobile App/i.test(message)) {
+    return message;
+  }
+  return `${message} Copy the Mobile App Secret Key from Options → Mobile App, then Save. A generated key does not work until you save. Desktop key will not work.`;
 }

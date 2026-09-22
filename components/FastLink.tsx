@@ -1,8 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { MouseEvent, ReactNode, useEffect } from "react";
-import { useTransition } from "react";
+import {
+  type AnchorHTMLAttributes,
+  MouseEvent,
+  ReactNode,
+  useEffect,
+  useTransition,
+} from "react";
 
 export function FastLink({
   href,
@@ -10,13 +15,14 @@ export function FastLink({
   children,
   prefetch = false,
   "aria-label": ariaLabel,
+  ...rest
 }: {
   href: string;
   className?: string;
   children: ReactNode;
   prefetch?: boolean;
   "aria-label"?: string;
-}) {
+} & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href" | "className" | "children" | "onClick">) {
   const router = useRouter();
   const [pending, start] = useTransition();
 
@@ -45,6 +51,7 @@ export function FastLink({
       className={`${className || ""}${pending ? " is-pending" : ""}`}
       aria-label={ariaLabel}
       onClick={onClick}
+      {...rest}
     >
       {children}
     </a>

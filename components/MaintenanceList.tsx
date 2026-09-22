@@ -1,29 +1,49 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import type {
-  MaintenanceItem,
-  MaintenanceListResponse,
-  MaintenanceOptions,
-} from "@/lib/maintenance";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { MaintenanceChoice, MaintenanceItem } from "@/lib/maintenance";
+import {
+  listMaintenance,
+  loadMaintenanceOptions,
+  updateMaintenanceStatus,
+} from "@/lib/helpers/maintenance";
+import { ClaimThumb } from "./ClaimThumb";
 import { Card } from "./ui/Card";
+import {
+  ClaimSearch,
+  activeFilterCount,
+  availableChoices,
+  dateRangeField,
+  inDateRange,
+  withUnassigned,
+} from "./ui/ClaimSearch";
 import { PaginatedList } from "./ui/PaginatedList";
 import { StatusBadge } from "./ui/StatusBadge";
 import { MenuSelect } from "./ui/MenuSelect";
+import { PlusIcon } from "./ui/Icons";
 
-type Tab = "internal" | "external" | "completed";
+type Tab = "internal" | "external" | "completed" | "open";
+
+const EMPTY_FILTERS = { type: "", status: "", range: "", assignee: "" };
 
 export function MaintenanceList() {
-  const [status, setStatus] = useState<Tab>("internal");
+  const [status, setStatus] = useState<Tab>("open");
   const [items, setItems] = useState<MaintenanceItem[]>([]);
   const [canEdit, setCanEdit] = useState(false);
   const [showCompletedTab, setShowCompletedTab] = useState(false);
-  const [statuses, setStatuses] = useState<{ id: number; label: string }[]>([]);
+  const [isStaff, setIsStaff] = useState(true);
+  const [types, setTypes] = useState<MaintenanceChoice[]>([]);
+  const [statuses, setStatuses] = useState<MaintenanceChoice[]>([]);
+  const [staff, setStaff] = useState<MaintenanceChoice[]>([]);
+  const [subcontractors, setSubcontractors] = useState<MaintenanceChoice[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [draft, setDraft] = useState(EMPTY_FILTERS);
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [reloadKey, setReloadKey] = useState(0);
   const [statusModalId, setStatusModalId] = useState<number | null>(null);
   const [statusValue, setStatusValue] = useState("");
@@ -38,33 +58,22 @@ export function MaintenanceList() {
   const loadList = useCallback(() => {
     setLoading(true);
     setError("");
-    const params = new URLSearchParams({
-      status,
-      per_page: "50",
-    });
-    if (search) params.set("search", search);
-    fetch(`/api/wp/maintenance?${params.toString()}`)
-      .then(async (r) => {
-        const data = (await r.json()) as MaintenanceListResponse & {
-          message?: string;
-        };
-        if (!r.ok) {
+    listMaintenance({ status, search })
+      .then((data) => {
+        if (!data.ok) {
           setError(data.message || "Could not load maintenance.");
           setItems([]);
           return;
         }
-        setItems(data.items || []);
-        setCanEdit(Boolean(data.can_edit));
-        if (typeof data.show_completed_tab === "boolean") {
-          setShowCompletedTab(data.show_completed_tab);
-          if (!data.show_completed_tab && status === "completed") {
-            setStatus("internal");
-          }
+        setItems(data.items);
+        setCanEdit(data.can_edit);
+        setShowCompletedTab(data.show_completed_tab);
+        setIsStaff(data.is_staff);
+        if (!data.is_staff && (status === "internal" || status === "external")) {
+          setStatus("open");
+        } else if (!data.show_completed_tab && status === "completed") {
+          setStatus(data.is_staff ? "internal" : "open");
         }
-      })
-      .catch(() => {
-        setError("Network error.");
-        setItems([]);
       })
       .finally(() => setLoading(false));
   }, [status, search]);
@@ -74,15 +83,19 @@ export function MaintenanceList() {
   }, [loadList, reloadKey]);
 
   useEffect(() => {
-    fetch("/api/wp/maintenance/options")
-      .then((r) => r.json())
-      .then((data: MaintenanceOptions) => {
-        setStatuses(data.statuses || []);
-        if (typeof data.show_completed_tab === "boolean") {
-          setShowCompletedTab(data.show_completed_tab);
-        }
-      })
-      .catch(() => undefined);
+    loadMaintenanceOptions().then((data) => {
+      if (!data) return;
+      setTypes(data.types || []);
+      setStatuses(data.statuses || []);
+      setStaff(data.staff || []);
+      setSubcontractors(data.subcontractors || []);
+      if (typeof data.show_completed_tab === "boolean") {
+        setShowCompletedTab(data.show_completed_tab);
+      }
+      if (typeof data.is_staff === "boolean") {
+        setIsStaff(data.is_staff);
+      }
+    });
   }, []);
 
   async function confirmStatus() {
@@ -90,138 +103,252 @@ export function MaintenanceList() {
     setSavingStatus(true);
     setStatusError("");
     try {
-      const res = await fetch(`/api/wp/maintenance/${statusModalId}/status`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ maintenance_status: Number(statusValue) }),
-      });
-      const data = (await res.json()) as { message?: string };
-      if (!res.ok) {
-        setStatusError(data.message || "Could not update status.");
+      const data = await updateMaintenanceStatus(
+        statusModalId,
+        Number(statusValue)
+      );
+      if (!data.ok) {
+        setStatusError(data.message);
         return;
       }
       setStatusModalId(null);
       setReloadKey((k) => k + 1);
-    } catch {
-      setStatusError("Network error.");
     } finally {
       setSavingStatus(false);
     }
   }
 
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "internal", label: "Internal" },
-    { id: "external", label: "External" },
-    ...(showCompletedTab
-      ? [{ id: "completed" as const, label: "Completed" }]
-      : []),
-  ];
+  const tabs: { id: Tab; label: string }[] = isStaff
+    ? [
+        { id: "internal", label: "Internal" },
+        { id: "external", label: "External" },
+        ...(showCompletedTab
+          ? [{ id: "completed" as const, label: "Completed" }]
+          : []),
+      ]
+    : [
+        { id: "open", label: "Open" },
+        ...(showCompletedTab
+          ? [{ id: "completed" as const, label: "Completed" }]
+          : []),
+      ];
+
+  const typeOptions = useMemo(
+    () =>
+      availableChoices(
+        types,
+        items.map((item) => ({
+          id: item.maintenance_type,
+          label: item.type_label,
+        }))
+      ),
+    [types, items]
+  );
+  const statusOptions = useMemo(
+    () =>
+      availableChoices(
+        statuses,
+        items.map((item) => ({
+          id: item.maintenance_status,
+          label: item.status_label,
+        }))
+      ),
+    [statuses, items]
+  );
+  const assigneeOptions = useMemo(
+    () =>
+      withUnassigned(
+        availableChoices(
+          [...staff, ...subcontractors],
+          items.flatMap((item) => [
+            { id: item.maintenance_assigned_person, label: item.assigned_name },
+            {
+              id: item.maintenance_sources_subcontractors || "",
+              label: item.subcontractor_name || "",
+            },
+          ])
+        ),
+        items.some(
+          (item) =>
+            !item.maintenance_assigned_person &&
+            !item.maintenance_sources_subcontractors
+        )
+      ),
+    [staff, subcontractors, items]
+  );
+  const filterFields = useMemo(
+    () => [
+      ...(typeOptions.length
+        ? [{ key: "type", label: "Type", placeholder: "All Types", options: typeOptions }]
+        : []),
+      ...(statusOptions.length
+        ? [
+            {
+              key: "status",
+              label: "Status",
+              placeholder: "All Statuses",
+              options: statusOptions,
+            },
+          ]
+        : []),
+      dateRangeField(),
+      ...(assigneeOptions.length
+        ? [
+            {
+              key: "assignee",
+              label: "Assigned To",
+              placeholder: "All",
+              options: assigneeOptions,
+            },
+          ]
+        : []),
+    ],
+    [typeOptions, statusOptions, assigneeOptions]
+  );
+
+  const visible = useMemo(
+    () =>
+      items.filter((item) => {
+        if (filters.type && String(item.maintenance_type) !== filters.type) {
+          return false;
+        }
+        if (filters.status && String(item.maintenance_status) !== filters.status) {
+          return false;
+        }
+        if (filters.assignee === "unassigned" && item.maintenance_assigned_person) {
+          return false;
+        }
+        if (
+          filters.assignee &&
+          filters.assignee !== "unassigned" &&
+          String(item.maintenance_assigned_person || "") !== filters.assignee &&
+          String(item.maintenance_sources_subcontractors || "") !== filters.assignee
+        ) {
+          return false;
+        }
+        return inDateRange(item.maintenance_date_request, filters.range);
+      }),
+    [items, filters]
+  );
+  const filterCount = activeFilterCount(filters);
 
   return (
     <div className="space-y-4">
-      <div className="ceo-toolbar">
-        <div className="ceo-tabs">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              className={status === t.id ? "is-active" : ""}
-              onClick={() => setStatus(t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        <label className="block">
-          <span className="sr-only">Search maintenance</span>
-          <input
-            type="search"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search unit, type, description…"
-            className="ceo-search"
-          />
-        </label>
+      <div className="ceo-claim-tabs">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            className={`ceo-claim-tab${status === t.id ? " is-active" : ""}`}
+            onClick={() => setStatus(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {loading ? (
-        <Card>
-          <p className="text-sm text-[var(--muted)]">Loading maintenance…</p>
-        </Card>
+      <ClaimSearch
+        query={searchInput}
+        onQuery={setSearchInput}
+        placeholder="Search unit, name, request…"
+        ariaLabel="Search maintenance"
+        fields={filterFields}
+        draft={draft}
+        onDraft={setDraft}
+        applied={filters}
+        open={showFilters}
+        onOpenChange={(next) => {
+          if (next) setDraft(filters);
+          setShowFilters(next);
+        }}
+        onClear={() => {
+          setDraft(EMPTY_FILTERS);
+          setFilters(EMPTY_FILTERS);
+        }}
+        onApply={() => {
+          setFilters(draft);
+          setShowFilters(false);
+        }}
+      />
+
+      {showFilters ? null : loading ? (
+        <div className="space-y-3">
+          <div className="ceo-skel h-[92px] rounded-2xl" />
+          <div className="ceo-skel h-[92px] rounded-2xl" />
+        </div>
       ) : error ? (
         <Card>
           <p className="text-sm text-[var(--danger)]">{error}</p>
         </Card>
       ) : (
         <PaginatedList
-          items={items}
-          pageSize={5}
+          items={visible}
+          listClassName="ceo-claim-list"
+          emptyIcon={search || filterCount ? "search" : "inbox"}
           emptyMessage={
-            search
-              ? "No maintenance records match your search."
-              : "No maintenance records."
+            search || filterCount ? "No matching requests" : "No work orders yet"
+          }
+          emptySubtitle={
+            search || filterCount
+              ? "Try another search or filter."
+              : "Submit a request when something needs attention."
           }
           getKey={(m) => m.id}
-            renderItem={(m) => (
-              <div className="ceo-list-card">
-                <div className="flex min-w-0 flex-1 items-start gap-3">
-                  {m.photos?.[0]?.url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={m.photos[0].url}
-                      alt=""
-                      className="h-12 w-12 shrink-0 rounded-lg object-cover"
-                    />
-                  ) : null}
-                  <div className="min-w-0">
-                    <p className="font-semibold">
-                      {m.maintenance_description ||
-                        m.type_label ||
-                        "Work order"}
-                    </p>
-                    <p className="mt-1 text-xs text-[var(--muted)]">
-                      {[
-                        m.unit_title ? `#${m.unit_title}` : "",
-                        m.maintenance_date_request,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex shrink-0 flex-col items-end gap-2">
-                  <StatusBadge label={m.status_label} />
-                  {canEdit ? (
-                    <>
-                      <button
-                        type="button"
-                        className="text-xs font-semibold text-[var(--accent)]"
-                        onClick={() => {
-                          setStatusError("");
-                          setStatusValue(
-                            m.maintenance_status
-                              ? String(m.maintenance_status)
-                              : statuses[0]
-                                ? String(statuses[0].id)
-                                : ""
-                          );
-                          setStatusModalId(m.id);
-                        }}
-                      >
-                        Status
-                      </button>
-                      <Link
-                        href={`/account/maintenance/${m.id}/edit`}
-                        className="text-xs font-semibold text-[var(--accent)]"
-                      >
-                        Edit
-                      </Link>
-                    </>
-                  ) : null}
+          renderItem={(m) => (
+            <div className="ceo-claim-card">
+              <ClaimThumb
+                src={m.photos?.[0]?.url}
+                name={m.request_by_name || m.type_label || m.unit_title}
+              />
+              <div className="min-w-0 flex-1">
+                <p className="ceo-claim-card__title">
+                  {m.maintenance_description || m.type_label || "Work order"}
+                </p>
+                <div className="ceo-claim-card__meta">
+                  <span>
+                    {[
+                      m.type_label,
+                      m.unit_title ? `#${m.unit_title}` : "",
+                      m.maintenance_date_request,
+                      m.assigned_name,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
                 </div>
               </div>
-            )}
+              <div className="flex shrink-0 flex-col items-end gap-2">
+                <StatusBadge label={m.status_label} short />
+                {canEdit ? (
+                  <>
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-[var(--accent)]"
+                      onClick={() => {
+                        setStatusError("");
+                        setStatusValue(
+                          m.maintenance_status
+                            ? String(m.maintenance_status)
+                            : statuses[0]
+                              ? String(statuses[0].id)
+                              : ""
+                        );
+                        setStatusModalId(m.id);
+                      }}
+                    >
+                      Status
+                    </button>
+                    <Link
+                      href={`/account/maintenance/${m.id}/edit`}
+                      className="text-xs font-semibold text-[var(--accent)]"
+                    >
+                      Edit
+                    </Link>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          )}
         />
       )}
 
@@ -230,6 +357,9 @@ export function MaintenanceList() {
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
           role="dialog"
           aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setStatusModalId(null);
+          }}
         >
           <div className="w-full max-w-md space-y-4 rounded-2xl bg-[var(--surface)] p-4">
             <h2 className="font-display text-lg font-semibold">Update status</h2>
@@ -276,11 +406,12 @@ export function MaintenanceList() {
         </div>
       ) : null}
 
-      {canEdit ? (
+      {showFilters || !canEdit ? null : (
         <Link href="/account/maintenance/new" className="ceo-fab">
-          + New request
+          <PlusIcon className="h-4 w-4" />
+          New request
         </Link>
-      ) : null}
+      )}
     </div>
   );
 }

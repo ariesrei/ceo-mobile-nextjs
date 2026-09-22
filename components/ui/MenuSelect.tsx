@@ -64,7 +64,11 @@ export function MenuSelect({
               type="button"
               className="ceo-menu-select__backdrop"
               aria-label="Close menu"
-              onClick={() => setOpen(false)}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setOpen(false);
+              }}
             />
             <div
               id={listId}
@@ -88,7 +92,8 @@ export function MenuSelect({
                         ? "ceo-menu-select__option is-active"
                         : "ceo-menu-select__option"
                     }
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       onChange(String(o.id));
                       setOpen(false);
                     }}

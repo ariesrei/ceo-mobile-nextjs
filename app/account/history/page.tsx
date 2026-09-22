@@ -1,30 +1,32 @@
 import { AppShell } from "@/components/AppShell";
 import { ClientWpRecord } from "@/components/ClientWpRecord";
-import { HistoryLists } from "@/components/HistoryLists";
-import { getServerClientName, requireMenuPath } from "@/lib/server-nav";
+import { HistoryBoard } from "@/components/HistoryBoard";
+import { HistoryView, type HistoryResponse } from "@/components/wp-record-views";
+import { showOpsAssetsUi } from "@/lib/app-profile";
+import {
+  getServerClientBranding,
+  getServerClientName,
+  requireAuth,
+  requireMenuPath,
+} from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
-import type { ReservationItem } from "@/lib/types";
-
-type HistoryResponse = {
-  tabs: {
-    guests?: {
-      enabled: boolean;
-      items: Array<{
-        id: number;
-        names: string;
-        phone: string;
-        check_in: string;
-        check_out: string;
-      }>;
-    };
-    reservations?: {
-      enabled: boolean;
-      items: ReservationItem[];
-    };
-  };
-};
 
 export default async function HistoryPage() {
+  if (showOpsAssetsUi()) {
+    await requireAuth();
+    const branding = await getServerClientBranding();
+    return (
+      <AppShell
+        title="History"
+        layout="community"
+        clientName={branding.name}
+        clientLogo={branding.logo}
+      >
+        <HistoryBoard />
+      </AppShell>
+    );
+  }
+
   await requireMenuPath("/account/history");
   const [result, clientName] = await Promise.all([
     wpFetchServer<HistoryResponse>("/app/history"),
@@ -33,18 +35,12 @@ export default async function HistoryPage() {
 
   return (
     <AppShell title="History" backHref="/account" clientName={clientName}>
-      <ClientWpRecord<HistoryResponse>
+      <ClientWpRecord
         path="/history"
         initial={result.data}
         error={result.error || "Unavailable."}
-      >
-        {(data) => (
-          <HistoryLists
-            guests={data.tabs?.guests}
-            reservations={data.tabs?.reservations}
-          />
-        )}
-      </ClientWpRecord>
+        as={HistoryView}
+      />
     </AppShell>
   );
 }

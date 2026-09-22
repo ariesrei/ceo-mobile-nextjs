@@ -2,22 +2,62 @@
 
 import { FormEvent, ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type {
-  WarrantyChoice,
-  WarrantyItem,
-  WarrantyOptions,
-  WarrantyPhoto,
+import {
+  fromTimeInputValue,
+  toTimeInputValue,
+  type WarrantyChoice,
+  type WarrantyItem,
+  type WarrantyOptions,
+  type WarrantyPhoto,
 } from "@/lib/warranties";
+import { readWarrantySettings } from "@/lib/warranty-settings";
 import { CameraCapturePhotos } from "./CameraCapturePhotos";
 import { FastLink } from "./FastLink";
 import { Button } from "./ui/Button";
+import { ChoiceChips } from "./ui/ChoiceChips";
 import { DateField } from "./ui/DateField";
+import { FieldLabel } from "./ui/FieldLabel";
 import { Input } from "./ui/Input";
 import { Select } from "./ui/Select";
 import { ChevronRightIcon } from "./ui/Icons";
 
 function toSelectOptions(items: WarrantyChoice[]) {
   return items.map((i) => ({ id: i.id, label: i.label }));
+}
+
+function applyLoggedInSubmitter<T extends {
+  warranty_first_name: string;
+  warranty_last_name: string;
+  warranty_email_address: string;
+  warranty_tel_number: string;
+}>(
+  next: T,
+  profile?: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    ceo_email?: string;
+    phone?: string;
+    mobile?: string;
+  }
+) {
+  if (!profile) return next;
+  if (!next.warranty_first_name && profile.first_name) {
+    next.warranty_first_name = profile.first_name;
+  }
+  if (!next.warranty_last_name && profile.last_name) {
+    next.warranty_last_name = profile.last_name;
+  }
+  if (
+    !next.warranty_email_address &&
+    (profile.email || profile.ceo_email)
+  ) {
+    next.warranty_email_address = profile.email || profile.ceo_email || "";
+  }
+  if (!next.warranty_tel_number && (profile.phone || profile.mobile)) {
+    next.warranty_tel_number = profile.phone || profile.mobile || "";
+  }
+  return next;
 }
 
 export function WarrantyForm({
@@ -55,8 +95,8 @@ export function WarrantyForm({
       []
     ).map(String),
     warranty_entry_date: record?.warranty_entry_date || "",
-    warranty_entry_start_time: record?.warranty_entry_start_time || "",
-    warranty_entry_end_time: record?.warranty_entry_end_time || "",
+    warranty_entry_start_time: toTimeInputValue(record?.warranty_entry_start_time),
+    warranty_entry_end_time: toTimeInputValue(record?.warranty_entry_end_time),
     warranty_entry_notes: record?.warranty_entry_notes || "",
   });
   const [error, setError] = useState("");
@@ -75,10 +115,14 @@ export function WarrantyForm({
         setUnits(data.units || []);
         setLocations(data.locations || []);
         setIsStaff(Boolean(data.is_staff));
-        if (!record?.status_label && data.default_status_id) {
-          const match = (data.statuses || []).find(
-            (s) => String(s.id) === String(data.default_status_id)
-          );
+        if (!record?.status_label) {
+          const preferred = readWarrantySettings().defaultStatus;
+          const match =
+            (preferred &&
+              (data.statuses || []).find((s) => String(s.id) === preferred)) ||
+            (data.statuses || []).find(
+              (s) => String(s.id) === String(data.default_status_id)
+            );
           if (match?.label) setStatusLabel(match.label);
         }
         setForm((f) => {
@@ -86,19 +130,8 @@ export function WarrantyForm({
           if (!next.warranty_type && data.types?.[0]) {
             next.warranty_type = String(data.types[0].id);
           }
-          if (!isEdit && !data.is_staff) {
-            if (!next.warranty_first_name && data.profile?.first_name) {
-              next.warranty_first_name = data.profile.first_name;
-            }
-            if (!next.warranty_last_name && data.profile?.last_name) {
-              next.warranty_last_name = data.profile.last_name;
-            }
-            if (!next.warranty_email_address && data.profile?.email) {
-              next.warranty_email_address = data.profile.email;
-            }
-            if (!next.warranty_tel_number && data.profile?.phone) {
-              next.warranty_tel_number = data.profile.phone;
-            }
+          if (!isEdit) {
+            applyLoggedInSubmitter(next, data.profile);
           }
           return next;
         });
@@ -107,38 +140,19 @@ export function WarrantyForm({
   }, [form.warranty_type, isEdit, record?.status_label]);
 
   useEffect(() => {
-    if (isEdit || !isStaff) return;
-    if (!form.warranty_unit) {
-      setForm((f) => ({
-        ...f,
-        warranty_first_name: "",
-        warranty_last_name: "",
-        warranty_email_address: "",
-        warranty_tel_number: "",
-      }));
-      return;
-    }
+    if (isEdit) return;
     let cancelled = false;
-    fetch(
-      `/api/wp/warranties/options?unit_id=${encodeURIComponent(form.warranty_unit)}`
-    )
+    fetch("/api/wp/profile")
       .then((r) => r.json())
-      .then((data: WarrantyOptions) => {
+      .then((profile) => {
         if (cancelled) return;
-        const c = data.unit_contact;
-        setForm((f) => ({
-          ...f,
-          warranty_first_name: c?.first_name || "",
-          warranty_last_name: c?.last_name || "",
-          warranty_email_address: c?.email || "",
-          warranty_tel_number: c?.phone || "",
-        }));
+        setForm((f) => applyLoggedInSubmitter({ ...f }, profile));
       })
       .catch(() => undefined);
     return () => {
       cancelled = true;
     };
-  }, [form.warranty_unit, isEdit, isStaff]);
+  }, [isEdit]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -166,8 +180,12 @@ export function WarrantyForm({
             .map((id) => Number(id))
             .filter((id) => id > 0),
           warranty_entry_date: form.warranty_entry_date,
-          warranty_entry_start_time: form.warranty_entry_start_time,
-          warranty_entry_end_time: form.warranty_entry_end_time,
+          warranty_entry_start_time: fromTimeInputValue(
+            form.warranty_entry_start_time
+          ),
+          warranty_entry_end_time: fromTimeInputValue(
+            form.warranty_entry_end_time
+          ),
           warranty_entry_notes: form.warranty_entry_notes,
           warranty_photo: photos.map((p) => p.id),
         }),
@@ -200,10 +218,6 @@ export function WarrantyForm({
               ...f,
               warranty_type: e.target.value,
               warranty_unit: "",
-              warranty_first_name: "",
-              warranty_last_name: "",
-              warranty_email_address: "",
-              warranty_tel_number: "",
             }))
           }
           options={toSelectOptions(types)}
@@ -276,45 +290,16 @@ export function WarrantyForm({
 
   const description = (
     <>
+      <ChoiceChips
+        label="Locations"
+        options={locations}
+        value={form.warranty_location}
+        onChange={(warranty_location) =>
+          setForm((f) => ({ ...f, warranty_location }))
+        }
+      />
       <label className="block space-y-1.5">
-        <span className="text-sm font-medium text-[var(--muted)]">
-          Locations
-        </span>
-        <div className="max-h-48 space-y-2 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3">
-          {locations.length === 0 ? (
-            <p className="text-sm text-[var(--muted)]">No locations available.</p>
-          ) : (
-            locations.map((loc) => {
-              const id = String(loc.id);
-              const checked = form.warranty_location.includes(id);
-              return (
-                <label
-                  key={id}
-                  className="flex items-center gap-2 text-sm text-[var(--ink)]"
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(e) => {
-                      setForm((f) => ({
-                        ...f,
-                        warranty_location: e.target.checked
-                          ? [...f.warranty_location, id]
-                          : f.warranty_location.filter((x) => x !== id),
-                      }));
-                    }}
-                  />
-                  {loc.label}
-                </label>
-              );
-            })
-          )}
-        </div>
-      </label>
-      <label className="block space-y-1.5">
-        <span className="text-sm font-medium text-[var(--muted)]">
-          Describe your request
-        </span>
+        <FieldLabel label="Describe your request" required />
         <textarea
           name="warranty_describe_the_request"
           required
@@ -352,11 +337,11 @@ export function WarrantyForm({
         value={form.warranty_entry_date}
         onChange={(value) => setForm((f) => ({ ...f, warranty_entry_date: value }))}
       />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="ceo-form-row ceo-form-row--times">
         <Input
           label="Start time"
           name="warranty_entry_start_time"
-          placeholder="9:00 am"
+          type="time"
           value={form.warranty_entry_start_time}
           onChange={(e) =>
             setForm((f) => ({ ...f, warranty_entry_start_time: e.target.value }))
@@ -365,7 +350,7 @@ export function WarrantyForm({
         <Input
           label="End time"
           name="warranty_entry_end_time"
-          placeholder="5:00 pm"
+          type="time"
           value={form.warranty_entry_end_time}
           onChange={(e) =>
             setForm((f) => ({ ...f, warranty_entry_end_time: e.target.value }))

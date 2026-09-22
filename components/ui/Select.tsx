@@ -1,3 +1,4 @@
+import { FieldLabel } from "./FieldLabel";
 import { MenuSelect } from "./MenuSelect";
 
 type Props = {
@@ -23,11 +24,12 @@ export function Select({
   className = "",
   id,
   disabled,
+  required,
 }: Props) {
   const inputId = id || name || label.replace(/\s+/g, "-").toLowerCase();
   return (
     <label className="block space-y-1.5" htmlFor={inputId}>
-      <span className="text-sm font-medium text-[var(--muted)]">{label}</span>
+      <FieldLabel label={label} required={required} />
       <MenuSelect
         id={inputId}
         variant="field"

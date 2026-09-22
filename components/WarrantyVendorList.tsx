@@ -1,14 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type {
-  WarrantyChoice,
-  WarrantyItem,
-  WarrantyListResponse,
-  WarrantyOptions,
-} from "@/lib/warranties";
+import type { WarrantyChoice, WarrantyItem } from "@/lib/warranties";
+import { loadWarrantyClaims, loadWarrantyOptions } from "@/lib/helpers/warranties";
 import { FastLink } from "./FastLink";
-import { Card } from "./ui/Card";
+import { EmptyState } from "./ui/ListState";
 import { SearchIcon, ChevronRightIcon } from "./ui/Icons";
 
 /**
@@ -21,29 +17,22 @@ export function WarrantyVendorList() {
   const [vendors, setVendors] = useState<WarrantyChoice[]>([]);
   const [openItems, setOpenItems] = useState<WarrantyItem[]>([]);
   const [search, setSearch] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/wp/warranties/options?lite=1")
-      .then((r) => r.json() as Promise<WarrantyOptions>)
+    loadWarrantyOptions()
       .then((options) => {
         if (cancelled) return;
-        setVendors(options.subcontractors || []);
+        setVendors(options?.subcontractors || []);
         setLoading(false);
-        fetch("/api/wp/warranties?status=open&per_page=20")
-          .then((r) => r.json() as Promise<WarrantyListResponse>)
-          .then((open) => {
-            if (!cancelled) setOpenItems(open.items || []);
-          })
-          .catch(() => undefined);
+        return loadWarrantyClaims("open", { perPage: 20 });
+      })
+      .then((open) => {
+        if (!cancelled && open) setOpenItems(open.items);
       })
       .catch(() => {
-        if (!cancelled) {
-          setError("Could not load vendors.");
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       });
     return () => {
       cancelled = true;
@@ -87,10 +76,6 @@ export function WarrantyVendorList() {
           <div className="ceo-skel h-[60px] rounded-2xl" />
           <div className="ceo-skel h-[60px] rounded-2xl" />
         </div>
-      ) : error ? (
-        <Card>
-          <p className="text-sm text-[var(--danger)]">{error}</p>
-        </Card>
       ) : visible.length ? (
         <nav className="ceo-warranty-menu">
           {visible.map((vendor) => {
@@ -115,9 +100,16 @@ export function WarrantyVendorList() {
           })}
         </nav>
       ) : (
-        <p className="ceo-empty-note">
-          {vendors.length ? "No vendors match your search." : "No vendors yet."}
-        </p>
+        <EmptyState
+          icon={vendors.length ? "search" : "inbox"}
+          subtitle={
+            vendors.length
+              ? "Try another name."
+              : "Subcontractors will show up here."
+          }
+        >
+          {vendors.length ? "No matching vendors" : "No vendors yet"}
+        </EmptyState>
       )}
     </div>
   );

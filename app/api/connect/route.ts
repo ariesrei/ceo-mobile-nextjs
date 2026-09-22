@@ -1,11 +1,9 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import {
-  COOKIE_APP_PROFILE,
   COOKIE_SITE_PROFILE,
   getBuildAppProfile,
-  normalizeAppProfile,
   profileMismatchMessage,
+  resolveSiteAppProfile,
   type AppProfile,
 } from "@/lib/app-profile";
 import { normalizeSecurityKey } from "@/lib/connect";
@@ -34,11 +32,7 @@ const cookieOpts = {
 };
 
 async function resolveBuildProfile(): Promise<AppProfile | null> {
-  const jar = await cookies();
-  return (
-    normalizeAppProfile(jar.get(COOKIE_APP_PROFILE)?.value) ||
-    getBuildAppProfile()
-  );
+  return getBuildAppProfile();
 }
 
 function brandingFromBody(body: Record<string, unknown>): ConnectVerifyResult {
@@ -54,7 +48,7 @@ function brandingFromBody(body: Record<string, unknown>): ConnectVerifyResult {
 }
 
 async function finishConnect(baseUrl: string, data: ConnectVerifyResult) {
-  const siteProfile = normalizeAppProfile(data.app_profile) || "operations";
+  const siteProfile = resolveSiteAppProfile(data.app_profile, baseUrl);
   const buildProfile = await resolveBuildProfile();
   if (buildProfile && buildProfile !== siteProfile) {
     return NextResponse.json(

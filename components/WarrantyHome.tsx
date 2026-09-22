@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { appVariant } from "@/lib/brand";
+import { getBuildAppProfile } from "@/lib/app-profile";
+import {
+  emptyWarrantySummary,
+  loadWarrantySummary,
+} from "@/lib/helpers/warranties";
 import type { WarrantySummary } from "@/lib/warranties";
 import { BottomNav } from "./BottomNav";
 import { FastLink } from "./FastLink";
@@ -50,7 +54,6 @@ function readCache(): { at: number; stats: WarrantySummary } | null {
 export function WarrantyHome() {
   const brand = useWarrantyBrand();
   const [stats, setStats] = useState<WarrantySummary>(EMPTY_STATS);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [greeting, setGreeting] = useState("Good morning,");
 
@@ -65,26 +68,14 @@ export function WarrantyHome() {
       setStats(warm.stats);
       setLoading(false);
     }
-    fetch("/api/wp/warranties/summary")
-      .then(async (res) => {
-        const data = (await res.json()) as WarrantySummary & { message?: string };
-        if (!res.ok) throw new Error(data.message || "Could not load warranty home.");
-        return data;
-      })
+    loadWarrantySummary()
       .then((next) => {
         if (cancelled) return;
-        const stats: WarrantySummary = {
-          open: Number(next.open) || 0,
-          in_progress: Number(next.in_progress) || 0,
-          closed: Number(next.closed) || 0,
-          assigned: Number(next.assigned) || 0,
-          expiring: Number(next.expiring) || 0,
-        };
-        setStats(stats);
-        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), stats }));
+        setStats(next);
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), stats: next }));
       })
-      .catch((err: Error) => {
-        if (!cancelled && !warm) setError(err.message || "Could not load warranty home.");
+      .catch(() => {
+        if (!cancelled && !warm) setStats(emptyWarrantySummary());
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -96,7 +87,7 @@ export function WarrantyHome() {
 
   const name = (brand.firstName || "").trim() || "there";
   const property = splitPropertyName(brand.name);
-  const fromOperations = appVariant() === "operations";
+  const fromOperations = getBuildAppProfile() === "operations";
 
   return (
     <div className="ceo-app ceo-warranty ceo-warranty-home mx-auto min-h-dvh w-full pb-28">
@@ -148,110 +139,118 @@ export function WarrantyHome() {
         </header>
 
         <div className="ceo-warranty-hero__greeting">
-          <p className="text-[18px] text-white/85">{greeting}</p>
-          <p className="mt-0.5 text-[34px] font-medium leading-none tracking-tight text-white">
-            {name}
-          </p>
+          <p className="ceo-warranty-hero__hello">{greeting}</p>
+          <p className="ceo-warranty-hero__name">{name}</p>
         </div>
       </section>
 
       <div className="ceo-warranty-sheet">
-        {error ? (
-          <p className="mb-4 text-sm text-[var(--danger)]">{error}</p>
-        ) : null}
-
-        <section className="ceo-warranty-overview">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold">Warranty Overview</p>
-            <span className="ceo-warranty-overview__period">This Month</span>
+        {loading ? (
+          <div
+            className="ceo-warranty-home-skel"
+            role="status"
+            aria-label="Loading warranty home"
+          >
+            <div className="ceo-skel h-[124px] rounded-[1.25rem]" />
+            <div className="ceo-skel h-[52px] rounded-[1.15rem]" />
+            <div className="ceo-skel h-[58px] rounded-2xl" />
+            <div className="ceo-skel h-[58px] rounded-2xl" />
+            <div className="ceo-skel h-[58px] rounded-2xl" />
           </div>
-          <div className="ceo-warranty-stats">
-            <FastLink
-              href="/account/warranties/claims?tab=open"
-              prefetch={false}
-              className="ceo-warranty-stat"
-            >
-              <span className="ceo-warranty-stat__n">{loading ? "—" : stats.open}</span>
-              <span className="ceo-warranty-stat__l">Open</span>
-            </FastLink>
-            <FastLink
-              href="/account/warranties/claims?tab=progress"
-              prefetch={false}
-              className="ceo-warranty-stat"
-            >
-              <span className="ceo-warranty-stat__n">
-                {loading ? "—" : stats.in_progress}
-              </span>
-              <span className="ceo-warranty-stat__l">In Progress</span>
-            </FastLink>
-            <FastLink
-              href="/account/warranties/claims?tab=closed"
-              prefetch={false}
-              className="ceo-warranty-stat"
-            >
-              <span className="ceo-warranty-stat__n">{loading ? "—" : stats.closed}</span>
-              <span className="ceo-warranty-stat__l">Closed</span>
-            </FastLink>
-          </div>
-        </section>
+        ) : (
+          <>
+            <section className="ceo-warranty-overview">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold">Warranty Overview</p>
+                <span className="ceo-warranty-overview__period">This Month</span>
+              </div>
+              <div className="ceo-warranty-stats">
+                <FastLink
+                  href="/account/warranties/claims?tab=open"
+                  prefetch={false}
+                  className="ceo-warranty-stat"
+                >
+                  <span className="ceo-warranty-stat__n">{stats.open}</span>
+                  <span className="ceo-warranty-stat__l">Open</span>
+                </FastLink>
+                <FastLink
+                  href="/account/warranties/claims?tab=progress"
+                  prefetch={false}
+                  className="ceo-warranty-stat"
+                >
+                  <span className="ceo-warranty-stat__n">{stats.in_progress}</span>
+                  <span className="ceo-warranty-stat__l">In Progress</span>
+                </FastLink>
+                <FastLink
+                  href="/account/warranties/claims?tab=closed"
+                  prefetch={false}
+                  className="ceo-warranty-stat"
+                >
+                  <span className="ceo-warranty-stat__n">{stats.closed}</span>
+                  <span className="ceo-warranty-stat__l">Closed</span>
+                </FastLink>
+              </div>
+            </section>
 
-        <FastLink href="/account/warranties/new" prefetch={false} className="ceo-warranty-new">
-          <PlusIcon className="h-4 w-4" />
-          New Claim
-        </FastLink>
+            <FastLink href="/account/warranties/new" prefetch={false} className="ceo-warranty-new">
+              <PlusIcon className="h-4 w-4" />
+              New Claim
+            </FastLink>
 
-        <nav className="ceo-warranty-menu ceo-warranty-menu--home">
-          <FastLink
-            href="/account/warranties/claims"
-            prefetch={false}
-            className="ceo-warranty-menu__row"
-          >
-            <span className="ceo-warranty-menu__icon">
-              <ClipboardIcon className="h-[18px] w-[18px]" />
-            </span>
-            <span className="ceo-warranty-menu__label">My Claims</span>
-          </FastLink>
-          <FastLink
-            href="/account/warranties/claims?tab=assigned"
-            prefetch={false}
-            className="ceo-warranty-menu__row"
-          >
-            <span className="ceo-warranty-menu__icon">
-              <UsersIcon className="h-[18px] w-[18px]" />
-            </span>
-            <span className="ceo-warranty-menu__label">Assigned to Subs</span>
-          </FastLink>
-          <FastLink
-            href="/account/warranties/claims?tab=expiring"
-            prefetch={false}
-            className="ceo-warranty-menu__row"
-          >
-            <span className="ceo-warranty-menu__icon">
-              <ClockIcon className="h-[18px] w-[18px]" />
-            </span>
-            <span className="ceo-warranty-menu__label">Expiring Warranties</span>
-          </FastLink>
-          <FastLink
-            href="/account/warranties/claims?filters=1"
-            prefetch={false}
-            className="ceo-warranty-menu__row"
-          >
-            <span className="ceo-warranty-menu__icon">
-              <FilterIcon className="h-[18px] w-[18px]" />
-            </span>
-            <span className="ceo-warranty-menu__label">Search & Filters</span>
-          </FastLink>
-          <FastLink
-            href="/account/warranties/reports"
-            prefetch={false}
-            className="ceo-warranty-menu__row"
-          >
-            <span className="ceo-warranty-menu__icon">
-              <ChartIcon className="h-[18px] w-[18px]" />
-            </span>
-            <span className="ceo-warranty-menu__label">Reports</span>
-          </FastLink>
-        </nav>
+            <nav className="ceo-warranty-menu ceo-warranty-menu--home">
+              <FastLink
+                href="/account/warranties/claims"
+                prefetch={false}
+                className="ceo-warranty-menu__row"
+              >
+                <span className="ceo-warranty-menu__icon">
+                  <ClipboardIcon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="ceo-warranty-menu__label">My Claims</span>
+              </FastLink>
+              <FastLink
+                href="/account/warranties/claims?tab=assigned"
+                prefetch={false}
+                className="ceo-warranty-menu__row"
+              >
+                <span className="ceo-warranty-menu__icon">
+                  <UsersIcon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="ceo-warranty-menu__label">Assigned to Subs</span>
+              </FastLink>
+              <FastLink
+                href="/account/warranties/claims?tab=expiring"
+                prefetch={false}
+                className="ceo-warranty-menu__row"
+              >
+                <span className="ceo-warranty-menu__icon">
+                  <ClockIcon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="ceo-warranty-menu__label">Expiring Warranties</span>
+              </FastLink>
+              <FastLink
+                href="/account/warranties/claims?filters=1"
+                prefetch={false}
+                className="ceo-warranty-menu__row"
+              >
+                <span className="ceo-warranty-menu__icon">
+                  <FilterIcon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="ceo-warranty-menu__label">Search & Filters</span>
+              </FastLink>
+              <FastLink
+                href="/account/warranties/reports"
+                prefetch={false}
+                className="ceo-warranty-menu__row"
+              >
+                <span className="ceo-warranty-menu__icon">
+                  <ChartIcon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="ceo-warranty-menu__label">Reports</span>
+              </FastLink>
+            </nav>
+          </>
+        )}
       </div>
 
       <BottomNav variant="warranty" />

@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { MessagingMessage, MessagingThreadResponse } from "@/lib/messaging";
 import { Card } from "./ui/Card";
+import { EmptyState, ListSkeleton } from "./ui/ListState";
 
 export function MessageThread({
   conversationId,
@@ -87,7 +88,7 @@ export function MessageThread({
   }
 
   if (loading) {
-    return <p className="text-sm text-[var(--muted)]">Loading conversation…</p>;
+    return <ListSkeleton rows={4} height={64} />;
   }
 
   return (
@@ -118,9 +119,13 @@ export function MessageThread({
             );
           })
         ) : (
-          <p className="px-2 py-6 text-center text-sm text-[var(--muted)]">
-            No messages yet. Write a reply below.
-          </p>
+          <EmptyState
+            icon="chat"
+            compact
+            subtitle="Write a reply below to start this thread."
+          >
+            No messages yet
+          </EmptyState>
         )}
       </div>
       <form className="flex gap-2" onSubmit={send}>

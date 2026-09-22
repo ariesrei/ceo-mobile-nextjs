@@ -1,20 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type {
-  WarrantyChoice,
-  WarrantyItem,
-  WarrantyListResponse,
-  WarrantyOptions,
+import { useEffect, useMemo, useState } from "react";
+import type { WarrantyChoice, WarrantyItem } from "@/lib/warranties";
+import {
+  isWarrantyClosed,
+  isWarrantyExpiring,
+  isWarrantyInProgress,
 } from "@/lib/warranties";
-import { isWarrantyExpiring, isWarrantyInProgress } from "@/lib/warranties";
+import { loadWarrantyClaims, loadWarrantyOptions } from "@/lib/helpers/warranties";
 import { ClaimThumb, claimContactName, claimMetaLines, claimThumbSrc } from "./ClaimThumb";
 import { FastLink } from "./FastLink";
-import { Card } from "./ui/Card";
 import { PaginatedList } from "./ui/PaginatedList";
 import { StatusBadge } from "./ui/StatusBadge";
-import { MenuSelect } from "./ui/MenuSelect";
-import { CalendarIcon, FilterIcon, PlusIcon, SearchIcon } from "./ui/Icons";
+import {
+  ClaimSearch,
+  availableChoices,
+  dateRangeField,
+  inDateRange,
+  withUnassigned,
+} from "./ui/ClaimSearch";
+import { PlusIcon } from "./ui/Icons";
 
 type Tab = "open" | "progress" | "closed" | "assigned" | "expiring";
 
@@ -22,13 +27,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "open", label: "Open" },
   { id: "progress", label: "In Progress" },
   { id: "closed", label: "Closed" },
-];
-
-const RANGES: { id: string; label: string; days: number }[] = [
-  { id: "7", label: "Last 7 Days", days: 7 },
-  { id: "30", label: "Last 30 Days", days: 30 },
-  { id: "90", label: "Last 90 Days", days: 90 },
-  { id: "365", label: "Last 12 Months", days: 365 },
 ];
 
 const EMPTY_FILTERS = { type: "", status: "", range: "", assignee: "" };
@@ -48,19 +46,13 @@ function parseTab(value?: string): Tab {
 }
 
 function inRange(item: WarrantyItem, rangeId: string): boolean {
-  if (!rangeId) return true;
-  const days = RANGES.find((r) => r.id === rangeId)?.days;
-  if (!days) return true;
-  const created = new Date(item.created_date);
-  if (Number.isNaN(created.getTime())) return true;
-  const floor = new Date();
-  floor.setDate(floor.getDate() - days);
-  return created >= floor;
+  return inDateRange(item.created_date, rangeId);
 }
 
-function matchesTab(item: WarrantyItem, tab: Tab, closedIds: Set<number>): boolean {
-  if (tab === "closed") return closedIds.has(item.id);
-  if (closedIds.has(item.id)) return false;
+function matchesTab(item: WarrantyItem, tab: Tab): boolean {
+  const closed = isWarrantyClosed(item);
+  if (tab === "closed") return closed;
+  if (closed) return false;
   if (tab === "progress") return isWarrantyInProgress(item);
   if (tab === "assigned") return Boolean(item.is_assigned);
   if (tab === "expiring") return isWarrantyExpiring(item);
@@ -84,7 +76,6 @@ export function WarrantyList({
   const [statuses, setStatuses] = useState<WarrantyChoice[]>([]);
   const [subcontractors, setSubcontractors] = useState<WarrantyChoice[]>([]);
   const [optionsLoaded, setOptionsLoaded] = useState(false);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -99,46 +90,36 @@ export function WarrantyList({
     return () => window.clearTimeout(t);
   }, [searchInput]);
 
-  const load = useCallback(async (status: "open" | "closed", term: string) => {
-    const params = new URLSearchParams({ status, per_page: "20" });
-    if (term) params.set("search", term);
-    const res = await fetch(`/api/wp/warranties?${params.toString()}`);
-    const data = (await res.json()) as WarrantyListResponse & { message?: string };
-    if (!res.ok) throw new Error(data.message || "Could not load warranties.");
-    return data;
-  }, []);
-
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    setError("");
-    load("open", search)
-      .then((open) => {
+    Promise.all([
+      loadWarrantyClaims("open", { search, perPage: 50 }),
+      loadWarrantyClaims("closed", { search, perPage: 50 }),
+    ])
+      .then(([open, closed]) => {
         if (cancelled) return;
-        setOpenItems(open.items || []);
-        setLoading(false);
-        return load("closed", search);
+        setOpenItems(open.items);
+        setClosedItems(closed.items);
       })
-      .then((closed) => {
-        if (cancelled || !closed) return;
-        setClosedItems(closed.items || []);
-      })
-      .catch((err: Error) => {
+      .catch(() => {
         if (cancelled) return;
-        setError(err.message || "Network error.");
         setOpenItems([]);
-        setLoading(false);
+        setClosedItems([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [load, search]);
+  }, [search]);
 
   useEffect(() => {
     if (optionsLoaded) return;
-    fetch("/api/wp/warranties/options?lite=1")
-      .then((r) => r.json())
-      .then((data: WarrantyOptions) => {
+    loadWarrantyOptions()
+      .then((data) => {
+        if (!data) return;
         setTypes(data.types || []);
         setStatuses(data.statuses || []);
         setSubcontractors(data.subcontractors || []);
@@ -146,11 +127,6 @@ export function WarrantyList({
       })
       .catch(() => undefined);
   }, [optionsLoaded]);
-
-  const closedIds = useMemo(
-    () => new Set(closedItems.map((w) => w.id)),
-    [closedItems]
-  );
 
   const all = useMemo(() => {
     const seen = new Set<number>();
@@ -160,6 +136,72 @@ export function WarrantyList({
       return true;
     });
   }, [openItems, closedItems]);
+
+  const typeOptions = useMemo(
+    () =>
+      availableChoices(
+        types,
+        all.map((item) => ({
+          id: item.warranty_type,
+          label: item.type_label,
+        }))
+      ),
+    [types, all]
+  );
+  const statusOptions = useMemo(
+    () =>
+      availableChoices(
+        statuses,
+        all.map((item) => ({
+          id: item.warranty_status,
+          label: item.status_label,
+        }))
+      ),
+    [statuses, all]
+  );
+  const assigneeOptions = useMemo(
+    () =>
+      withUnassigned(
+        availableChoices(
+          subcontractors,
+          all.map((item) => ({
+            id: item.warranty_sources_subcontractors || "",
+            label: item.subcontractor_name || "",
+          }))
+        ),
+        all.some((item) => !item.warranty_sources_subcontractors)
+      ),
+    [subcontractors, all]
+  );
+  const filterFields = useMemo(
+    () => [
+      ...(typeOptions.length
+        ? [{ key: "type", label: "Type", placeholder: "All Types", options: typeOptions }]
+        : []),
+      ...(statusOptions.length
+        ? [
+            {
+              key: "status",
+              label: "Status",
+              placeholder: "All Statuses",
+              options: statusOptions,
+            },
+          ]
+        : []),
+      dateRangeField(),
+      ...(assigneeOptions.length
+        ? [
+            {
+              key: "assignee",
+              label: "Assigned To",
+              placeholder: "All",
+              options: assigneeOptions,
+            },
+          ]
+        : []),
+    ],
+    [typeOptions, statusOptions, assigneeOptions]
+  );
 
   const filtered = useMemo(
     () =>
@@ -185,16 +227,16 @@ export function WarrantyList({
 
   const counts = useMemo(
     () => ({
-      open: filtered.filter((w) => matchesTab(w, "open", closedIds)).length,
-      progress: filtered.filter((w) => matchesTab(w, "progress", closedIds)).length,
-      closed: filtered.filter((w) => matchesTab(w, "closed", closedIds)).length,
+      open: filtered.filter((w) => matchesTab(w, "open")).length,
+      progress: filtered.filter((w) => matchesTab(w, "progress")).length,
+      closed: filtered.filter((w) => matchesTab(w, "closed")).length,
     }),
-    [filtered, closedIds]
+    [filtered]
   );
 
   const visible = useMemo(
-    () => filtered.filter((w) => matchesTab(w, tab, closedIds)),
-    [filtered, tab, closedIds]
+    () => filtered.filter((w) => matchesTab(w, tab)),
+    [filtered, tab]
   );
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
@@ -225,94 +267,29 @@ export function WarrantyList({
         </p>
       ) : null}
 
-      <div className="ceo-claim-search-row">
-        <label className="ceo-claim-search">
-          <span className="ceo-claim-search__icon-wrap" aria-hidden>
-            <SearchIcon className="ceo-claim-search__icon" />
-          </span>
-          <input
-            type="search"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search unit, name, request…"
-            aria-label="Search claims"
-          />
-        </label>
-        <button
-          type="button"
-          className={`ceo-claim-search__filter${showFilters ? " is-active" : ""}`}
-          aria-label="Filters"
-          aria-expanded={showFilters}
-          onClick={() => {
-            setDraft(filters);
-            setShowFilters((v) => !v);
-          }}
-        >
-          <FilterIcon className="h-[18px] w-[18px]" />
-          {activeFilterCount ? (
-            <span className="ceo-claim-search__dot" aria-hidden />
-          ) : null}
-        </button>
-      </div>
-
-      {showFilters ? (
-        <div className="ceo-claim-filters">
-          <FilterRow
-            label="Type"
-            value={draft.type}
-            placeholder="All Types"
-            options={types}
-            onChange={(type) => setDraft((d) => ({ ...d, type }))}
-          />
-          <FilterRow
-            label="Status"
-            value={draft.status}
-            placeholder="All Statuses"
-            options={statuses}
-            onChange={(status) => setDraft((d) => ({ ...d, status }))}
-          />
-          <FilterRow
-            label="Date Range"
-            value={draft.range}
-            placeholder="Last 30 Days"
-            options={RANGES.map((r) => ({ id: r.id, label: r.label }))}
-            trailing
-            onChange={(range) => setDraft((d) => ({ ...d, range }))}
-          />
-          <FilterRow
-            label="Assigned To"
-            value={draft.assignee}
-            placeholder="All"
-            options={[
-              { id: "unassigned", label: "Unassigned" },
-              ...subcontractors,
-            ]}
-            onChange={(assignee) => setDraft((d) => ({ ...d, assignee }))}
-          />
-          <div className="ceo-claim-filter-actions">
-            <button
-              type="button"
-              className="ceo-btn-outline"
-              onClick={() => {
-                setDraft(EMPTY_FILTERS);
-                setFilters(EMPTY_FILTERS);
-              }}
-            >
-              Clear
-            </button>
-            <button
-              type="button"
-              className="ceo-btn-solid"
-              onClick={() => {
-                setFilters(draft);
-                setShowFilters(false);
-              }}
-            >
-              Apply
-            </button>
-          </div>
-        </div>
-      ) : null}
+      <ClaimSearch
+        query={searchInput}
+        onQuery={setSearchInput}
+        placeholder="Search unit, name, request…"
+        ariaLabel="Search claims"
+        fields={filterFields}
+        draft={draft}
+        onDraft={setDraft}
+        applied={filters}
+        open={showFilters}
+        onOpenChange={(next) => {
+          if (next) setDraft(filters);
+          setShowFilters(next);
+        }}
+        onClear={() => {
+          setDraft(EMPTY_FILTERS);
+          setFilters(EMPTY_FILTERS);
+        }}
+        onApply={() => {
+          setFilters(draft);
+          setShowFilters(false);
+        }}
+      />
 
       {showFilters ? null : loading ? (
         <div className="space-y-3">
@@ -320,19 +297,21 @@ export function WarrantyList({
           <div className="ceo-skel h-[92px] rounded-2xl" />
           <div className="ceo-skel h-[92px] rounded-2xl" />
         </div>
-      ) : error ? (
-        <Card>
-          <p className="text-sm text-[var(--danger)]">{error}</p>
-        </Card>
       ) : (
         <PaginatedList
           items={visible}
           pageSize={6}
           listClassName="ceo-claim-list"
+          emptyIcon={search || activeFilterCount ? "search" : "inbox"}
           emptyMessage={
             search || activeFilterCount
-              ? "No claims match your search."
-              : "No claims yet."
+              ? "No matching claims"
+              : "No claims yet"
+          }
+          emptySubtitle={
+            search || activeFilterCount
+              ? "Try another search or filter."
+              : "New claims will show up here."
           }
           getKey={(w) => w.id}
           renderItem={(w) => {
@@ -354,8 +333,8 @@ export function WarrantyList({
                   <p className="ceo-claim-card__title">{title}</p>
                   {meta.length ? (
                     <div className="ceo-claim-card__meta">
-                      {meta.map((line) => (
-                        <p key={line}>{line}</p>
+                      {meta.map((line, i) => (
+                        <span key={`${i}-${line}`}>{line}</span>
                       ))}
                     </div>
                   ) : null}
@@ -375,39 +354,6 @@ export function WarrantyList({
           New Claim
         </FastLink>
       )}
-    </div>
-  );
-}
-
-function FilterRow({
-  label,
-  value,
-  placeholder,
-  options,
-  onChange,
-  trailing = false,
-}: {
-  label: string;
-  value: string;
-  placeholder: string;
-  options: { id: string | number; label: string }[];
-  onChange: (value: string) => void;
-  trailing?: boolean;
-}) {
-  return (
-    <div className="ceo-claim-filter">
-      <span className="ceo-claim-filter__label">{label}</span>
-      <div className="ceo-claim-filter__value">
-        <MenuSelect
-          value={value}
-          onChange={onChange}
-          options={options}
-          placeholder={placeholder}
-          variant="inline"
-          aria-label={label}
-        />
-        {trailing ? <CalendarIcon className="ceo-claim-filter__cal" /> : null}
-      </div>
     </div>
   );
 }

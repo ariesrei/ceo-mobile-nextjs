@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { COOKIE_APP_PROFILE, COOKIE_SITE_PROFILE } from "./app-profile";
+import { refreshWpTokens } from "./auth-session";
 import { fetchErrorMessage, serverFetch } from "./server-fetch";
 import type { ConnectConfig } from "./types";
 import { publicWpErrorMessage } from "./wp-error";
@@ -82,9 +83,15 @@ async function wpFetchServerImpl<T>(
   init: RequestInit = {}
 ): Promise<{ data?: T; error?: string; status: number }> {
   const connect = await getServerConnect();
-  const token = await getAccessToken();
+  const jar = await cookies();
+  let token = jar.get(COOKIE_ACCESS)?.value || "";
+  const refresh = jar.get(COOKIE_REFRESH)?.value || "";
   if (!connect?.baseUrl) {
     return { error: "Property not connected.", status: 400 };
+  }
+  if (!token && refresh) {
+    const tokens = await refreshWpTokens(connect.baseUrl, refresh).catch(() => null);
+    token = tokens?.access_token || "";
   }
   if (!token) {
     return { error: "Not authenticated.", status: 401 };
@@ -104,6 +111,13 @@ async function wpFetchServerImpl<T>(
   let res: Response;
   try {
     res = await serverFetch(url, { ...init, headers, cache: "no-store" });
+    if (res.status === 401 && refresh) {
+      const tokens = await refreshWpTokens(connect.baseUrl, refresh).catch(() => null);
+      if (tokens?.access_token) {
+        headers.set("Authorization", `Bearer ${tokens.access_token}`);
+        res = await serverFetch(url, { ...init, headers, cache: "no-store" });
+      }
+    }
   } catch (err) {
     return { error: fetchErrorMessage(err, url), status: 502 };
   }

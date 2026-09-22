@@ -1,0 +1,26 @@
+---
+description: Every app list/page must show a skeleton while loading and a real empty state — never leftover list lines.
+globs: "**/*.{tsx,jsx}"
+alwaysApply: true
+---
+
+# Loading and empty states
+
+Do not render list chrome (ul, dividers, `li + li` borders, pagination bars) until there are items.
+
+```tsx
+// BAD — empty list / leftover lines while fetching
+const [items, setItems] = useState([]);
+return items.length ? <ul>{...}</ul> : <p>No items.</p>;
+
+// GOOD
+if (loading) return <ListSkeleton rows={3} />;
+if (!items.length) return <EmptyState>No items yet.</EmptyState>;
+return <ul>{items.map(...)}</ul>;
+```
+
+- Use `ListSkeleton` + `EmptyState` from `components/ui/ListState.tsx`.
+- First paint uses card skeletons (`ListSkeleton`). `LoadingDots` are only for scroll load-more after data is already on screen.
+- Never flash the empty sentence during load.
+- Never leave a bordered empty `<ul>` or divider when the list is empty.
+- Applies to Operations and Warranty screens.

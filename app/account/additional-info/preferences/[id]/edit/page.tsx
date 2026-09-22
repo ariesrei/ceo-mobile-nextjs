@@ -1,7 +1,6 @@
 import { AppShell } from "@/components/AppShell";
-import { Card } from "@/components/ui/Card";
 import { ClientWpRecord } from "@/components/ClientWpRecord";
-import { PreferenceForm } from "@/components/PreferenceForm";
+import { PreferenceEditView } from "@/components/wp-record-views";
 import type { PreferenceItem } from "@/lib/additional-info";
 import { getServerClientName, requireMenuPath } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
@@ -23,17 +22,12 @@ export default async function EditPreferencePage({ params }: Props) {
       backHref="/account/additional-info"
       clientName={clientName}
     >
-      <ClientWpRecord<PreferenceItem>
+      <ClientWpRecord
         path={`/additional-info/preferences/${id}`}
         initial={result.data}
         error={result.error || "Preference not found."}
-      >
-        {(preference) => (
-          <Card>
-            <PreferenceForm preference={preference} />
-          </Card>
-        )}
-      </ClientWpRecord>
+        as={PreferenceEditView}
+      />
     </AppShell>
   );
 }
