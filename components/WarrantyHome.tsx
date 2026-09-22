@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { getBuildAppProfile } from "@/lib/app-profile";
+import {
+  emptyWarrantySummary,
+  loadWarrantySummary,
+} from "@/lib/helpers/warranties";
 import type { WarrantySummary } from "@/lib/warranties";
 import { BottomNav } from "./BottomNav";
 import { FastLink } from "./FastLink";
@@ -50,7 +54,6 @@ function readCache(): { at: number; stats: WarrantySummary } | null {
 export function WarrantyHome() {
   const brand = useWarrantyBrand();
   const [stats, setStats] = useState<WarrantySummary>(EMPTY_STATS);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [greeting, setGreeting] = useState("Good morning,");
 
@@ -65,26 +68,14 @@ export function WarrantyHome() {
       setStats(warm.stats);
       setLoading(false);
     }
-    fetch("/api/wp/warranties/summary")
-      .then(async (res) => {
-        const data = (await res.json()) as WarrantySummary & { message?: string };
-        if (!res.ok) throw new Error(data.message || "Could not load warranty home.");
-        return data;
-      })
+    loadWarrantySummary()
       .then((next) => {
         if (cancelled) return;
-        const stats: WarrantySummary = {
-          open: Number(next.open) || 0,
-          in_progress: Number(next.in_progress) || 0,
-          closed: Number(next.closed) || 0,
-          assigned: Number(next.assigned) || 0,
-          expiring: Number(next.expiring) || 0,
-        };
-        setStats(stats);
-        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), stats }));
+        setStats(next);
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), stats: next }));
       })
-      .catch((err: Error) => {
-        if (!cancelled && !warm) setError(err.message || "Could not load warranty home.");
+      .catch(() => {
+        if (!cancelled && !warm) setStats(emptyWarrantySummary());
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -154,10 +145,6 @@ export function WarrantyHome() {
       </section>
 
       <div className="ceo-warranty-sheet">
-        {error ? (
-          <p className="mb-4 text-sm text-[var(--danger)]">{error}</p>
-        ) : null}
-
         {loading ? (
           <div
             className="ceo-warranty-home-skel"

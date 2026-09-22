@@ -5,7 +5,8 @@ export default function ContactsPage() {
     <StaffModulePlaceholder
       path="/account/contacts"
       title="Contacts"
-      accessKey="contacts_access"
+      subtitle="Residents and staff"
+      description="The contacts directory is not in the mobile API yet. This screen will list the same people as desktop All Contacts."
     />
   );
 }

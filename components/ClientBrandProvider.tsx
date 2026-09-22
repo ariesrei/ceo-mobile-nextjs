@@ -12,9 +12,14 @@ import { getConnectConfig, saveConnectConfig } from "@/lib/connect";
 type Branding = {
   name: string;
   logo: string;
+  hero: string;
 };
 
-const ClientBrandContext = createContext<Branding>({ name: "", logo: "" });
+const ClientBrandContext = createContext<Branding>({
+  name: "",
+  logo: "",
+  hero: "",
+});
 
 export function useClientBrand(): Branding {
   return useContext(ClientBrandContext);
@@ -23,18 +28,21 @@ export function useClientBrand(): Branding {
 export function ClientBrandProvider({
   name = "",
   logo = "",
+  hero = "",
   children,
 }: {
   name?: string;
   logo?: string;
+  hero?: string;
   children: ReactNode;
 }) {
   const value = useMemo(
     () => ({
       name: name.trim(),
       logo: logo.trim(),
+      hero: hero.trim(),
     }),
-    [name, logo]
+    [name, logo, hero]
   );
 
   useEffect(() => {

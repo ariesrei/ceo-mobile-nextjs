@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { applyAuthCookies, refreshWpTokens } from "@/lib/auth-session";
 import { fetchErrorMessage, serverFetch } from "@/lib/server-fetch";
+import { publicWpErrorMessage } from "@/lib/wp-error";
 import {
   apiUrl,
   COOKIE_ACCESS,
@@ -64,10 +65,17 @@ async function proxy(request: Request, ctx: Ctx) {
     }
 
     const payload = await res.text();
-    const response = new NextResponse(payload, {
-      status: res.status,
-      headers: { "Content-Type": "application/json" },
-    });
+    let data: unknown = {};
+    let status = res.status;
+    try {
+      data = payload ? JSON.parse(payload) : {};
+    } catch {
+      data = {
+        message: publicWpErrorMessage(payload, `Request failed (${res.status})`),
+      };
+      if (status < 400) status = 502;
+    }
+    const response = NextResponse.json(data, { status });
     if (freshTokens) {
       applyAuthCookies(response, freshTokens);
     }

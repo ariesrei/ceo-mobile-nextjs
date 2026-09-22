@@ -57,10 +57,18 @@ async function fileToJpegDataUri(file: File): Promise<string> {
 export function ProfileAvatarField({
   avatar,
   initials,
+  uploadUrl = "/api/wp/profile/media",
+  parentId,
+  title = "Profile photo",
+  subtitle = "Photo changes are submitted for staff review.",
   onPendingChange,
 }: {
   avatar?: string;
   initials: string;
+  uploadUrl?: string;
+  parentId?: number;
+  title?: string;
+  subtitle?: string;
   onPendingChange?: (pending: { id: number; url: string } | null) => void;
 }) {
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -76,10 +84,13 @@ export function ProfileAvatarField({
     setMessage("");
     try {
       const image = await fileToJpegDataUri(file);
-      const res = await fetch("/api/wp/profile/media", {
+      const res = await fetch(uploadUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image }),
+        body: JSON.stringify({
+          image,
+          ...(parentId ? { parent_id: parentId, pet_id: parentId } : {}),
+        }),
       });
       const data = (await res.json()) as {
         id?: number;
@@ -133,10 +144,10 @@ export function ProfileAvatarField({
             {uploading ? "…" : "Edit"}
           </button>
         </div>
-        <p className="mt-3 text-sm font-semibold">Profile photo</p>
-        <p className="text-xs text-[var(--muted)]">
-          Photo changes are submitted for staff review.
-        </p>
+        <p className="mt-3 text-sm font-semibold">{title}</p>
+        {subtitle ? (
+          <p className="text-xs text-[var(--muted)]">{subtitle}</p>
+        ) : null}
       </div>
 
       <input

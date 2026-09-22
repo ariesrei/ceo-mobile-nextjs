@@ -15,6 +15,7 @@ export default async function AccountLayout({
     <ClientBrandProvider
       name={branding?.name ?? ""}
       logo={branding?.logo ?? ""}
+      hero={branding?.hero ?? ""}
     >
       <SessionKeepAlive />
       {children}

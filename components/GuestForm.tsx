@@ -52,7 +52,13 @@ function splitDateTime(value?: string): { date: string; time: string } {
   };
 }
 
-export function GuestForm({ guest }: { guest?: GuestItem | null }) {
+export function GuestForm({
+  guest,
+  afterSaveHref = "/account/guests",
+}: {
+  guest?: GuestItem | null;
+  afterSaveHref?: string;
+}) {
   const router = useRouter();
   const isEdit = Boolean(guest?.id);
   const checkInSplit = splitDateTime(guest?.guest_check_in);
@@ -129,7 +135,7 @@ export function GuestForm({ guest }: { guest?: GuestItem | null }) {
       }
       setMessage(data.message || "Saved.");
       setTimeout(() => {
-        router.push("/account/guests");
+        router.push(afterSaveHref);
         router.refresh();
       }, 700);
     } catch {

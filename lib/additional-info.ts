@@ -11,6 +11,8 @@ export type PetItem = {
   pet_weight: string;
   service_animal: boolean;
   desc: string;
+  photo_id?: number;
+  photo?: string;
   status?: string;
   pending?: boolean;
 };
@@ -27,6 +29,8 @@ export type VehicleItem = {
   expiry: string;
   electric_vehicle: boolean;
   active: boolean;
+  photo_id?: number;
+  photo?: string;
   status?: string;
   pending?: boolean;
 };

@@ -40,7 +40,7 @@ export function WarrantyAssignForm({ record }: { record: WarrantyItem }) {
         }
       })
       .catch(() => undefined);
-  }, []);
+  }, [record.warranty_sources_subcontractors]);
 
   const vendors = useMemo(() => {
     const term = vendorSearch.trim().toLowerCase();

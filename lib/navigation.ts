@@ -1,5 +1,5 @@
 import {
-  isWarrantyProfile,
+  getBuildAppProfile,
   normalizeAppProfile,
   WARRANTY_MENU_ALLOWLIST,
   type AppProfile,
@@ -8,6 +8,42 @@ import type { MenuItem, NavigationResponse } from "./types";
 
 /** Temporary: hide these modules for staff and residents. */
 export const HIDDEN_MENU_IDS: string[] = [];
+
+/** Ops modules that `/account/warranties/[id]` must not treat as a claim id. */
+export const ACCOUNT_MODULE_PATHS: Record<string, string> = {
+  parcels: "/account/parcels",
+  guests: "/account/guests",
+  maintenance: "/account/maintenance",
+  messaging: "/account/messaging",
+  contacts: "/account/contacts",
+  activities: "/account/activities",
+  events: "/account/events",
+  announcements: "/account/announcements",
+  classifieds: "/account/classifieds",
+  reservations: "/account/reservations",
+  amenities: "/account/reservations",
+  entry_pass: "/account/entry-pass",
+  profile: "/account/profile",
+  additional_info: "/account/additional-info",
+  assets: "/account/assets",
+  documents: "/account/documents",
+  preferences: "/account/preferences",
+  actions: "/account/actions",
+  pay: "/account/pay",
+  pay_balance: "/account/pay",
+  edit_profile: "/account/edit",
+  history: "/account/history",
+  warranties: "/account/warranties",
+};
+
+export function menuHref(item: { id: string; path?: string }): string {
+  const raw = (item.path || "").trim();
+  if (raw.startsWith("/account/")) return raw;
+  if (ACCOUNT_MODULE_PATHS[item.id]) return ACCOUNT_MODULE_PATHS[item.id];
+  if (raw.startsWith("/")) return raw;
+  if (raw) return `/account/${raw.replace(/^account\//, "")}`;
+  return "/account";
+}
 
 function isHiddenMenu(item: MenuItem): boolean {
   return (
@@ -36,12 +72,13 @@ export function applyMenuVisibility(
   menus: MenuItem[],
   profile?: AppProfile | null
 ): MenuItem[] {
-  const warranty = isWarrantyProfile(profile);
+  const warrantyLocked =
+    getBuildAppProfile() === "warranty" || profile === "warranty";
   return menus.map((m) => {
     if (isHiddenMenu(m)) {
       return { ...m, enabled: false };
     }
-    if (warranty && !isWarrantyAllowed(m)) {
+    if (warrantyLocked && !isWarrantyAllowed(m)) {
       return { ...m, enabled: false };
     }
     return m;

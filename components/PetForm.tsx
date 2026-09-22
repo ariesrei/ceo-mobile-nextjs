@@ -3,12 +3,19 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Choice, PetItem } from "@/lib/additional-info";
+import { ProfileAvatarField } from "./ProfileAvatarField";
 import { Button } from "./ui/Button";
 import { DateField } from "./ui/DateField";
 import { Input } from "./ui/Input";
 import { Select } from "./ui/Select";
 
-export function PetForm({ pet }: { pet?: PetItem | null }) {
+export function PetForm({
+  pet,
+  afterSaveHref = "/account/additional-info",
+}: {
+  pet?: PetItem | null;
+  afterSaveHref?: string;
+}) {
   const router = useRouter();
   const isEdit = Boolean(pet?.id);
   const [types, setTypes] = useState<Choice[]>([]);
@@ -22,6 +29,7 @@ export function PetForm({ pet }: { pet?: PetItem | null }) {
     desc: pet?.desc || "",
     service_animal: Boolean(pet?.service_animal),
   });
+  const [photoId, setPhotoId] = useState(pet?.photo_id || 0);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,6 +56,7 @@ export function PetForm({ pet }: { pet?: PetItem | null }) {
         body: JSON.stringify({
           ...form,
           type_id: Number(form.type_id),
+          ...(photoId > 0 ? { photo_id: photoId } : {}),
         }),
       });
       const data = await res.json();
@@ -57,7 +66,7 @@ export function PetForm({ pet }: { pet?: PetItem | null }) {
       }
       setMessage(data.message || "Saved.");
       setTimeout(() => {
-        router.push("/account/additional-info");
+        router.push(afterSaveHref);
         router.refresh();
       }, 700);
     } catch {
@@ -69,6 +78,21 @@ export function PetForm({ pet }: { pet?: PetItem | null }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
+      <ProfileAvatarField
+        avatar={pet?.photo}
+        initials={(pet?.pet_name || form.pet_name || "P").slice(0, 1).toUpperCase()}
+        uploadUrl="/api/wp/additional-info/media"
+        parentId={pet?.id}
+        title="Pet photo"
+        subtitle={
+          isEdit
+            ? "This is the picture on their card. Save the form after you change it."
+            : "Add a picture for their card."
+        }
+        onPendingChange={(next) => {
+          if (next?.id) setPhotoId(next.id);
+        }}
+      />
       <Select
         label="Pet type"
         name="type_id"
@@ -111,7 +135,7 @@ export function PetForm({ pet }: { pet?: PetItem | null }) {
           Notes / description
         </span>
         <textarea
-          className="w-full rounded-xl border border-[var(--border)] bg-white px-3.5 py-3 outline-none ring-[var(--accent)] focus:ring-2"
+          className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 text-[var(--ink)] outline-none ring-[var(--accent)] focus:ring-2"
           rows={3}
           value={form.desc}
           onChange={(e) => setForm({ ...form, desc: e.target.value })}

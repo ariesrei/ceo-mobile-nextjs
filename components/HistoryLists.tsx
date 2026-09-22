@@ -2,6 +2,7 @@
 
 import type { ReservationItem } from "@/lib/types";
 import { Card } from "./ui/Card";
+import { EmptyState } from "./ui/ListState";
 import { PaginatedList } from "./ui/PaginatedList";
 
 type GuestItem = {
@@ -25,8 +26,10 @@ export function HistoryLists({ guests, reservations }: Props) {
         <h2 className="mb-3 font-semibold">Guests</h2>
         <PaginatedList
           items={guests?.items || []}
-          pageSize={5}
-          emptyMessage="No guest history."
+          emptyCompact
+          emptyIcon="pass"
+          emptyMessage="No guest history"
+          emptySubtitle="Past guests will show up here."
           getKey={(g) => g.id}
           renderItem={(g) => (
             <div className="rounded-xl bg-[var(--surface-2)] p-3">
@@ -45,8 +48,10 @@ export function HistoryLists({ guests, reservations }: Props) {
           <h2 className="mb-3 font-semibold">Reservations</h2>
           <PaginatedList
             items={reservations.items}
-            pageSize={5}
-            emptyMessage="No reservation history."
+            emptyCompact
+            emptyIcon="calendar"
+            emptyMessage="No reservation history"
+            emptySubtitle="Past reservations will show up here."
             getKey={(r) => r.id}
             renderItem={(r) => (
               <div className="rounded-xl bg-[var(--surface-2)] p-3">
@@ -61,9 +66,9 @@ export function HistoryLists({ guests, reservations }: Props) {
       ) : null}
 
       {!guests?.enabled && !reservations?.enabled ? (
-        <Card>
-          <p className="text-sm text-[var(--muted)]">No history modules are enabled.</p>
-        </Card>
+        <EmptyState icon="inbox" subtitle="Nothing is turned on for this property.">
+          No history to show
+        </EmptyState>
       ) : null}
     </div>
   );

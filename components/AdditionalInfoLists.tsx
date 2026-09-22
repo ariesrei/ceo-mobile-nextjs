@@ -14,15 +14,17 @@ export function AdditionalInfoLists({ sections }: { sections: AdditionalSections
             <h2 className="font-semibold">Pets</h2>
             <Link
               href="/account/additional-info/pets/new"
-              className="ceo-btn-accent rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-white"
+              className="ceo-btn-accent rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold"
             >
               Add pet
             </Link>
           </div>
           <PaginatedList
             items={sections.pets.items}
-            pageSize={5}
-            emptyMessage="No pets on file."
+            emptyCompact
+            emptyIcon="pet"
+            emptyMessage="No pets yet"
+            emptySubtitle="Add a pet to keep their details on file."
             getKey={(pet) => pet.id}
             renderItem={(pet) => (
               <div className="flex items-start justify-between gap-3 rounded-xl bg-[var(--surface-2)] p-3">
@@ -55,15 +57,17 @@ export function AdditionalInfoLists({ sections }: { sections: AdditionalSections
             <h2 className="font-semibold">Vehicles</h2>
             <Link
               href="/account/additional-info/vehicles/new"
-              className="ceo-btn-accent rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-white"
+              className="ceo-btn-accent rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold"
             >
               Add vehicle
             </Link>
           </div>
           <PaginatedList
             items={sections.vehicles.items}
-            pageSize={5}
-            emptyMessage="No vehicles on file."
+            emptyCompact
+            emptyIcon="vehicle"
+            emptyMessage="No vehicles yet"
+            emptySubtitle="Add a vehicle to keep its details on file."
             getKey={(v) => v.id}
             renderItem={(v) => (
               <div className="flex items-start justify-between gap-3 rounded-xl bg-[var(--surface-2)] p-3">
@@ -98,15 +102,17 @@ export function AdditionalInfoLists({ sections }: { sections: AdditionalSections
             <h2 className="font-semibold">Preferences</h2>
             <Link
               href="/account/additional-info/preferences/new"
-              className="ceo-btn-accent rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-white"
+              className="ceo-btn-accent rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold"
             >
               Add preference
             </Link>
           </div>
           <PaginatedList
             items={sections.preferences.items}
-            pageSize={5}
-            emptyMessage="No preferences on file."
+            emptyCompact
+            emptyIcon="inbox"
+            emptyMessage="No preferences yet"
+            emptySubtitle="Add a preference to keep it on file."
             getKey={(p) => p.id}
             renderItem={(p) => (
               <div className="flex items-start justify-between gap-3 rounded-xl bg-[var(--surface-2)] p-3">

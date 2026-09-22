@@ -2,6 +2,7 @@ import { AppShell } from "@/components/AppShell";
 import { ClientWpRecord } from "@/components/ClientWpRecord";
 import { MaintenanceView } from "@/components/wp-record-views";
 import type { MaintenanceItem } from "@/lib/maintenance";
+import { showOpsAssetsUi } from "@/lib/app-profile";
 import { getServerClientBranding, requireMenuPath } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
 
@@ -15,11 +16,14 @@ export default async function EditMaintenancePage({ params }: Props) {
     getServerClientBranding(),
   ]);
 
+  const community = showOpsAssetsUi();
+
   return (
     <AppShell
       title="Edit maintenance"
-      subtitle="Update request details"
+      subtitle={community ? undefined : "Update request details"}
       backHref="/account/maintenance"
+      layout={community ? "community" : "default"}
       clientName={branding.name}
       clientLogo={branding.logo}
     >

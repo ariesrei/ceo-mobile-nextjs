@@ -16,6 +16,7 @@
 # next.js
 /.next/
 /.next-warranty/
+/.next-check/
 /out/
 
 # local Cursor audit (not the app)

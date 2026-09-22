@@ -1,23 +1,45 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import type { ParcelItem, ParcelListResponse, ParcelOptions } from "@/lib/parcels";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ParcelChoice, ParcelItem } from "@/lib/parcels";
+import {
+  listParcels,
+  loadParcelOptions,
+  signOutParcel,
+} from "@/lib/helpers/parcels";
+import { ClaimThumb } from "./ClaimThumb";
 import { Card } from "./ui/Card";
+import {
+  ClaimSearch,
+  activeFilterCount,
+  availableChoices,
+  dateRangeField,
+  inDateRange,
+  withUnassigned,
+} from "./ui/ClaimSearch";
+import { ListSkeleton } from "./ui/ListState";
 import { PaginatedList } from "./ui/PaginatedList";
+import { useHeldLoading } from "./ui/useLoadMore";
 import { StatusBadge } from "./ui/StatusBadge";
 import { MenuSelect } from "./ui/MenuSelect";
+import { PlusIcon } from "./ui/Icons";
 
 /** Set true later to show Claimed history tab again. */
 const SHOW_CLAIMED_TAB = false;
+
+const EMPTY_FILTERS = { type: "", range: "", assignee: "" };
 
 export function ParcelsList() {
   const [status, setStatus] = useState<"storage" | "claimed">("storage");
   const [items, setItems] = useState<ParcelItem[]>([]);
   const [canEdit, setCanEdit] = useState(false);
   const [pickupTypes, setPickupTypes] = useState<string[]>(["Quick Signout"]);
+  const [parcelTypes, setParcelTypes] = useState<ParcelChoice[]>([]);
+  const [staff, setStaff] = useState<ParcelChoice[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const pending = useHeldLoading(loading);
   const [signoutId, setSignoutId] = useState<number | null>(null);
   const [pickupType, setPickupType] = useState("Quick Signout");
   const [signingOut, setSigningOut] = useState(false);
@@ -25,6 +47,9 @@ export function ParcelsList() {
   const [reloadKey, setReloadKey] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [draft, setDraft] = useState(EMPTY_FILTERS);
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
 
   const activeStatus = SHOW_CLAIMED_TAB ? status : "storage";
 
@@ -36,29 +61,15 @@ export function ParcelsList() {
   const loadList = useCallback(() => {
     setLoading(true);
     setError("");
-    const params = new URLSearchParams({
-      status: activeStatus,
-      per_page: "50",
-    });
-    if (search) {
-      params.set("search", search);
-    }
-    fetch(`/api/wp/parcels?${params.toString()}`)
-      .then(async (r) => {
-        const data = (await r.json()) as ParcelListResponse & {
-          message?: string;
-        };
-        if (!r.ok) {
+    listParcels({ status: activeStatus, search })
+      .then((data) => {
+        if (!data.ok) {
           setError(data.message || "Could not load parcels.");
           setItems([]);
           return;
         }
-        setItems(data.items || []);
-        setCanEdit(Boolean(data.can_edit));
-      })
-      .catch(() => {
-        setError("Network error.");
-        setItems([]);
+        setItems(data.items);
+        setCanEdit(data.can_edit);
       })
       .finally(() => setLoading(false));
   }, [activeStatus, search]);
@@ -68,17 +79,17 @@ export function ParcelsList() {
   }, [loadList, reloadKey]);
 
   useEffect(() => {
-    fetch("/api/wp/parcels/options")
-      .then((r) => r.json())
-      .then((data: ParcelOptions) => {
-        if (data.pickup_types?.length) {
-          setPickupTypes(data.pickup_types);
-          setPickupType((prev) =>
-            data.pickup_types!.includes(prev) ? prev : data.pickup_types![0]
-          );
-        }
-      })
-      .catch(() => undefined);
+    loadParcelOptions().then((data) => {
+      if (!data) return;
+      setParcelTypes(data.parcel_types || []);
+      setStaff(data.staff || []);
+      if (data.pickup_types?.length) {
+        setPickupTypes(data.pickup_types);
+        setPickupType((prev) =>
+          data.pickup_types!.includes(prev) ? prev : data.pickup_types![0]
+        );
+      }
+    });
   }, []);
 
   async function confirmSignout() {
@@ -86,144 +97,222 @@ export function ParcelsList() {
     setSigningOut(true);
     setSignoutError("");
     try {
-      const res = await fetch(`/api/wp/parcels/${signoutId}/signout`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ parcel_pickup_type: pickupType }),
-      });
-      const data = (await res.json()) as { message?: string };
-      if (!res.ok) {
-        setSignoutError(data.message || "Could not sign out parcel.");
+      const data = await signOutParcel(signoutId, pickupType);
+      if (!data.ok) {
+        setSignoutError(data.message);
         return;
       }
       setSignoutId(null);
       setReloadKey((k) => k + 1);
-    } catch {
-      setSignoutError("Network error.");
     } finally {
       setSigningOut(false);
     }
   }
 
+  const typeOptions = useMemo(
+    () =>
+      availableChoices(
+        parcelTypes,
+        items.map((item) => ({
+          id: item.parcel_type || item.parcel_type_other || item.parcel_type_label,
+          label: item.parcel_type_label || item.parcel_type_other,
+        }))
+      ),
+    [parcelTypes, items]
+  );
+  const receivedOptions = useMemo(
+    () =>
+      withUnassigned(
+        availableChoices(
+          staff,
+          items.map((item) => ({
+            id: item.parcel_received_by,
+            label: item.received_by_name,
+          }))
+        ),
+        items.some((item) => !item.parcel_received_by)
+      ),
+    [staff, items]
+  );
+  const filterFields = useMemo(
+    () => [
+      ...(typeOptions.length
+        ? [
+            {
+              key: "type",
+              label: "Type",
+              placeholder: "All Types",
+              options: typeOptions,
+            },
+          ]
+        : []),
+      dateRangeField(),
+      ...(receivedOptions.length
+        ? [
+            {
+              key: "assignee",
+              label: "Received By",
+              placeholder: "All",
+              options: receivedOptions,
+            },
+          ]
+        : []),
+    ],
+    [typeOptions, receivedOptions]
+  );
+
+  const visible = useMemo(
+    () =>
+      items.filter((item) => {
+        const typeId = item.parcel_type
+          ? String(item.parcel_type)
+          : item.parcel_type_other || item.parcel_type_label;
+        if (filters.type && typeId !== filters.type) return false;
+        if (filters.assignee === "unassigned" && item.parcel_received_by) return false;
+        if (
+          filters.assignee &&
+          filters.assignee !== "unassigned" &&
+          String(item.parcel_received_by || "") !== filters.assignee
+        ) {
+          return false;
+        }
+        return inDateRange(item.parcel_delivered_on, filters.range);
+      }),
+    [items, filters]
+  );
+  const filterCount = activeFilterCount(filters);
+
   return (
     <div className="space-y-4">
-      <div className="ceo-toolbar">
-        {SHOW_CLAIMED_TAB ? (
-          <div className="ceo-tabs">
-            <button
-              type="button"
-              className={status === "storage" ? "is-active" : ""}
-              onClick={() => setStatus("storage")}
-            >
-              In storage
-            </button>
-            <button
-              type="button"
-              className={status === "claimed" ? "is-active" : ""}
-              onClick={() => setStatus("claimed")}
-            >
-              Claimed
-            </button>
-          </div>
-        ) : null}
+      {SHOW_CLAIMED_TAB ? (
+        <div className="ceo-claim-tabs">
+          <button
+            type="button"
+            className={`ceo-claim-tab${status === "storage" ? " is-active" : ""}`}
+            onClick={() => setStatus("storage")}
+          >
+            In storage
+          </button>
+          <button
+            type="button"
+            className={`ceo-claim-tab${status === "claimed" ? " is-active" : ""}`}
+            onClick={() => setStatus("claimed")}
+          >
+            Claimed
+          </button>
+        </div>
+      ) : null}
 
-        <label className="block">
-          <span className="sr-only">Search parcels</span>
-          <input
-            type="search"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search unit, resident, barcode…"
-            className="ceo-search"
-          />
-        </label>
-      </div>
+      <ClaimSearch
+        query={searchInput}
+        onQuery={setSearchInput}
+        placeholder="Search unit, resident, barcode…"
+        ariaLabel="Search parcels"
+        fields={filterFields}
+        draft={draft}
+        onDraft={(next) => setDraft({ ...EMPTY_FILTERS, ...next })}
+        applied={filters}
+        open={showFilters}
+        onOpenChange={(next) => {
+          if (next) setDraft(filters);
+          setShowFilters(next);
+        }}
+        onClear={() => {
+          setDraft(EMPTY_FILTERS);
+          setFilters(EMPTY_FILTERS);
+        }}
+        onApply={() => {
+          setFilters(draft);
+          setShowFilters(false);
+        }}
+      />
 
-      {loading ? (
-        <Card>
-          <p className="text-sm text-[var(--muted)]">Loading parcels…</p>
-        </Card>
+      {showFilters ? null : pending ? (
+        <ListSkeleton rows={3} height={92} />
       ) : error ? (
         <Card>
           <p className="text-sm text-[var(--danger)]">{error}</p>
         </Card>
       ) : (
         <PaginatedList
-          items={items}
-          pageSize={5}
+          items={visible}
+          listClassName="ceo-claim-list"
+          emptyIcon={search || filterCount ? "search" : "inbox"}
           emptyMessage={
-            search
-              ? "No parcels match your search."
+            search || filterCount
+              ? "No matching packages"
               : activeStatus === "storage"
-                ? "No parcels in storage."
-                : "No claimed parcels."
+                ? "No packages in storage"
+                : "No claimed packages"
+          }
+          emptySubtitle={
+            search || filterCount
+              ? "Try another search or filter."
+              : activeStatus === "storage"
+                ? "Deliveries waiting for pickup will show up here."
+                : "Claimed packages will show up here."
           }
           getKey={(p) => p.id}
-            renderItem={(p) => (
-              <div className="ceo-list-card">
-                <div className="flex min-w-0 flex-1 items-start gap-3">
-                  {p.photos?.[0]?.url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={p.photos[0].url}
-                      alt=""
-                      className="h-12 w-12 shrink-0 rounded-lg object-cover"
-                    />
-                  ) : null}
-                  <div className="min-w-0">
-                    <p className="font-semibold">
-                      {p.resident_name || "Resident"}
-                    </p>
-                    <p className="mt-1 text-xs text-[var(--muted)]">
-                      {[
-                        p.unit_title,
-                        p.parcel_type_label || p.parcel_type_other,
-                        p.parcel_delivered_on,
-                        p.parcel_number > 1 ? `×${p.parcel_number}` : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex shrink-0 flex-col items-end gap-2">
-                  <StatusBadge
-                    label={
-                      p.status === "in_storage" || !p.parcel_pickup_type
-                        ? "In storage"
-                        : "Claimed"
-                    }
-                  />
-                  {canEdit ? (
-                    <>
-                      {p.status === "in_storage" || !p.parcel_pickup_type ? (
-                        <button
-                          type="button"
-                          className="text-xs font-semibold text-[var(--accent)]"
-                          onClick={() => {
-                            setSignoutError("");
-                            setPickupType(
-                              pickupTypes.includes("Quick Signout")
-                                ? "Quick Signout"
-                                : pickupTypes[0] || "Quick Signout"
-                            );
-                            setSignoutId(p.id);
-                          }}
-                        >
-                          Sign out
-                        </button>
-                      ) : null}
-                      <Link
-                        href={`/account/parcels/${p.id}/edit`}
-                        className="text-xs font-semibold text-[var(--accent)]"
-                      >
-                        Edit
-                      </Link>
-                    </>
-                  ) : null}
+          renderItem={(p) => (
+            <div className="ceo-claim-card">
+              <ClaimThumb src={p.photos?.[0]?.url} name={p.resident_name} />
+              <div className="min-w-0 flex-1">
+                <p className="ceo-claim-card__title">
+                  {p.resident_name || "Resident"}
+                </p>
+                <div className="ceo-claim-card__meta">
+                  <span>
+                    {[
+                      p.unit_title,
+                      p.parcel_type_label || p.parcel_type_other,
+                      p.parcel_delivered_on,
+                      p.parcel_number > 1 ? `×${p.parcel_number}` : "",
+                      p.comments_parcel_barcode,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
                 </div>
               </div>
-            )}
+              <div className="flex shrink-0 flex-col items-end gap-2">
+                <StatusBadge
+                  label={
+                    p.status === "in_storage" || !p.parcel_pickup_type
+                      ? "In storage"
+                      : "Claimed"
+                  }
+                  short
+                />
+                {canEdit ? (
+                  <>
+                    {p.status === "in_storage" || !p.parcel_pickup_type ? (
+                      <button
+                        type="button"
+                        className="text-xs font-semibold text-[var(--accent)]"
+                        onClick={() => {
+                          setSignoutError("");
+                          setPickupType(
+                            pickupTypes.includes("Quick Signout")
+                              ? "Quick Signout"
+                              : pickupTypes[0] || "Quick Signout"
+                          );
+                          setSignoutId(p.id);
+                        }}
+                      >
+                        Sign out
+                      </button>
+                    ) : null}
+                    <Link
+                      href={`/account/parcels/${p.id}/edit`}
+                      className="text-xs font-semibold text-[var(--accent)]"
+                    >
+                      Edit
+                    </Link>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          )}
         />
       )}
 
@@ -233,6 +322,9 @@ export function ParcelsList() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="parcel-signout-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSignoutId(null);
+          }}
         >
           <div className="w-full max-w-md space-y-4 rounded-2xl bg-[var(--surface)] p-4">
             <h2
@@ -284,11 +376,12 @@ export function ParcelsList() {
         </div>
       ) : null}
 
-      {canEdit ? (
+      {showFilters || !canEdit ? null : (
         <Link href="/account/parcels/new" className="ceo-fab">
-          + New parcel
+          <PlusIcon className="h-4 w-4" />
+          New parcel
         </Link>
-      ) : null}
+      )}
     </div>
   );
 }

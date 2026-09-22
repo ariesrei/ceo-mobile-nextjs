@@ -82,6 +82,8 @@ export type Profile = {
   membership_type: string;
   membership_id: string;
   avatar: string;
+  unit?: string;
+  address?: string;
   editable_fields: string[];
 };
 

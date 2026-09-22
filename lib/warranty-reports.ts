@@ -1,5 +1,6 @@
-import type { WarrantyItem, WarrantyListResponse } from "./warranties";
+import type { WarrantyItem } from "./warranties";
 import { isWarrantyExpiring } from "./warranties";
+import { loadWarrantyClaims } from "./helpers/warranties";
 
 export async function fetchAllWarrantyItems(): Promise<WarrantyItem[]> {
   const seen = new Set<number>();
@@ -8,16 +9,14 @@ export async function fetchAllWarrantyItems(): Promise<WarrantyItem[]> {
   let total = Infinity;
 
   while (items.length < total && page <= 40) {
-    const res = await fetch(`/api/wp/warranties?per_page=50&page=${page}`);
-    const data = (await res.json()) as WarrantyListResponse & { message?: string };
-    if (!res.ok) throw new Error(data.message || "Could not load claims.");
-    total = Number(data.total) || 0;
-    for (const item of data.items || []) {
+    const data = await loadWarrantyClaims("all", { perPage: 50, page });
+    total = data.total || items.length;
+    for (const item of data.items) {
       if (seen.has(item.id)) continue;
       seen.add(item.id);
       items.push(item);
     }
-    if (!(data.items || []).length) break;
+    if (!data.items.length) break;
     page += 1;
   }
 

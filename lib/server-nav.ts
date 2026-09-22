@@ -16,6 +16,7 @@ import {
 import {
   COOKIE_APP_PROFILE,
   COOKIE_SITE_PROFILE,
+  getBuildAppProfile,
   resolveDisplayAppProfile,
 } from "./app-profile";
 import { applyNavVisibility, isPathAllowed } from "./navigation";
@@ -181,7 +182,8 @@ export async function requireMenuPath(path: string) {
     return blockedNav();
   }
   const nav = applyNavVisibility(result.data || null, profile);
-  if (!isPathAllowed(nav, path, profile)) {
+  // Unlocked Chrome is one app. Only the Play Store warranty build hides ops.
+  if (getBuildAppProfile() === "warranty" && !isPathAllowed(nav, path, profile)) {
     redirect("/account");
   }
   return nav;

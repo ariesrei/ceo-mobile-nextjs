@@ -19,6 +19,7 @@ export const WARRANTY_BLOCKED_PATHS = [
   "/account/activities",
   "/account/reservations",
   "/account/messaging",
+  "/account/classifieds",
 ];
 
 export function normalizeAppProfile(
@@ -113,6 +114,18 @@ export function resolveDisplayAppProfile(input: {
     getBuildAppProfile() ||
     "warranty"
   );
+}
+
+/** Resident community chrome (home / amenities tabs). Warranty APK stays off. */
+export function showOpsCommunityUi(appProfile?: AppProfile | null): boolean {
+  if (getBuildAppProfile() === "warranty") return false;
+  if (getBuildAppProfile() === "operations") return true;
+  return appProfile === "operations";
+}
+
+/** Pets/Vehicles My Assets. Ops build and unlocked web; Warranty APK keeps Additional Information. */
+export function showOpsAssetsUi(): boolean {
+  return getBuildAppProfile() !== "warranty";
 }
 
 /** Native / env product identity. Null on unlocked web (no flavor). */

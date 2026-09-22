@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { asPhotoUrl } from "@/lib/helpers/validate";
 import { UserIcon } from "./ui/Icons";
 
 function initialsFrom(name: string) {
@@ -29,11 +30,7 @@ function present(value?: string) {
 }
 
 function usableImageUrl(url?: string) {
-  const text = (url || "").trim();
-  if (!text || /default-user\.jpg/i.test(text)) {
-    return "";
-  }
-  return text;
+  return asPhotoUrl(url);
 }
 
 /** Claim attachment first, then the contact avatar. Empty when neither exists. */

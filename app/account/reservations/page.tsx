@@ -1,32 +1,19 @@
+import { AmenitiesList } from "@/components/AmenitiesList";
 import { AppShell } from "@/components/AppShell";
-import { ClientWpRecord } from "@/components/ClientWpRecord";
-import { ReservationsView } from "@/components/wp-record-views";
-import { getServerClientName, requireMenuPath } from "@/lib/server-nav";
-import { wpFetchServer } from "@/lib/wp";
-import type { ReservationItem } from "@/lib/types";
+import { getServerClientBranding, requireMenuPath } from "@/lib/server-nav";
 
-type ResResponse = { type: string; items: ReservationItem[] };
-
-export default async function ReservationsPage() {
+export default async function AmenitiesPage() {
   await requireMenuPath("/account/reservations");
-  const [result, clientName] = await Promise.all([
-    wpFetchServer<ResResponse>("/app/reservations?type=upcoming"),
-    getServerClientName(),
-  ]);
+  const branding = await getServerClientBranding();
 
   return (
     <AppShell
-      title="Reservations"
-      subtitle="Upcoming bookings"
-      backHref="/account"
-      clientName={clientName}
+      title="Amenities"
+      layout="community"
+      clientName={branding.name}
+      clientLogo={branding.logo}
     >
-      <ClientWpRecord
-        path="/reservations?type=upcoming"
-        initial={result.data}
-        error={result.error}
-        as={ReservationsView}
-      />
+      <AmenitiesList />
     </AppShell>
   );
 }
