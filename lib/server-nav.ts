@@ -19,7 +19,7 @@ import {
   getBuildAppProfile,
   resolveDisplayAppProfile,
 } from "./app-profile";
-import { applyNavVisibility, isPathAllowed } from "./navigation";
+import { applyNavVisibility, isPathAllowed, menuHasStaffPath } from "./navigation";
 import { serverFetch } from "./server-fetch";
 import { isWafBlockedResult } from "./wp-error";
 
@@ -193,10 +193,8 @@ export function isStaffMenuPath(
   nav: NavigationResponse | null | undefined,
   path: string
 ): boolean {
-  if (nav?.upstream_blocked) return true;
-  return Boolean(
-    nav?.menus?.some(
-      (m) => m.enabled && m.path === path && m.group === "staff"
-    )
-  );
+  /* Vercel often cannot reach WP (WAF). Treat that as unknown, not staff,
+     so an Owner/resident does not get Assigned / Reports / Edit. */
+  if (nav?.upstream_blocked) return false;
+  return menuHasStaffPath(nav?.menus, path);
 }

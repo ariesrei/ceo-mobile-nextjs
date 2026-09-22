@@ -6,6 +6,8 @@ import {
   emptyWarrantySummary,
   loadWarrantySummary,
 } from "@/lib/helpers/warranties";
+import { applyNavVisibility, menuHasStaffPath } from "@/lib/navigation";
+import type { NavigationResponse } from "@/lib/types";
 import type { WarrantySummary } from "@/lib/warranties";
 import { BottomNav } from "./BottomNav";
 import { FastLink } from "./FastLink";
@@ -53,12 +55,28 @@ function readCache(): { at: number; stats: WarrantySummary } | null {
 
 export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
   const brand = useWarrantyBrand();
+  const [staff, setStaff] = useState(isStaff);
   const [stats, setStats] = useState<WarrantySummary>(EMPTY_STATS);
   const [loading, setLoading] = useState(true);
   const [greeting, setGreeting] = useState("Good morning,");
 
   useEffect(() => {
     setGreeting(greetingLabel());
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/wp/navigation")
+      .then((r) => r.json())
+      .then((data: NavigationResponse) => {
+        if (cancelled || data.upstream_blocked) return;
+        const menus = applyNavVisibility(data)?.menus || data.menus || [];
+        setStaff(menuHasStaffPath(menus, "/account/warranties"));
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -208,7 +226,7 @@ export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
                 </span>
                 <span className="ceo-warranty-menu__label">My Claims</span>
               </FastLink>
-              {isStaff ? (
+              {staff ? (
                 <FastLink
                   href="/account/warranties/claims?tab=assigned"
                   prefetch={false}
@@ -220,7 +238,7 @@ export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
                   <span className="ceo-warranty-menu__label">Assigned to Subs</span>
                 </FastLink>
               ) : null}
-              {isStaff ? (
+              {staff ? (
                 <FastLink
                   href="/account/warranties/claims?tab=expiring"
                   prefetch={false}
@@ -242,7 +260,7 @@ export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
                 </span>
                 <span className="ceo-warranty-menu__label">Search & Filters</span>
               </FastLink>
-              {isStaff ? (
+              {staff ? (
                 <FastLink
                   href="/account/warranties/reports"
                   prefetch={false}

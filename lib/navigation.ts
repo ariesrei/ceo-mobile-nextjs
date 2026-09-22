@@ -107,6 +107,16 @@ export function enabledMenus(
   return filtered.menus.filter((m) => m.enabled);
 }
 
+/** Staff chrome only when WP marked that path `group: staff`. Unknown ≠ staff. */
+export function menuHasStaffPath(
+  menus: MenuItem[] | undefined,
+  path: string
+): boolean {
+  return Boolean(
+    menus?.some((m) => m.enabled && m.path === path && m.group === "staff")
+  );
+}
+
 export function isPathAllowed(
   nav: NavigationResponse | null | undefined,
   path: string,
