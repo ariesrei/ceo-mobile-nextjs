@@ -1,16 +1,18 @@
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { ParcelForm } from "@/components/ParcelForm";
+import { StaffPathGate } from "@/components/StaffPathGate";
 import {
   getServerClientBranding,
-  isStaffMenuPath,
   requireMenuPath,
+  staffMenuDecision,
 } from "@/lib/server-nav";
 import { redirect } from "next/navigation";
 
 export default async function NewParcelPage() {
   const nav = await requireMenuPath("/account/parcels");
-  if (!isStaffMenuPath(nav, "/account/parcels")) {
+  const decision = staffMenuDecision(nav, "/account/parcels");
+  if (decision === "resident") {
     redirect("/account/parcels");
   }
   const branding = await getServerClientBranding();
@@ -23,9 +25,15 @@ export default async function NewParcelPage() {
       clientName={branding.name}
       clientLogo={branding.logo}
     >
-      <Card>
-        <ParcelForm />
-      </Card>
+      <StaffPathGate
+        path="/account/parcels"
+        confirmed={decision === "staff"}
+        fallbackHref="/account/parcels"
+      >
+        <Card>
+          <ParcelForm />
+        </Card>
+      </StaffPathGate>
     </AppShell>
   );
 }

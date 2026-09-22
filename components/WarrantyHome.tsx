@@ -6,8 +6,7 @@ import {
   emptyWarrantySummary,
   loadWarrantySummary,
 } from "@/lib/helpers/warranties";
-import { applyNavVisibility, menuHasStaffPath } from "@/lib/navigation";
-import type { NavigationResponse } from "@/lib/types";
+import { useWarrantyStaff } from "@/hooks/useWarrantyStaff";
 import type { WarrantySummary } from "@/lib/warranties";
 import { BottomNav } from "./BottomNav";
 import { FastLink } from "./FastLink";
@@ -55,28 +54,13 @@ function readCache(): { at: number; stats: WarrantySummary } | null {
 
 export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
   const brand = useWarrantyBrand();
-  const [staff, setStaff] = useState(isStaff);
+  const staff = useWarrantyStaff(isStaff);
   const [stats, setStats] = useState<WarrantySummary>(EMPTY_STATS);
   const [loading, setLoading] = useState(true);
   const [greeting, setGreeting] = useState("Good morning,");
 
   useEffect(() => {
     setGreeting(greetingLabel());
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/wp/navigation")
-      .then((r) => r.json())
-      .then((data: NavigationResponse) => {
-        if (cancelled || data.upstream_blocked) return;
-        const menus = applyNavVisibility(data)?.menus || data.menus || [];
-        setStaff(menuHasStaffPath(menus, "/account/warranties"));
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   useEffect(() => {

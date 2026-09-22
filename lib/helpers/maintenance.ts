@@ -20,7 +20,7 @@ export type MaintenanceListResult =
       total: number;
       can_edit: boolean;
       show_completed_tab: boolean;
-      is_staff: boolean;
+      is_staff?: boolean;
     }
   | {
       ok: false;
@@ -28,7 +28,7 @@ export type MaintenanceListResult =
       total: 0;
       can_edit: false;
       show_completed_tab: false;
-      is_staff: false;
+      is_staff?: undefined;
       error: AppError;
       message: string;
     };
@@ -94,7 +94,6 @@ export async function listMaintenance(input: {
       total: 0,
       can_edit: false,
       show_completed_tab: false,
-      is_staff: false,
       error: res.error,
       message: res.message,
     };
@@ -109,7 +108,10 @@ export async function listMaintenance(input: {
     total: payload.total || items.length,
     can_edit: payload.can_edit,
     show_completed_tab: asBoolean(payload.extra.show_completed_tab),
-    is_staff: asBoolean(payload.extra.is_staff),
+    is_staff:
+      payload.extra.is_staff === undefined
+        ? undefined
+        : asBoolean(payload.extra.is_staff),
   };
 }
 

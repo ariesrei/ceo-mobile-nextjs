@@ -75,6 +75,7 @@ export function WarrantyList({
   initialShowFilters?: boolean;
   isStaff?: boolean;
 }) {
+  const [staff, setStaff] = useState(isStaff);
   const [tab, setTab] = useState<Tab>(() => parseTab(initialTab, isStaff));
   const [openItems, setOpenItems] = useState<WarrantyItem[]>([]);
   const [closedItems, setClosedItems] = useState<WarrantyItem[]>([]);
@@ -129,10 +130,24 @@ export function WarrantyList({
         setTypes(data.types || []);
         setStatuses(data.statuses || []);
         setSubcontractors(data.subcontractors || []);
+        setStaff(Boolean(data.is_staff));
         setOptionsLoaded(true);
       })
       .catch(() => undefined);
   }, [optionsLoaded]);
+
+  useEffect(() => {
+    if (!staff) return;
+    const next = parseTab(initialTab, true);
+    if (next === "assigned" || next === "expiring") setTab(next);
+    if (initialAssignee) {
+      setFilters((current) =>
+        current.assignee === initialAssignee
+          ? current
+          : { ...current, assignee: initialAssignee }
+      );
+    }
+  }, [staff, initialTab, initialAssignee]);
 
   const all = useMemo(() => {
     const seen = new Set<number>();
@@ -195,7 +210,7 @@ export function WarrantyList({
           ]
         : []),
       dateRangeField(),
-      ...(isStaff && assigneeOptions.length
+      ...(staff && assigneeOptions.length
         ? [
             {
               key: "assignee",
@@ -206,7 +221,7 @@ export function WarrantyList({
           ]
         : []),
     ],
-    [typeOptions, statusOptions, assigneeOptions, isStaff]
+    [typeOptions, statusOptions, assigneeOptions, staff]
   );
 
   const filtered = useMemo(

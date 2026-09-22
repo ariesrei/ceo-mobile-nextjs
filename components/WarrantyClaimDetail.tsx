@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useWarrantyStaff } from "@/hooks/useWarrantyStaff";
 import type { WarrantyItem } from "@/lib/warranties";
 import { ClaimThumb, claimContactName, claimMetaLines, claimThumbSrc } from "./ClaimThumb";
 import { FastLink } from "./FastLink";
@@ -87,6 +88,7 @@ export function WarrantyClaimDetail({
   canEdit: boolean;
   isStaff: boolean;
 }) {
+  const staff = useWarrantyStaff(isStaff);
   const [tab, setTab] = useState<Tab>("details");
   const [fileFilter, setFileFilter] = useState<FileFilter>("all");
   const [updateDraft, setUpdateDraft] = useState("");
@@ -174,10 +176,10 @@ export function WarrantyClaimDetail({
                 .join(" – ")}
             />
             <Row label="Notes" value={record.warranty_entry_notes} />
-            {isStaff ? (
+            {staff ? (
               <Row label="Subcontractor" value={record.subcontractor_name} />
             ) : null}
-            {isStaff ? (
+            {staff ? (
               <Row label="Due" value={record.warranty_sources_target_due} />
             ) : null}
           </div>
@@ -188,7 +190,7 @@ export function WarrantyClaimDetail({
         <div className="space-y-4">
           <ProgressPath events={events} />
 
-          {isStaff ? (
+          {staff ? (
             <form
               className="ceo-composer"
               onSubmit={(e) => {
@@ -266,7 +268,7 @@ export function WarrantyClaimDetail({
             </div>
           ) : null}
 
-          {isStaff && canEdit ? (
+          {staff && canEdit ? (
             <FastLink
               href={`/account/warranties/${record.id}/edit`}
               className="ceo-btn-solid w-full"
@@ -293,7 +295,7 @@ export function WarrantyClaimDetail({
         </ol>
       ) : null}
 
-      {isStaff && canEdit && tab === "details" ? (
+      {staff && canEdit && tab === "details" ? (
         <div className="space-y-2 pt-1">
           <FastLink
             href={`/account/warranties/${record.id}/status`}

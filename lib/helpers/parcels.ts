@@ -14,8 +14,21 @@ import {
 export type ParcelStatus = "storage" | "claimed";
 
 export type ParcelListResult =
-  | { ok: true; items: ParcelItem[]; total: number; can_edit: boolean }
-  | { ok: false; items: []; total: 0; can_edit: false; error: AppError; message: string };
+  | {
+      ok: true;
+      items: ParcelItem[];
+      total: number;
+      can_edit: boolean;
+      is_staff?: boolean;
+    }
+  | {
+      ok: false;
+      items: [];
+      total: 0;
+      can_edit: false;
+      error: AppError;
+      message: string;
+    };
 
 function toPhoto(raw: unknown): ParcelPhoto | null {
   if (typeof raw === "number" && raw > 0) {
@@ -121,6 +134,10 @@ export async function listParcels(input: {
     })),
     total: payload.total || items.length,
     can_edit: payload.can_edit,
+    is_staff:
+      payload.extra.is_staff === undefined
+        ? undefined
+        : asBoolean(payload.extra.is_staff),
   };
 }
 

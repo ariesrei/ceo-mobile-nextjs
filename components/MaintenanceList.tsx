@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { MaintenanceChoice, MaintenanceItem } from "@/lib/maintenance";
+import { useStaffMenuPath } from "@/hooks/useStaffMenuPath";
 import {
   listMaintenance,
   loadMaintenanceOptions,
@@ -32,7 +33,8 @@ export function MaintenanceList() {
   const [items, setItems] = useState<MaintenanceItem[]>([]);
   const [canEdit, setCanEdit] = useState(false);
   const [showCompletedTab, setShowCompletedTab] = useState(false);
-  const [isStaff, setIsStaff] = useState(true);
+  const { staff: navStaff } = useStaffMenuPath("/account/maintenance");
+  const [apiStaff, setApiStaff] = useState<boolean | undefined>(undefined);
   const [types, setTypes] = useState<MaintenanceChoice[]>([]);
   const [statuses, setStatuses] = useState<MaintenanceChoice[]>([]);
   const [staff, setStaff] = useState<MaintenanceChoice[]>([]);
@@ -68,12 +70,7 @@ export function MaintenanceList() {
         setItems(data.items);
         setCanEdit(data.can_edit);
         setShowCompletedTab(data.show_completed_tab);
-        setIsStaff(data.is_staff);
-        if (!data.is_staff && (status === "internal" || status === "external")) {
-          setStatus("open");
-        } else if (!data.show_completed_tab && status === "completed") {
-          setStatus(data.is_staff ? "internal" : "open");
-        }
+        if (typeof data.is_staff === "boolean") setApiStaff(data.is_staff);
       })
       .finally(() => setLoading(false));
   }, [status, search]);
@@ -93,7 +90,10 @@ export function MaintenanceList() {
         setShowCompletedTab(data.show_completed_tab);
       }
       if (typeof data.is_staff === "boolean") {
-        setIsStaff(data.is_staff);
+        setApiStaff(data.is_staff);
+      }
+      if (typeof data.can_edit === "boolean") {
+        setCanEdit(data.can_edit);
       }
     });
   }, []);
@@ -117,6 +117,22 @@ export function MaintenanceList() {
       setSavingStatus(false);
     }
   }
+
+  const isStaff = apiStaff ?? navStaff;
+
+  useEffect(() => {
+    if (isStaff && status === "open") {
+      setStatus("internal");
+      return;
+    }
+    if (!isStaff && (status === "internal" || status === "external")) {
+      setStatus("open");
+      return;
+    }
+    if (!showCompletedTab && status === "completed") {
+      setStatus(isStaff ? "internal" : "open");
+    }
+  }, [isStaff, showCompletedTab, status]);
 
   const tabs: { id: Tab; label: string }[] = isStaff
     ? [

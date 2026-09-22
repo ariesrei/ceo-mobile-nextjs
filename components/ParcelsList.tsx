@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ParcelChoice, ParcelItem } from "@/lib/parcels";
+import { useStaffMenuPath } from "@/hooks/useStaffMenuPath";
 import {
   listParcels,
   loadParcelOptions,
@@ -33,6 +34,7 @@ const EMPTY_FILTERS = { type: "", range: "", assignee: "" };
 export function ParcelsList() {
   const [status, setStatus] = useState<"storage" | "claimed">("storage");
   const [items, setItems] = useState<ParcelItem[]>([]);
+  const { staff: isStaff } = useStaffMenuPath("/account/parcels");
   const [canEdit, setCanEdit] = useState(false);
   const [pickupTypes, setPickupTypes] = useState<string[]>(["Quick Signout"]);
   const [parcelTypes, setParcelTypes] = useState<ParcelChoice[]>([]);
@@ -69,7 +71,7 @@ export function ParcelsList() {
           return;
         }
         setItems(data.items);
-        setCanEdit(data.can_edit);
+        if (data.can_edit || data.is_staff) setCanEdit(true);
       })
       .finally(() => setLoading(false));
   }, [activeStatus, search]);
@@ -83,6 +85,7 @@ export function ParcelsList() {
       if (!data) return;
       setParcelTypes(data.parcel_types || []);
       setStaff(data.staff || []);
+      if (data.can_edit || data.is_staff) setCanEdit(true);
       if (data.pickup_types?.length) {
         setPickupTypes(data.pickup_types);
         setPickupType((prev) =>
@@ -376,7 +379,7 @@ export function ParcelsList() {
         </div>
       ) : null}
 
-      {showFilters || !canEdit ? null : (
+      {showFilters || !(canEdit || isStaff) ? null : (
         <Link href="/account/parcels/new" className="ceo-fab">
           <PlusIcon className="h-4 w-4" />
           New parcel

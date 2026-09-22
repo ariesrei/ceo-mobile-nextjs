@@ -1,17 +1,24 @@
 import { redirect } from "next/navigation";
 import { WarrantyReports } from "@/components/WarrantyReports";
 import { WarrantyShell } from "@/components/WarrantyShell";
-import { getNavigation, isStaffMenuPath } from "@/lib/server-nav";
+import { WarrantyStaffGate } from "@/components/WarrantyStaffGate";
+import { getNavigation, staffMenuDecision } from "@/lib/server-nav";
 
 export default async function WarrantyReportsPage() {
   const nav = await getNavigation();
-  if (!isStaffMenuPath(nav, "/account/warranties")) {
+  const decision = staffMenuDecision(nav, "/account/warranties");
+  if (decision === "resident") {
     redirect("/account/warranties");
   }
 
   return (
     <WarrantyShell title="Reports" backHref="/account/warranties">
-      <WarrantyReports />
+      <WarrantyStaffGate
+        confirmed={decision === "staff"}
+        fallbackHref="/account/warranties"
+      >
+        <WarrantyReports />
+      </WarrantyStaffGate>
     </WarrantyShell>
   );
 }

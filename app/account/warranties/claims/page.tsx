@@ -31,7 +31,7 @@ export default async function WarrantyClaimsPage({ searchParams }: Props) {
     >
       <WarrantyList
         initialTab={tab}
-        initialAssignee={isStaff ? assignee : undefined}
+        initialAssignee={assignee}
         initialShowFilters={filters === "1"}
         isStaff={isStaff}
       />

@@ -42,6 +42,7 @@ export type ParcelOptions = {
   residents: ParcelChoice[];
   pickup_types?: string[];
   can_edit: boolean;
+  is_staff?: boolean;
   current_user: number;
 };
 

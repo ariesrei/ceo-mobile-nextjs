@@ -189,12 +189,20 @@ export async function requireMenuPath(path: string) {
   return nav;
 }
 
+export type StaffMenuDecision = "staff" | "resident" | "unknown";
+
+/** WAF / missing nav is unknown — not resident. Client must confirm staff. */
+export function staffMenuDecision(
+  nav: NavigationResponse | null | undefined,
+  path: string
+): StaffMenuDecision {
+  if (!nav || nav.upstream_blocked) return "unknown";
+  return menuHasStaffPath(nav.menus, path) ? "staff" : "resident";
+}
+
 export function isStaffMenuPath(
   nav: NavigationResponse | null | undefined,
   path: string
 ): boolean {
-  /* Vercel often cannot reach WP (WAF). Treat that as unknown, not staff,
-     so an Owner/resident does not get Assigned / Reports / Edit. */
-  if (nav?.upstream_blocked) return false;
-  return menuHasStaffPath(nav?.menus, path);
+  return staffMenuDecision(nav, path) === "staff";
 }
