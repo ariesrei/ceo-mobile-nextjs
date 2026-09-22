@@ -159,6 +159,14 @@ export function isWarrantyProfile(
   return candidates.some((c) => normalizeAppProfile(c) === "warranty");
 }
 
+/** ClaimTrack opens WarrantyHome, not the 3-row /account menu. */
+export function landsOnWarrantyHome(
+  appProfile?: AppProfile | null
+): boolean {
+  if (getBuildAppProfile() === "operations") return false;
+  return getBuildAppProfile() === "warranty" || isWarrantyProfile(appProfile);
+}
+
 export function isWarrantyPathBlocked(
   path: string,
   profile: AppProfile | null | undefined

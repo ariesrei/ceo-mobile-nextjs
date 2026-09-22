@@ -2,13 +2,18 @@ import { FastLink } from "@/components/FastLink";
 import { WarrantyList } from "@/components/WarrantyList";
 import { WarrantyShell } from "@/components/WarrantyShell";
 import { PlusIcon } from "@/components/ui/Icons";
+import { getNavigation, isStaffMenuPath } from "@/lib/server-nav";
 
 type Props = {
   searchParams: Promise<{ tab?: string; assignee?: string; filters?: string }>;
 };
 
 export default async function WarrantyClaimsPage({ searchParams }: Props) {
-  const { tab, assignee, filters } = await searchParams;
+  const [{ tab, assignee, filters }, nav] = await Promise.all([
+    searchParams,
+    getNavigation(),
+  ]);
+  const isStaff = isStaffMenuPath(nav, "/account/warranties");
 
   return (
     <WarrantyShell
@@ -26,8 +31,9 @@ export default async function WarrantyClaimsPage({ searchParams }: Props) {
     >
       <WarrantyList
         initialTab={tab}
-        initialAssignee={assignee}
+        initialAssignee={isStaff ? assignee : undefined}
         initialShowFilters={filters === "1"}
+        isStaff={isStaff}
       />
     </WarrantyShell>
   );

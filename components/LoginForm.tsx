@@ -150,7 +150,9 @@ export function LoginForm({
           appProfile: data.user.app_profile || data.appProfile,
         });
       }
-      window.location.assign(postLoginPath());
+      window.location.assign(
+        postLoginPath(data.user?.app_profile || data.appProfile || appProfile)
+      );
     } catch {
       busy.fail("Network error. Please try again.");
     }

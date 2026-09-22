@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { WarrantyItem } from "@/lib/warranties";
 import { ClaimThumb, claimContactName, claimMetaLines, claimThumbSrc } from "./ClaimThumb";
 import { FastLink } from "./FastLink";
+import { StatusBadge } from "./ui/StatusBadge";
 import { FileIcon, ImageIcon, PlusIcon, SendIcon } from "./ui/Icons";
 
 type Tab = "details" | "updates" | "files" | "timeline";
@@ -116,6 +117,12 @@ export function WarrantyClaimDetail({
             </div>
           ) : null}
         </div>
+        {record.status_label ? (
+          <StatusBadge
+            label={record.status_label}
+            color={record.status_color}
+          />
+        ) : null}
       </div>
 
       <div className="ceo-seg">
@@ -165,6 +172,20 @@ export function WarrantyClaimDetail({
           ) : null}
 
           <div className="ceo-warranty-detail">
+            {record.status_label ? (
+              <div className="ceo-claim-status">
+                <div className="min-w-0">
+                  <p className="text-xs text-[var(--muted)]">Status</p>
+                  <p className="mt-0.5 text-sm font-semibold">
+                    {record.status_label}
+                  </p>
+                </div>
+                <StatusBadge
+                  label={record.status_label}
+                  color={record.status_color}
+                />
+              </div>
+            ) : null}
             <Row
               label="Type"
               value={record.type_label || String(record.warranty_type || "")}
@@ -179,8 +200,12 @@ export function WarrantyClaimDetail({
                 .join(" – ")}
             />
             <Row label="Notes" value={record.warranty_entry_notes} />
-            <Row label="Subcontractor" value={record.subcontractor_name} />
-            <Row label="Due" value={record.warranty_sources_target_due} />
+            {isStaff ? (
+              <Row label="Subcontractor" value={record.subcontractor_name} />
+            ) : null}
+            {isStaff ? (
+              <Row label="Due" value={record.warranty_sources_target_due} />
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -189,25 +214,27 @@ export function WarrantyClaimDetail({
         <div className="space-y-4">
           <ProgressPath events={events} />
 
-          <form
-            className="ceo-composer"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setUpdateNotice(
-                "Posting updates connects to WordPress in a later pass."
-              );
-            }}
-          >
-            <input
-              value={updateDraft}
-              onChange={(e) => setUpdateDraft(e.target.value)}
-              placeholder="Add an update…"
-              aria-label="Add an update"
-            />
-            <button type="submit" aria-label="Send update">
-              <SendIcon className="h-[18px] w-[18px]" />
-            </button>
-          </form>
+          {isStaff ? (
+            <form
+              className="ceo-composer"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setUpdateNotice(
+                  "Posting updates connects to WordPress in a later pass."
+                );
+              }}
+            >
+              <input
+                value={updateDraft}
+                onChange={(e) => setUpdateDraft(e.target.value)}
+                placeholder="Add an update…"
+                aria-label="Add an update"
+              />
+              <button type="submit" aria-label="Send update">
+                <SendIcon className="h-[18px] w-[18px]" />
+              </button>
+            </form>
+          ) : null}
           {updateNotice ? (
             <p className="text-xs text-[var(--muted)]">{updateNotice}</p>
           ) : null}
@@ -265,7 +292,7 @@ export function WarrantyClaimDetail({
             </div>
           ) : null}
 
-          {canEdit ? (
+          {isStaff && canEdit ? (
             <FastLink
               href={`/account/warranties/${record.id}/edit`}
               className="ceo-btn-solid w-full"
@@ -292,17 +319,15 @@ export function WarrantyClaimDetail({
         </ol>
       ) : null}
 
-      {canEdit && tab === "details" ? (
+      {isStaff && canEdit && tab === "details" ? (
         <div className="space-y-2 pt-1">
-          {isStaff ? (
-            <FastLink
-              href={`/account/warranties/${record.id}/status`}
-              className="ceo-btn-solid w-full"
-            >
-              Update Status
-            </FastLink>
-          ) : null}
-          {isStaff && !record.is_assigned && !record.warranty_sources_subcontractors ? (
+          <FastLink
+            href={`/account/warranties/${record.id}/status`}
+            className="ceo-btn-solid w-full"
+          >
+            Update Status
+          </FastLink>
+          {!record.is_assigned && !record.warranty_sources_subcontractors ? (
             <FastLink
               href={`/account/warranties/${record.id}/assign`}
               className="ceo-btn-outline w-full"

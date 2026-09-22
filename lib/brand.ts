@@ -1,12 +1,11 @@
-import type { AppProfile } from "./app-profile";
+import { landsOnWarrantyHome, type AppProfile } from "./app-profile";
 
 /**
  * One code base, two app builds.
  *
  * Set NEXT_PUBLIC_CEO_APP_VARIANT=warranty or operations per build.
- * Splash and login branding follow the variant. After sign-in the home
- * depends on who logged in: residents stay on /account; Warranty staff
- * open ClaimTrack.
+ * Splash and login branding follow the variant. After sign-in, ClaimTrack
+ * opens WarrantyHome; Operations stays on /account.
  */
 
 export type AppVariant = "warranty" | "operations";
@@ -110,7 +109,9 @@ export function brandForProfile(profile?: AppProfile | null): AppBrand {
   return appBrand();
 }
 
-/** Default after connect + login. /account then sends Warranty staff to ClaimTrack. */
-export function postLoginPath(): "/account" {
-  return "/account";
+/** Default after connect + login. ClaimTrack skips the 3-row account menu. */
+export function postLoginPath(
+  profile?: AppProfile | null
+): "/account" | "/account/warranties" {
+  return landsOnWarrantyHome(profile) ? "/account/warranties" : "/account";
 }

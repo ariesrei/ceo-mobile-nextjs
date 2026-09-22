@@ -33,7 +33,10 @@ const EMPTY_FILTERS = { type: "", status: "", range: "", assignee: "" };
 
 type Filters = typeof EMPTY_FILTERS;
 
-function parseTab(value?: string): Tab {
+function parseTab(value?: string, isStaff = true): Tab {
+  if (!isStaff && (value === "assigned" || value === "expiring")) {
+    return "open";
+  }
   if (
     value === "progress" ||
     value === "closed" ||
@@ -64,12 +67,14 @@ export function WarrantyList({
   /** Set by the Vendors screen, which links here to show one vendor's claims. */
   initialAssignee,
   initialShowFilters,
+  isStaff = true,
 }: {
   initialTab?: string;
   initialAssignee?: string;
   initialShowFilters?: boolean;
+  isStaff?: boolean;
 }) {
-  const [tab, setTab] = useState<Tab>(() => parseTab(initialTab));
+  const [tab, setTab] = useState<Tab>(() => parseTab(initialTab, isStaff));
   const [openItems, setOpenItems] = useState<WarrantyItem[]>([]);
   const [closedItems, setClosedItems] = useState<WarrantyItem[]>([]);
   const [types, setTypes] = useState<WarrantyChoice[]>([]);
@@ -189,7 +194,7 @@ export function WarrantyList({
           ]
         : []),
       dateRangeField(),
-      ...(assigneeOptions.length
+      ...(isStaff && assigneeOptions.length
         ? [
             {
               key: "assignee",
@@ -200,7 +205,7 @@ export function WarrantyList({
           ]
         : []),
     ],
-    [typeOptions, statusOptions, assigneeOptions]
+    [typeOptions, statusOptions, assigneeOptions, isStaff]
   );
 
   const filtered = useMemo(
@@ -340,7 +345,10 @@ export function WarrantyList({
                   ) : null}
                 </div>
                 {w.status_label ? (
-                  <StatusBadge label={w.status_label} short />
+                  <StatusBadge
+                    label={w.status_label}
+                    color={w.status_color}
+                  />
                 ) : null}
               </FastLink>
             );

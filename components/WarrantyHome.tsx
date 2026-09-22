@@ -51,7 +51,7 @@ function readCache(): { at: number; stats: WarrantySummary } | null {
   }
 }
 
-export function WarrantyHome() {
+export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
   const brand = useWarrantyBrand();
   const [stats, setStats] = useState<WarrantySummary>(EMPTY_STATS);
   const [loading, setLoading] = useState(true);
@@ -208,26 +208,30 @@ export function WarrantyHome() {
                 </span>
                 <span className="ceo-warranty-menu__label">My Claims</span>
               </FastLink>
-              <FastLink
-                href="/account/warranties/claims?tab=assigned"
-                prefetch={false}
-                className="ceo-warranty-menu__row"
-              >
-                <span className="ceo-warranty-menu__icon">
-                  <UsersIcon className="h-[18px] w-[18px]" />
-                </span>
-                <span className="ceo-warranty-menu__label">Assigned to Subs</span>
-              </FastLink>
-              <FastLink
-                href="/account/warranties/claims?tab=expiring"
-                prefetch={false}
-                className="ceo-warranty-menu__row"
-              >
-                <span className="ceo-warranty-menu__icon">
-                  <ClockIcon className="h-[18px] w-[18px]" />
-                </span>
-                <span className="ceo-warranty-menu__label">Expiring Warranties</span>
-              </FastLink>
+              {isStaff ? (
+                <FastLink
+                  href="/account/warranties/claims?tab=assigned"
+                  prefetch={false}
+                  className="ceo-warranty-menu__row"
+                >
+                  <span className="ceo-warranty-menu__icon">
+                    <UsersIcon className="h-[18px] w-[18px]" />
+                  </span>
+                  <span className="ceo-warranty-menu__label">Assigned to Subs</span>
+                </FastLink>
+              ) : null}
+              {isStaff ? (
+                <FastLink
+                  href="/account/warranties/claims?tab=expiring"
+                  prefetch={false}
+                  className="ceo-warranty-menu__row"
+                >
+                  <span className="ceo-warranty-menu__icon">
+                    <ClockIcon className="h-[18px] w-[18px]" />
+                  </span>
+                  <span className="ceo-warranty-menu__label">Expiring Warranties</span>
+                </FastLink>
+              ) : null}
               <FastLink
                 href="/account/warranties/claims?filters=1"
                 prefetch={false}
@@ -238,16 +242,18 @@ export function WarrantyHome() {
                 </span>
                 <span className="ceo-warranty-menu__label">Search & Filters</span>
               </FastLink>
-              <FastLink
-                href="/account/warranties/reports"
-                prefetch={false}
-                className="ceo-warranty-menu__row"
-              >
-                <span className="ceo-warranty-menu__icon">
-                  <ChartIcon className="h-[18px] w-[18px]" />
-                </span>
-                <span className="ceo-warranty-menu__label">Reports</span>
-              </FastLink>
+              {isStaff ? (
+                <FastLink
+                  href="/account/warranties/reports"
+                  prefetch={false}
+                  className="ceo-warranty-menu__row"
+                >
+                  <span className="ceo-warranty-menu__icon">
+                    <ChartIcon className="h-[18px] w-[18px]" />
+                  </span>
+                  <span className="ceo-warranty-menu__label">Reports</span>
+                </FastLink>
+              ) : null}
             </nav>
           </>
         )}

@@ -421,7 +421,7 @@ export function BottomNav({
           : enabled.filter((m) => !tabPaths.has(m.path));
 
   const tabs = warranty
-    ? WARRANTY_TABS
+    ? WARRANTY_TABS.filter((tab) => isStaff || tab.id !== "vendors")
     : community
       ? COMMUNITY_TABS
       : [
@@ -500,7 +500,30 @@ export function BottomNav({
                         <span aria-hidden>→</span>
                       </Link>
                     </li>
-                  ) : null}
+                  ) : (
+                    <>
+                      <li>
+                        <Link
+                          href="/account/profile"
+                          className="flex items-center justify-between rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm font-semibold"
+                          onClick={() => setMoreOpen(false)}
+                        >
+                          View Profile
+                          <span aria-hidden>→</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/account/edit"
+                          className="flex items-center justify-between rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm font-semibold"
+                          onClick={() => setMoreOpen(false)}
+                        >
+                          Edit Profile
+                          <span aria-hidden>→</span>
+                        </Link>
+                      </li>
+                    </>
+                  )}
                   <li>
                     <Link
                       href="/account/warranties/claims?filters=1"
@@ -511,26 +534,30 @@ export function BottomNav({
                       <span aria-hidden>→</span>
                     </Link>
                   </li>
-                  <li>
-                    <Link
-                      href="/account/warranties/reports"
-                      className="flex items-center justify-between rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm font-semibold"
-                      onClick={() => setMoreOpen(false)}
-                    >
-                      Reports
-                      <span aria-hidden>→</span>
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/account/warranties/settings"
-                      className="flex items-center justify-between rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm font-semibold"
-                      onClick={() => setMoreOpen(false)}
-                    >
-                      Warranty Settings
-                      <span aria-hidden>→</span>
-                    </Link>
-                  </li>
+                  {isStaff ? (
+                    <li>
+                      <Link
+                        href="/account/warranties/reports"
+                        className="flex items-center justify-between rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm font-semibold"
+                        onClick={() => setMoreOpen(false)}
+                      >
+                        Reports
+                        <span aria-hidden>→</span>
+                      </Link>
+                    </li>
+                  ) : null}
+                  {isStaff ? (
+                    <li>
+                      <Link
+                        href="/account/warranties/settings"
+                        className="flex items-center justify-between rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm font-semibold"
+                        onClick={() => setMoreOpen(false)}
+                      >
+                        Warranty Settings
+                        <span aria-hidden>→</span>
+                      </Link>
+                    </li>
+                  ) : null}
                 </>
               ) : null}
               {moreItems.map((item) => (

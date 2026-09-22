@@ -6,6 +6,12 @@ import type { WarrantyChoice, WarrantyItem, WarrantyOptions } from "@/lib/warran
 import { MenuSelect } from "./ui/MenuSelect";
 import { CheckIcon } from "./ui/Icons";
 
+/**
+ * Robert (22 Sep Gorman): the step bar does not match their process.
+ * Keep the markup; turn the flag on after he and Aries review the statuses.
+ */
+const SHOW_STATUS_STEPS = false;
+
 export function WarrantyStatusForm({ record }: { record: WarrantyItem }) {
   const router = useRouter();
   const [statuses, setStatuses] = useState<WarrantyChoice[]>([]);
@@ -64,7 +70,7 @@ export function WarrantyStatusForm({ record }: { record: WarrantyItem }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
-      {statuses.length ? (
+      {SHOW_STATUS_STEPS && statuses.length ? (
         <ol className="ceo-stepper ceo-stepper--scroll">
           {statuses.map((status, i) => (
             <li
@@ -86,9 +92,10 @@ export function WarrantyStatusForm({ record }: { record: WarrantyItem }) {
             </li>
           ))}
         </ol>
-      ) : (
+      ) : null}
+      {!SHOW_STATUS_STEPS && !statuses.length ? (
         <p className="text-sm text-[var(--muted)]">Loading statuses…</p>
-      )}
+      ) : null}
 
       <label className="block space-y-1.5">
         <span className="text-sm font-medium text-[var(--muted)]">Status</span>

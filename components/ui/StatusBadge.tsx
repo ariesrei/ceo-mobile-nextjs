@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 export function statusTone(
   label?: string
 ): "progress" | "warn" | "done" | "info" | "danger" {
@@ -58,13 +60,31 @@ export function StatusBadge({
   label,
   /** Opt-in so Parcels and Maintenance keep their full workflow names. */
   short = false,
+  color,
 }: {
   label?: string;
   short?: boolean;
+  /** Intra status color. When set, skip the mapped tone. */
+  color?: string;
 }) {
   if (!label) return null;
+  const intra = Boolean(color && !short);
+  const className = [
+    "ceo-status",
+    intra ? "ceo-status--intra" : `ceo-status--${statusTone(label)}`,
+    short ? "" : "ceo-status--full",
+  ]
+    .filter(Boolean)
+    .join(" ");
   return (
-    <span className={`ceo-status ceo-status--${statusTone(label)}`}>
+    <span
+      className={className}
+      style={
+        intra
+          ? ({ ["--status-color"]: color } as CSSProperties)
+          : undefined
+      }
+    >
       {short ? shortStatusLabel(label) : label}
     </span>
   );

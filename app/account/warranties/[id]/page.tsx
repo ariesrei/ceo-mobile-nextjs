@@ -29,7 +29,10 @@ export default async function WarrantyDetailPage({ params }: Props) {
       showNav={false}
       action={
         result.data?.status_label ? (
-          <StatusBadge label={result.data.status_label} short />
+          <StatusBadge
+            label={result.data.status_label}
+            color={result.data.status_color}
+          />
         ) : undefined
       }
     >

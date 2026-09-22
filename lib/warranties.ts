@@ -26,7 +26,10 @@ export type WarrantyItem = {
   warranty_entry_end_time: string;
   warranty_entry_notes: string;
   warranty_status: number;
+  /** Intra Warranty Status Name (`warranty_status_name`), else post title. */
   status_label: string;
+  /** Intra Warranty Status Color (`warranty_status_color`). */
+  status_color?: string;
   warranty_sources_trade: number[];
   trade_labels?: string[] | string;
   warranty_sources_target_due: string;
@@ -122,6 +125,11 @@ export function fromTimeInputValue(value?: string): string {
   return `${hour}:${minute} ${suffix}`;
 }
 
+/**
+ * Closed tab. WP `is_closed` first, then status title keywords.
+ * "Approved" is not closed — that claim stays in Open until assigned or a
+ * status whose title contains "progress".
+ */
 export function isWarrantyClosed(w: WarrantyItem): boolean {
   if (w.is_closed) return true;
   const s = (w.status_label || "").toLowerCase();
@@ -133,6 +141,14 @@ export function isWarrantyClosed(w: WarrantyItem): boolean {
   );
 }
 
+/**
+ * In Progress = past the gate and moving: status title contains "progress",
+ * or a subcontractor is assigned.
+ *
+ * Open (the leftover non-closed bucket) = awaiting gatekeeper, or approved
+ * but not yet assigned. Robert (22 Sep): "Broken cabinet" / Approved + no
+ * assignee belongs in Open, not In Progress.
+ */
 export function isWarrantyInProgress(w: WarrantyItem): boolean {
   if (isWarrantyClosed(w)) return false;
   const s = (w.status_label || "").toLowerCase();
