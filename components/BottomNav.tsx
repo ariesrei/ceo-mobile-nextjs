@@ -283,16 +283,47 @@ function MoreSheet({
   );
 }
 
+const COMMUNITY_MORE_EXTRAS: MenuItem[] = [
+  {
+    id: "announcements",
+    label: "Announcements",
+    path: "/account/announcements",
+    enabled: true,
+    group: "account",
+  },
+  {
+    id: "events",
+    label: "Events",
+    path: "/account/events",
+    enabled: true,
+    group: "account",
+  },
+  {
+    id: "documents",
+    label: "Documents",
+    path: "/account/documents",
+    enabled: true,
+    group: "account",
+  },
+  {
+    id: "classifieds",
+    label: "Classifieds",
+    path: "/account/classifieds",
+    enabled: true,
+    group: "account",
+  },
+];
+
 function communityMoreItems(items: MenuItem[]): MenuItem[] {
   const mapped = items
     .filter((item) => item.id !== "guests" && item.path !== "/account/guests")
     .map((item) =>
-    item.id === "additional_info"
-      ? { ...item, label: "My Assets", path: "/account/assets" }
-      : item
-  );
+      item.id === "additional_info"
+        ? { ...item, label: "My Assets", path: "/account/assets" }
+        : item
+    );
   if (!mapped.some((item) => item.path === "/account/assets")) {
-    mapped.unshift({
+    mapped.push({
       id: "assets",
       label: "My Assets",
       path: "/account/assets",
@@ -300,7 +331,24 @@ function communityMoreItems(items: MenuItem[]): MenuItem[] {
       group: "account",
     });
   }
-  return mapped;
+
+  const extras = COMMUNITY_MORE_EXTRAS.map((extra) => {
+    const found = mapped.find(
+      (item) => item.id === extra.id || item.path === extra.path
+    );
+    return found ? { ...found, label: extra.label, path: extra.path } : extra;
+  });
+  const extraKey = new Set(extras.flatMap((item) => [item.id, item.path]));
+  const rest = mapped.filter(
+    (item) => !extraKey.has(item.id) && !extraKey.has(item.path)
+  );
+  const profile = rest.filter(
+    (item) => item.id === "profile" || item.id === "edit_profile"
+  );
+  const other = rest.filter(
+    (item) => item.id !== "profile" && item.id !== "edit_profile"
+  );
+  return [...profile, ...extras, ...other];
 }
 
 export function BottomNav({

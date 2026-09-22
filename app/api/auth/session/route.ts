@@ -9,7 +9,23 @@ import {
   siteProfileFromUser,
   tokensFromBody,
 } from "@/lib/auth-session";
-import { COOKIE_BASE_URL } from "@/lib/wp";
+import { COOKIE_ACCESS, COOKIE_BASE_URL, COOKIE_REFRESH } from "@/lib/wp";
+
+/** New tab: copy httpOnly session into the page so WP can load from the device. */
+export async function GET() {
+  const jar = await cookies();
+  const access_token = jar.get(COOKIE_ACCESS)?.value || "";
+  const refresh_token = jar.get(COOKIE_REFRESH)?.value || "";
+  if (!access_token && !refresh_token) {
+    return NextResponse.json({ authenticated: false }, { status: 401 });
+  }
+  return NextResponse.json({
+    authenticated: true,
+    access_token,
+    refresh_token,
+    baseUrl: jar.get(COOKIE_BASE_URL)?.value || "",
+  });
+}
 
 /** Browser already talked to WordPress; Next only stores the session cookies. */
 export async function POST(request: Request) {

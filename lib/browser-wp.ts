@@ -1,4 +1,4 @@
-import { getConnectConfig } from "./connect";
+import { getConnectConfig, writeConnectConfig } from "./connect";
 import {
   clearBrowserTokens,
   getBrowserAccessToken,
@@ -81,6 +81,35 @@ function apiWpTarget(input: RequestInfo | URL): { path: string; search: string }
 }
 
 let nativeFetch: typeof fetch | null = null;
+let hydratePromise: Promise<void> | null = null;
+
+async function hydrateBrowserSession(): Promise<void> {
+  if (getBrowserAccessToken() || !nativeFetch) return;
+  if (hydratePromise) return hydratePromise;
+  hydratePromise = (async () => {
+    try {
+      const res = await nativeFetch!("/api/auth/session", {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      if (!res.ok) return;
+      const data = (await res.json().catch(() => ({}))) as {
+        access_token?: string;
+        refresh_token?: string;
+        baseUrl?: string;
+      };
+      if (data.access_token) {
+        saveBrowserTokens(data.access_token, data.refresh_token || "");
+      }
+      if (data.baseUrl && !getConnectConfig()?.baseUrl) {
+        writeConnectConfig({ baseUrl: data.baseUrl });
+      }
+    } catch {
+      /* stay on cookie proxy */
+    }
+  })();
+  return hydratePromise;
+}
 
 async function refreshBrowserSession(baseUrl: string): Promise<string> {
   const refresh = getBrowserRefreshToken();
@@ -162,6 +191,10 @@ export function installWpDirectFetch() {
     const target = apiWpTarget(input);
     if (!target) {
       return nativeFetch!(input, init);
+    }
+
+    if (!isLocalAppOrigin() && !getBrowserAccessToken()) {
+      await hydrateBrowserSession();
     }
 
     const baseUrl = getConnectConfig()?.baseUrl;
