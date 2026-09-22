@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import type { WarrantyItem } from "@/lib/warranties";
 import { ClaimThumb, claimContactName, claimMetaLines, claimThumbSrc } from "./ClaimThumb";
 import { FastLink } from "./FastLink";
-import { StatusBadge } from "./ui/StatusBadge";
 import { FileIcon, ImageIcon, PlusIcon, SendIcon } from "./ui/Icons";
 
 type Tab = "details" | "updates" | "files" | "timeline";
@@ -117,12 +116,6 @@ export function WarrantyClaimDetail({
             </div>
           ) : null}
         </div>
-        {record.status_label ? (
-          <StatusBadge
-            label={record.status_label}
-            color={record.status_color}
-          />
-        ) : null}
       </div>
 
       <div className="ceo-seg">
@@ -165,27 +158,8 @@ export function WarrantyClaimDetail({
             </div>
           ) : null}
 
-          {title ? (
-            <div className="ceo-warranty-detail">
-              <p className="text-sm leading-relaxed">{title}</p>
-            </div>
-          ) : null}
-
           <div className="ceo-warranty-detail">
-            {record.status_label ? (
-              <div className="ceo-claim-status">
-                <div className="min-w-0">
-                  <p className="text-xs text-[var(--muted)]">Status</p>
-                  <p className="mt-0.5 text-sm font-semibold">
-                    {record.status_label}
-                  </p>
-                </div>
-                <StatusBadge
-                  label={record.status_label}
-                  color={record.status_color}
-                />
-              </div>
-            ) : null}
+            <Row label="Status" value={record.status_label} />
             <Row
               label="Type"
               value={record.type_label || String(record.warranty_type || "")}
