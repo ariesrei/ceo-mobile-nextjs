@@ -4,11 +4,14 @@ Headless staff and resident app for CE OneSource. Connects to a WordPress proper
 
 **One Next.js codebase, two store products.** Do not clone this folder for ClaimTrack. WordPress REST lives in theme `dayone-intranet-sub` (`onesource/v1/app/*`).
 
+**Roles:** Admin/Staff and Residents do not share the same screens. Intended homes, bottom nav, warranty flows, and the current places where resident UI still opens staff pages are in [`docs/Mobile-App-Role-Workflows.MD`](docs/Mobile-App-Role-Workflows.MD). New screens follow that split (`group: "account"` vs `group: "staff"`).
+
 ## Folder structure
 
 ```
 app/public/
 ├── ceo-mobile-nextjs/              # This app (Next.js 15 on Vercel)
+│   ├── docs/Mobile-App-Role-Workflows.MD
 │   ├── app/go/[profile]/           # /go/operations | /go/warranty — locks product
 │   ├── app/download/               # Unlisted store links
 │   ├── app/api/connect/            # verify-connect + plan mismatch
