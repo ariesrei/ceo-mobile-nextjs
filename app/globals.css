@@ -5065,7 +5065,9 @@ div.ceo-accordion__row {
    strip and a full-height box at different scales, so the two copies never
    lined up and the seam read as a ghosted double exposure. */
 .ceo-login__hero {
-  position: absolute;
+  /* Fixed at every width so a mid-size pane does not show cream gutters
+     around the 24rem column. Connect and login share this layer. */
+  position: fixed;
   inset: 0;
   z-index: 0;
   background-size: cover;
@@ -5403,12 +5405,6 @@ div.ceo-accordion__row {
     padding-top: 0;
     padding-block: 2rem;
     background: transparent;
-  }
-
-  /* `fixed` rather than the mobile `absolute`, so the photo covers the whole
-     window instead of only the centred --app-max column the card sits in. */
-  .ceo-login__hero {
-    position: fixed;
   }
 
   /* The card floats over a much larger expanse of photo here, so the veil is

@@ -11,8 +11,8 @@ export default async function NewEntryDeliveryPage() {
 
   return (
     <AppShell
-      title="Add Entry Authorization"
-      subtitle="Authorize a food delivery for the unit."
+      title="Create a Delivery Pass"
+      subtitle="Log a delivery or service drop-off."
       layout="community"
       backHref="/account/entry-pass"
       clientName={branding.name}

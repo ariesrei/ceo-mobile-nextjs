@@ -62,6 +62,12 @@ export function ConnectForm() {
       const normalized = normalizeBaseUrl(baseUrl);
       const key = normalizeSecurityKey(securityKey);
       const verified = await verifyFromProperty(normalized, key);
+      // WP already rejected this key. Do not verify again from the Next
+      // server — that burns a second rate-limit hit and replaces the hint.
+      if (!verified.ok && verified.error) {
+        busy.fail(verified.error);
+        return;
+      }
       const res = await fetch("/api/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

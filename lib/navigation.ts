@@ -23,6 +23,7 @@ export const ACCOUNT_MODULE_PATHS: Record<string, string> = {
   reservations: "/account/reservations",
   amenities: "/account/reservations",
   entry_pass: "/account/entry-pass",
+  unit_entries: "/account/entry-pass",
   profile: "/account/profile",
   additional_info: "/account/additional-info",
   assets: "/account/assets",

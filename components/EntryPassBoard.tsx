@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { GuestItem } from "@/lib/guests";
-import type { ParcelItem } from "@/lib/parcels";
-import { listGuests } from "@/lib/helpers/guests";
-import { listParcels } from "@/lib/helpers/parcels";
+import {
+  listUnitEntries,
+  type UnitEntryItem,
+  type UnitEntryType,
+} from "@/lib/helpers/unit-entries";
 import { FastLink } from "./FastLink";
 import { ListGo, ListSkeleton } from "./ui/ListState";
 import { PaginatedList } from "./ui/PaginatedList";
@@ -66,38 +67,40 @@ function Mark({ name, src }: { name: string; src?: string }) {
   );
 }
 
+function PassCard({ item }: { item: UnitEntryItem }) {
+  const name = item.name || item.type_label || "Guest";
+  return (
+    <div className="ceo-pass-card">
+      <Mark name={name} src={item.photo} />
+      <span>
+        <b>{name}</b>
+        <em>{item.type_label || item.type}</em>
+        <small>{formatPassWhen(item.entry_date, item.expire_date)}</small>
+      </span>
+      <ListGo icon={item.type === "Delivery" ? "inbox" : "pass"} />
+    </div>
+  );
+}
+
 export function EntryPassBoard() {
   const [tab, setTab] = useState<Tab>("guests");
-  const [guests, setGuests] = useState<GuestItem[]>([]);
-  const [deliveries, setDeliveries] = useState<ParcelItem[]>([]);
-  const [pastGuests, setPastGuests] = useState<GuestItem[]>([]);
-  const [pastDeliveries, setPastDeliveries] = useState<ParcelItem[]>([]);
+  const [items, setItems] = useState<UnitEntryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const pending = useHeldLoading(loading);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    const load =
-      tab === "guests"
-        ? listGuests({ status: "checked_in" }).then((res) => {
-            if (!cancelled && res.ok) setGuests(res.items);
-          })
-        : tab === "deliveries"
-          ? listParcels({ status: "storage" }).then((res) => {
-              if (!cancelled && res.ok) setDeliveries(res.items);
-            })
-          : Promise.all([
-              listGuests({ status: "checked_out" }),
-              listParcels({ status: "claimed" }),
-            ]).then(([guestRes, parcelRes]) => {
-              if (cancelled) return;
-              if (guestRes.ok) setPastGuests(guestRes.items);
-              if (parcelRes.ok) setPastDeliveries(parcelRes.items);
-            });
-    load.finally(() => {
-      if (!cancelled) setLoading(false);
-    });
+    const type: UnitEntryType | "all" =
+      tab === "guests" ? "Guest" : tab === "deliveries" ? "Delivery" : "all";
+    const status = tab === "history" ? "history" : "active";
+    listUnitEntries({ type, status })
+      .then((res) => {
+        if (!cancelled) setItems(res.ok ? res.items : []);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => {
       cancelled = true;
     };
@@ -108,11 +111,11 @@ export function EntryPassBoard() {
 
   return (
     <div className="ceo-pass">
-      <div className="ceo-assets-tabs" role="tablist" aria-label="Unit entry authorization type">
+      <div className="ceo-assets-tabs" role="tablist" aria-label="Entry pass type">
         {(
           [
             { id: "guests", label: "Guests" },
-            { id: "deliveries", label: "Food Delivery" },
+            { id: "deliveries", label: "Deliveries" },
             { id: "history", label: "History" },
           ] as const
         ).map((item) => (
@@ -131,107 +134,41 @@ export function EntryPassBoard() {
 
       {tab !== "history" ? (
         <div className="ceo-pass-create">
-          <FastLink href={createHref} className="ceo-pass-create__plus" aria-label="Add entry authorization">
+          <FastLink href={createHref} className="ceo-pass-create__plus" aria-label="Create a new pass">
             +
           </FastLink>
-          <b>Add Entry Authorization</b>
-          <p>Grant access to guests or food deliveries.</p>
+          <b>Create a New Pass</b>
+          <p>Grant access to guests, service providers or deliveries.</p>
         </div>
       ) : null}
 
       <h2 className="ceo-pass-heading">
-        {tab === "history" ? "History" : "Active authorizations"}
+        {tab === "history" ? "History" : "Active Passes"}
       </h2>
 
       {pending ? (
         <ListSkeleton rows={2} height={84} />
-      ) : tab === "guests" ? (
-        <PaginatedList
-          items={guests}
-          listClassName="ceo-pass-list"
-          emptyIcon="pass"
-          emptyMessage="No active guest authorizations"
-          emptySubtitle="Add an authorization to let a guest in."
-          getKey={(item) => `g-${item.id}`}
-          renderItem={(item) => {
-            const name = item.guest_names || item.title || "Guest";
-            return (
-              <FastLink href={`/account/guests/${item.id}/edit`} className="ceo-pass-card">
-                <Mark name={name} src={item.photos?.[0]?.url} />
-                <span>
-                  <b>{name}</b>
-                  <em>Guest</em>
-                  <small>{formatPassWhen(item.guest_check_in, item.guest_check_out)}</small>
-                </span>
-                <ListGo icon="pass" />
-              </FastLink>
-            );
-          }}
-        />
-      ) : tab === "deliveries" ? (
-        <PaginatedList
-          items={deliveries}
-          listClassName="ceo-pass-list"
-          emptyIcon="inbox"
-          emptyMessage="No active food deliveries"
-          emptySubtitle="Food delivery authorizations will show up here."
-          getKey={(item) => `p-${item.id}`}
-          renderItem={(item) => {
-            const name = item.resident_name || item.title || "Delivery";
-            return (
-              <FastLink href={`/account/parcels/${item.id}/edit`} className="ceo-pass-card">
-                <Mark name={name} src={item.photos?.[0]?.url} />
-                <span>
-                  <b>{name}</b>
-                  <em>{item.parcel_type_label || "Food Delivery"}</em>
-                  <small>{formatPassWhen(item.parcel_delivered_on)}</small>
-                </span>
-                <ListGo icon="inbox" />
-              </FastLink>
-            );
-          }}
-        />
       ) : (
         <PaginatedList
-          items={[
-            ...pastGuests.map((item) => ({ kind: "guest" as const, item })),
-            ...pastDeliveries.map((item) => ({ kind: "parcel" as const, item })),
-          ]}
+          items={items}
           listClassName="ceo-pass-list"
-          emptyIcon="pass"
-          emptyMessage="No past authorizations yet"
-          emptySubtitle="Expired guests and food deliveries land here."
-          getKey={(row) => `${row.kind}-${row.item.id}`}
-          renderItem={(row) => {
-            if (row.kind === "guest") {
-              const item = row.item;
-              const name = item.guest_names || item.title || "Guest";
-              return (
-                <FastLink href={`/account/guests/${item.id}/edit`} className="ceo-pass-card">
-                  <Mark name={name} src={item.photos?.[0]?.url} />
-                  <span>
-                    <b>{name}</b>
-                    <em>Guest</em>
-                    <small>{formatPassWhen(item.guest_check_in, item.guest_check_out)}</small>
-                  </span>
-                  <ListGo icon="pass" />
-                </FastLink>
-              );
-            }
-            const item = row.item;
-            const name = item.resident_name || item.title || "Delivery";
-            return (
-              <FastLink href={`/account/parcels/${item.id}/edit`} className="ceo-pass-card">
-                <Mark name={name} src={item.photos?.[0]?.url} />
-                <span>
-                  <b>{name}</b>
-                  <em>{item.parcel_type_label || "Food Delivery"}</em>
-                  <small>{formatPassWhen(item.parcel_delivered_on)}</small>
-                </span>
-                <ListGo icon="inbox" />
-              </FastLink>
-            );
-          }}
+          emptyIcon={tab === "deliveries" ? "inbox" : "pass"}
+          emptyMessage={
+            tab === "history"
+              ? "No past passes yet"
+              : tab === "deliveries"
+                ? "No active deliveries"
+                : "No active guest passes"
+          }
+          emptySubtitle={
+            tab === "history"
+              ? "Expired guest and delivery authorizations land here."
+              : tab === "deliveries"
+                ? "Food delivery authorizations will show up here."
+                : "Create a pass to let a guest in."
+          }
+          getKey={(item) => String(item.id)}
+          renderItem={(item) => <PassCard item={item} />}
         />
       )}
     </div>

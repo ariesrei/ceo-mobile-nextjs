@@ -85,7 +85,7 @@ const COMMUNITY_TABS = [
   { id: "home", label: "Home", path: "/account" },
   { id: "messaging", label: "Messages", path: "/account/messaging" },
   { id: "reservations", label: "Amenities", path: "/account/reservations" },
-  { id: "entry_pass", label: "Unit Entry", path: "/account/entry-pass" },
+  { id: "entry_pass", label: "Entry Pass", path: "/account/entry-pass" },
 ];
 
 function CommunityIcon({ id }: { id: string }) {
@@ -174,7 +174,7 @@ function tabLabel(item: MenuItem): string {
   if (item.id === "warranties") return "Warranty";
   if (item.id === "profile") return "View Profile";
   if (item.id === "edit_profile") return "Edit Profile";
-  if (item.id === "entry_pass") return "Unit Entry Authorization";
+  if (item.id === "entry_pass") return "Entry Pass";
   return item.label.replace(/^My /, "");
 }
 

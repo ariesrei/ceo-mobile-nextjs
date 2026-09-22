@@ -11,8 +11,8 @@ export default async function NewEntryPassPage() {
 
   return (
     <AppShell
-      title="Add Entry Authorization"
-      subtitle="Authorize a guest to enter the unit."
+      title="Create a New Pass"
+      subtitle="Grant access to a guest."
       layout="community"
       backHref="/account/entry-pass"
       clientName={branding.name}

@@ -1,7 +1,7 @@
 import { ConnectForm } from "@/components/ConnectForm";
-import { appBrand, LANDING_BG } from "@/lib/brand";
+import { companyBrand, LANDING_BG } from "@/lib/brand";
 
-const brand = appBrand();
+const brand = companyBrand();
 
 export default function ConnectPage() {
   return (
@@ -18,13 +18,13 @@ export default function ConnectPage() {
         <header className="ceo-login__brand">
           <div className="ceo-login__lockup">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={brand.logo} alt="" className="ceo-login__badge-mark" />
+            <img src={brand.logo} alt="" className="ceo-login__company-mark" />
             <div className="ceo-login__lockup-text">
               <p className="ceo-login__company-name">
                 <span className="ceo-login__company-name-bold">CE</span>{" "}
                 ONESOURCE
               </p>
-              <p className="ceo-login__company-variant">{brand.wordmark}</p>
+              <p className="ceo-login__company-tagline">{brand.tagline}</p>
             </div>
           </div>
         </header>

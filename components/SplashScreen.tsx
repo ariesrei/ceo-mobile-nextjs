@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import type { AppProfile } from "@/lib/app-profile";
 import {
   brandForProfile,
+  companyBrand,
   COMPANY_SPLASH,
   LANDING_BG,
 } from "@/lib/brand";
@@ -27,7 +28,9 @@ type Props = {
 };
 
 export function SplashScreen({ connected = false, appProfile = null }: Props) {
-  const brand = brandForProfile(appProfile || "warranty");
+  const brand = connected
+    ? brandForProfile(appProfile)
+    : companyBrand();
   /**
    * Shows on every app open, every refresh, and after sign-in (full load).
    * Starting visible avoids a flash of the page underneath.
@@ -73,11 +76,17 @@ export function SplashScreen({ connected = false, appProfile = null }: Props) {
 
       <div className="ceo-splash__lockup">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={brand.logo} alt="" className="ceo-splash__badge" />
+        <img
+          src={brand.logo}
+          alt=""
+          className={connected ? "ceo-splash__badge" : "ceo-splash__mark"}
+        />
         <p className="ceo-splash__title">
           <span className="ceo-splash__title-bold">CE</span> ONESOURCE
         </p>
-        <p className="ceo-splash__wordmark">{brand.wordmark}</p>
+        <p className={connected ? "ceo-splash__wordmark" : "ceo-splash__tagline"}>
+          {brand.wordmark}
+        </p>
       </div>
 
       <div className="ceo-splash__foot">

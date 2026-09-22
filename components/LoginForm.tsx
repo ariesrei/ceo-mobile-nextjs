@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useBusyState } from "@/hooks/useBusyState";
 import { useConnectSession } from "@/hooks/useConnectSession";
 import type { AppProfile } from "@/lib/app-profile";
-import { brandForProfile, postLoginPath } from "@/lib/brand";
+import { brandForProfile, LANDING_BG, postLoginPath } from "@/lib/brand";
 import {
   clearBrowserTokens,
   loginFromProperty,
@@ -42,11 +42,12 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [changingProperty, setChangingProperty] = useState(false);
+  const [liveHero, setLiveHero] = useState("");
 
   const baseUrl = config?.baseUrl || fallbackBaseUrl || "";
   const propertyName = fallbackName || config?.clientName || "";
   const propertyLogo = fallbackLogo || config?.clientLogo || "";
-  const hero = fallbackHero || config?.clientHero || "";
+  const propertyHero = liveHero || fallbackHero || config?.clientHero || "";
   const tagline = fallbackTagline || config?.clientTagline || "";
 
   useEffect(() => {
@@ -63,6 +64,26 @@ export function LoginForm({
       });
     }
   }, [config, fallbackBaseUrl, fallbackHero, fallbackTagline, remember, router]);
+
+  useEffect(() => {
+    if (!baseUrl) return;
+    const url = `${baseUrl.replace(/\/+$/, "")}/wp-json/onesource/v1/mobile/branding`;
+    let cancelled = false;
+    fetch(url, { headers: { Accept: "application/json" } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { client_hero?: string } | null) => {
+        const next = String(data?.client_hero || "").trim();
+        if (cancelled || !next) return;
+        setLiveHero(next);
+        remember({ baseUrl, clientHero: next });
+      })
+      .catch(() => {
+        /* Cookie/localStorage hero stays if WordPress is unreachable. */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [baseUrl, remember]);
 
   async function onChangeProperty() {
     if (changingProperty) return;
@@ -137,13 +158,15 @@ export function LoginForm({
 
   return (
     <div className="ceo-login">
-      {hero ? (
-        <div
-          className="ceo-login__hero"
-          style={{ backgroundImage: `url(${hero})` }}
-          aria-hidden
-        />
-      ) : null}
+      <div
+        className="ceo-login__hero"
+        style={{
+          backgroundImage: propertyHero
+            ? `url(${propertyHero}), url(${LANDING_BG})`
+            : `url(${LANDING_BG})`,
+        }}
+        aria-hidden
+      />
 
       <header className="ceo-login__brand">
         <div className="ceo-login__lockup">

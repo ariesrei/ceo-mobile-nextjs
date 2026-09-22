@@ -11,7 +11,7 @@ export default async function EntryPassPage() {
 
   return (
     <AppShell
-      title="Unit Entry Authorization"
+      title="Entry Pass"
       layout="community"
       clientName={branding.name}
       clientLogo={branding.logo}

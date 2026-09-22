@@ -86,6 +86,23 @@ export function appBrand(): AppBrand {
   return appVariant() === "operations" ? OPERATIONS : WARRANTY;
 }
 
+/** Pre-connect lockup: company only. No property / WARRANTY / OPERATIONS yet. */
+export const COMPANY_BRAND: AppBrand = {
+  variant: "warranty",
+  appName: "CE OneSource",
+  wordmark: COMPANY_TAGLINE,
+  tagline: COMPANY_TAGLINE,
+  loginBadge: "",
+  logo: COMPANY_MARK,
+  splashFrom: COMPANY_SPLASH.from,
+  splashTo: COMPANY_SPLASH.to,
+  glow: COMPANY_SPLASH.glow,
+};
+
+export function companyBrand(): AppBrand {
+  return COMPANY_BRAND;
+}
+
 /** Splash/login after Connect: follow the property, not only the build env. */
 export function brandForProfile(profile?: AppProfile | null): AppBrand {
   if (profile === "warranty") return WARRANTY;
