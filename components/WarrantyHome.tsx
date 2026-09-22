@@ -23,7 +23,7 @@ import {
   UsersIcon,
 } from "./ui/Icons";
 
-const CACHE_KEY = "ceo_warranty_home_v2";
+const CACHE_KEY = "ceo_warranty_home_v3";
 const CACHE_MS = 60_000;
 
 function greetingLabel(now = new Date()): string {

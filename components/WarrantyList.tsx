@@ -6,6 +6,7 @@ import {
   isWarrantyClosed,
   isWarrantyExpiring,
   isWarrantyInProgress,
+  warrantyBucketCounts,
 } from "@/lib/warranties";
 import { loadWarrantyClaims, loadWarrantyOptions } from "@/lib/helpers/warranties";
 import { ClaimThumb, claimContactName, claimMetaLines, claimThumbSrc } from "./ClaimThumb";
@@ -230,14 +231,14 @@ export function WarrantyList({
     [all, filters]
   );
 
-  const counts = useMemo(
-    () => ({
-      open: filtered.filter((w) => matchesTab(w, "open")).length,
-      progress: filtered.filter((w) => matchesTab(w, "progress")).length,
-      closed: filtered.filter((w) => matchesTab(w, "closed")).length,
-    }),
-    [filtered]
-  );
+  const counts = useMemo(() => {
+    const stats = warrantyBucketCounts(filtered);
+    return {
+      open: stats.open,
+      progress: stats.in_progress,
+      closed: stats.closed,
+    };
+  }, [filtered]);
 
   const visible = useMemo(
     () => filtered.filter((w) => matchesTab(w, tab)),

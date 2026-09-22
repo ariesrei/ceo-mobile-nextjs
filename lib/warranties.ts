@@ -155,6 +155,28 @@ export function isWarrantyInProgress(w: WarrantyItem): boolean {
   return s.includes("progress") || Boolean(w.is_assigned);
 }
 
+/** Same buckets as the Claims tabs — home overview must use this. */
+export function warrantyBucketCounts(items: WarrantyItem[]): WarrantySummary {
+  const stats: WarrantySummary = {
+    open: 0,
+    in_progress: 0,
+    closed: 0,
+    assigned: 0,
+    expiring: 0,
+  };
+  for (const item of items) {
+    if (isWarrantyClosed(item)) {
+      stats.closed += 1;
+      continue;
+    }
+    if (isWarrantyInProgress(item)) stats.in_progress += 1;
+    else stats.open += 1;
+    if (item.is_assigned) stats.assigned += 1;
+    if (isWarrantyExpiring(item)) stats.expiring += 1;
+  }
+  return stats;
+}
+
 export function isWarrantyExpiring(w: WarrantyItem, withinDays = 45): boolean {
   const due = (w.warranty_sources_target_due || "").trim();
   if (!due || isWarrantyClosed(w)) return false;

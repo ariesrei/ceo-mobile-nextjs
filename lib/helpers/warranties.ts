@@ -4,10 +4,7 @@ import type {
   WarrantyOptions,
   WarrantySummary,
 } from "@/lib/warranties";
-import {
-  isWarrantyExpiring,
-  isWarrantyInProgress,
-} from "@/lib/warranties";
+import { warrantyBucketCounts } from "@/lib/warranties";
 import { apiGet, queryString } from "./api";
 import { asArray, asNumber, asRecord, readListPayload } from "./validate";
 
@@ -19,47 +16,28 @@ const EMPTY: WarrantySummary = {
   expiring: 0,
 };
 
-function fromSummaryRow(raw: unknown): WarrantySummary | null {
-  const row = asRecord(raw);
-  if (!row) return null;
-  if (row.open == null && row.in_progress == null && row.closed == null) {
-    return null;
-  }
-  return {
-    open: asNumber(row.open),
-    in_progress: asNumber(row.in_progress),
-    closed: asNumber(row.closed),
-    assigned: asNumber(row.assigned),
-    expiring: asNumber(row.expiring),
-  };
-}
-
 function asItems(raw: unknown): WarrantyItem[] {
   return asArray(readListPayload(raw).items) as WarrantyItem[];
 }
 
-export async function loadWarrantySummary(): Promise<WarrantySummary> {
-  const direct = await apiGet("/api/wp/warranties/summary");
-  if (direct.ok) {
-    const stats = fromSummaryRow(direct.data);
-    if (stats) return stats;
-  }
+function uniqueClaims(items: WarrantyItem[]): WarrantyItem[] {
+  const seen = new Set<number>();
+  return items.filter((item) => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
 
+export async function loadWarrantySummary(): Promise<WarrantySummary> {
   const [openRes, closedRes] = await Promise.all([
     apiGet("/api/wp/warranties?status=open&per_page=50"),
     apiGet("/api/wp/warranties?status=closed&per_page=50"),
   ]);
 
   const openItems = openRes.ok ? asItems(openRes.data) : [];
-  const closedPayload = closedRes.ok ? readListPayload(closedRes.data) : null;
-
-  return {
-    open: openItems.filter((item) => !isWarrantyInProgress(item)).length,
-    in_progress: openItems.filter((item) => isWarrantyInProgress(item)).length,
-    closed: closedPayload?.total || 0,
-    assigned: openItems.filter((item) => item.is_assigned).length,
-    expiring: openItems.filter((item) => isWarrantyExpiring(item)).length,
-  };
+  const closedItems = closedRes.ok ? asItems(closedRes.data) : [];
+  return warrantyBucketCounts(uniqueClaims([...openItems, ...closedItems]));
 }
 
 export function emptyWarrantySummary(): WarrantySummary {
