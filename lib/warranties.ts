@@ -45,7 +45,7 @@ export type WarrantyItem = {
   photos?: WarrantyPhoto[];
   can_edit?: boolean;
   is_closed?: boolean;
-  /** From desktop Target Due (expired or within 45 days). */
+  /** REST flag; Claims Expiring uses Target Due on the client, not this. */
   is_expiring?: boolean;
 };
 
@@ -201,18 +201,15 @@ export function warrantyBucketCounts(items: WarrantyItem[]): WarrantySummary {
 }
 
 /**
- * Desktop Quality Details / reports: Target Due on or before today is expired.
- * Home tile also includes due dates inside the next 45 days (WP summary).
+ * Same as desktop Warranty Request "expired" badge: Target Due before today.
+ * Does not use the API is_expiring flag.
  */
-export function isWarrantyExpiring(w: WarrantyItem, withinDays = 45): boolean {
+export function isWarrantyExpiring(w: WarrantyItem): boolean {
   if (isWarrantyClosed(w)) return false;
-  if (w.is_expiring) return true;
   const parsed = parseWarrantyDueDate(w.warranty_sources_target_due);
   if (!parsed) return false;
   parsed.setHours(0, 0, 0, 0);
   const now = new Date();
   now.setHours(0, 0, 0, 0);
-  const limit = new Date(now);
-  limit.setDate(limit.getDate() + withinDays);
-  return parsed.getTime() <= limit.getTime();
+  return parsed.getTime() < now.getTime();
 }

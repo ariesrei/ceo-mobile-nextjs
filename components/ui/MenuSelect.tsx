@@ -27,7 +27,7 @@ export function MenuSelect({
   className = "",
   variant = "field",
   id,
-  searchable,
+  searchable = false,
   "aria-label": ariaLabel,
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -40,8 +40,7 @@ export function MenuSelect({
       : options;
   const current =
     items.find((o) => String(o.id) === String(value)) || items[0];
-  const showSearch = Boolean(searchable) || options.length >= 12;
-  const visible = showSearch
+  const visible = searchable
     ? items.filter((o) => {
         const term = query.trim().toLowerCase();
         if (!term) return true;
@@ -85,12 +84,12 @@ export function MenuSelect({
               id={listId}
               role="listbox"
               aria-label={ariaLabel}
-              className="ceo-menu-select__sheet"
+              className={`ceo-menu-select__sheet${searchable ? " has-search" : ""}`}
             >
               {ariaLabel ? (
                 <p className="ceo-menu-select__sheet-title">{ariaLabel}</p>
               ) : null}
-              {showSearch ? (
+              {searchable ? (
                 <input
                   type="search"
                   className="ceo-menu-select__search"
@@ -98,35 +97,38 @@ export function MenuSelect({
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search…"
                   aria-label={ariaLabel ? `Search ${ariaLabel}` : "Search"}
-                  autoFocus
+                  autoComplete="off"
+                  enterKeyHint="search"
                 />
               ) : null}
-              {visible.map((o) => {
-                const active = String(o.id) === String(value);
-                return (
-                  <button
-                    key={String(o.id) || "empty"}
-                    type="button"
-                    role="option"
-                    aria-selected={active}
-                    className={
-                      active
-                        ? "ceo-menu-select__option is-active"
-                        : "ceo-menu-select__option"
-                    }
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onChange(String(o.id));
-                      setOpen(false);
-                    }}
-                  >
-                    {o.label}
-                  </button>
-                );
-              })}
-              {showSearch && !visible.length ? (
-                <p className="ceo-menu-select__empty">No matches.</p>
-              ) : null}
+              <div className="ceo-menu-select__options">
+                {visible.map((o) => {
+                  const active = String(o.id) === String(value);
+                  return (
+                    <button
+                      key={String(o.id) || "empty"}
+                      type="button"
+                      role="option"
+                      aria-selected={active}
+                      className={
+                        active
+                          ? "ceo-menu-select__option is-active"
+                          : "ceo-menu-select__option"
+                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onChange(String(o.id));
+                        setOpen(false);
+                      }}
+                    >
+                      {o.label}
+                    </button>
+                  );
+                })}
+                {searchable && !visible.length ? (
+                  <p className="ceo-menu-select__empty">No matches.</p>
+                ) : null}
+              </div>
             </div>
           </div>,
           document.body

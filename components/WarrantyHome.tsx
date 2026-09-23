@@ -16,10 +16,8 @@ import {
   BuildingIcon,
   ClipboardIcon,
   ClockIcon,
-  ChartIcon,
   FilterIcon,
   PlusIcon,
-  SettingsIcon,
   UsersIcon,
 } from "./ui/Icons";
 
@@ -245,22 +243,6 @@ export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
                 </span>
                 <span className="ceo-warranty-menu__label">Search & Filters</span>
               </FastLink>
-              {staff ? (
-                <span className="ceo-warranty-menu__row is-soon">
-                  <span className="ceo-warranty-menu__icon">
-                    <ChartIcon className="h-[18px] w-[18px]" />
-                  </span>
-                  <span className="ceo-warranty-menu__label">Reports</span>
-                </span>
-              ) : null}
-              {staff ? (
-                <span className="ceo-warranty-menu__row is-soon">
-                  <span className="ceo-warranty-menu__icon">
-                    <SettingsIcon className="h-[18px] w-[18px]" />
-                  </span>
-                  <span className="ceo-warranty-menu__label">Warranty Settings</span>
-                </span>
-              ) : null}
             </nav>
           </>
         )}

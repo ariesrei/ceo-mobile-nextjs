@@ -16,10 +16,6 @@ const EMPTY: WarrantySummary = {
   expiring: 0,
 };
 
-function asItems(raw: unknown): WarrantyItem[] {
-  return asArray(readListPayload(raw).items) as WarrantyItem[];
-}
-
 function uniqueClaims(items: WarrantyItem[]): WarrantyItem[] {
   const seen = new Set<number>();
   return items.filter((item) => {
@@ -30,22 +26,35 @@ function uniqueClaims(items: WarrantyItem[]): WarrantyItem[] {
 }
 
 export async function loadWarrantySummary(): Promise<WarrantySummary> {
-  const [openRes, closedRes, expiringRes] = await Promise.all([
-    apiGet("/api/wp/warranties?status=open&per_page=80"),
-    apiGet("/api/wp/warranties?status=closed&per_page=80"),
-    apiGet("/api/wp/warranties?status=expiring&per_page=200"),
+  const [openItems, closedItems] = await Promise.all([
+    loadAllWarrantyClaims("open"),
+    loadAllWarrantyClaims("closed"),
   ]);
-
-  const openItems = openRes.ok ? asItems(openRes.data) : [];
-  const closedItems = closedRes.ok ? asItems(closedRes.data) : [];
-  const expiringItems = expiringRes.ok ? asItems(expiringRes.data) : [];
-  return warrantyBucketCounts(
-    uniqueClaims([...openItems, ...closedItems, ...expiringItems])
-  );
+  return warrantyBucketCounts(uniqueClaims([...openItems, ...closedItems]));
 }
 
 export function emptyWarrantySummary(): WarrantySummary {
   return { ...EMPTY };
+}
+
+/** Staff lists: walk pages so tab counts match cards. Stops on a short page. */
+export async function loadAllWarrantyClaims(
+  status: "open" | "closed" | "all" | "expiring",
+  input: { search?: string } = {}
+): Promise<WarrantyItem[]> {
+  const perPage = 200;
+  const acc: WarrantyItem[] = [];
+  for (let page = 1; page <= 20; page += 1) {
+    const res = await loadWarrantyClaims(status, {
+      search: input.search,
+      perPage,
+      page,
+    });
+    if (!res.items.length) break;
+    acc.push(...res.items);
+    if (res.items.length < perPage) break;
+  }
+  return uniqueClaims(acc);
 }
 
 export async function loadWarrantyClaims(

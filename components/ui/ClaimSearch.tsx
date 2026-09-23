@@ -54,7 +54,7 @@ export function dateRangeField(key = "range"): ClaimFilterField {
   return {
     key,
     label: "Date Range",
-    placeholder: "Last 30 Days",
+    placeholder: "Any date",
     options: DATE_RANGES.map((range) => ({
       id: range.id,
       label: range.label,
@@ -156,6 +156,7 @@ export function ClaimSearch<T extends Record<string, string>>({
                   options={field.options}
                   placeholder={field.placeholder}
                   variant="inline"
+                  searchable={false}
                   aria-label={field.label}
                 />
                 {field.trailing ? (

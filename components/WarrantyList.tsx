@@ -8,10 +8,10 @@ import {
   isWarrantyInProgress,
   warrantyBucketCounts,
 } from "@/lib/warranties";
-import { loadWarrantyClaims, loadWarrantyOptions } from "@/lib/helpers/warranties";
+import { loadAllWarrantyClaims, loadWarrantyOptions } from "@/lib/helpers/warranties";
 import { ClaimThumb, claimContactName, claimMetaLines, claimThumbSrc } from "./ClaimThumb";
 import { FastLink } from "./FastLink";
-import { PaginatedList } from "./ui/PaginatedList";
+import { EmptyState, ListSkeleton } from "./ui/ListState";
 import { StatusBadge } from "./ui/StatusBadge";
 import {
   ClaimSearch,
@@ -79,7 +79,6 @@ export function WarrantyList({
   const [tab, setTab] = useState<Tab>(() => parseTab(initialTab, isStaff));
   const [openItems, setOpenItems] = useState<WarrantyItem[]>([]);
   const [closedItems, setClosedItems] = useState<WarrantyItem[]>([]);
-  const [expiringItems, setExpiringItems] = useState<WarrantyItem[]>([]);
   const [types, setTypes] = useState<WarrantyChoice[]>([]);
   const [statuses, setStatuses] = useState<WarrantyChoice[]>([]);
   const [subcontractors, setSubcontractors] = useState<WarrantyChoice[]>([]);
@@ -101,23 +100,14 @@ export function WarrantyList({
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    Promise.all([
-      loadWarrantyClaims("open", { search, perPage: 80 }),
-      loadWarrantyClaims("closed", { search, perPage: 80 }),
-      loadWarrantyClaims("expiring", { search, perPage: 200 }),
-    ])
-      .then(([open, closed, expiring]) => {
-        if (cancelled) return;
-        setOpenItems(open.items);
-        setClosedItems(closed.items);
-        setExpiringItems(expiring.items);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setOpenItems([]);
-        setClosedItems([]);
-        setExpiringItems([]);
-      })
+    Promise.allSettled([
+      loadAllWarrantyClaims("open", { search }),
+      loadAllWarrantyClaims("closed", { search }),
+    ]).then(([open, closed]) => {
+      if (cancelled) return;
+      setOpenItems(open.status === "fulfilled" ? open.value : []);
+      setClosedItems(closed.status === "fulfilled" ? closed.value : []);
+    })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
@@ -155,12 +145,12 @@ export function WarrantyList({
 
   const all = useMemo(() => {
     const seen = new Set<number>();
-    return [...openItems, ...closedItems, ...expiringItems].filter((w) => {
+    return [...openItems, ...closedItems].filter((w) => {
       if (seen.has(w.id)) return false;
       seen.add(w.id);
       return true;
     });
-  }, [openItems, closedItems, expiringItems]);
+  }, [openItems, closedItems]);
 
   const typeOptions = useMemo(
     () =>
@@ -316,30 +306,22 @@ export function WarrantyList({
         }}
       />
 
-      {showFilters ? null : loading ? (
-        <div className="space-y-3">
-          <div className="ceo-skel h-[92px] rounded-2xl" />
-          <div className="ceo-skel h-[92px] rounded-2xl" />
-          <div className="ceo-skel h-[92px] rounded-2xl" />
-        </div>
-      ) : (
-        <PaginatedList
-          items={visible}
-          pageSize={6}
-          listClassName="ceo-claim-list"
-          emptyIcon={search || activeFilterCount ? "search" : "inbox"}
-          emptyMessage={
-            search || activeFilterCount
-              ? "No matching claims"
-              : "No claims yet"
-          }
-          emptySubtitle={
+      {loading ? (
+        <ListSkeleton rows={4} />
+      ) : !visible.length ? (
+        <EmptyState
+          icon={search || activeFilterCount ? "search" : "inbox"}
+          subtitle={
             search || activeFilterCount
               ? "Try another search or filter."
               : "New claims will show up here."
           }
-          getKey={(w) => w.id}
-          renderItem={(w) => {
+        >
+          {search || activeFilterCount ? "No matching claims" : "No claims yet"}
+        </EmptyState>
+      ) : (
+        <ul className="ceo-claim-list">
+          {visible.map((w) => {
             const title =
               w.warranty_describe_the_request ||
               w.warranty_describe_the_request_single ||
@@ -348,40 +330,40 @@ export function WarrantyList({
             const contact = claimContactName(w);
             const meta = claimMetaLines(w, title);
             return (
-              <FastLink
-                href={`/account/warranties/${w.id}`}
-                className="ceo-claim-card"
-              >
-                <ClaimThumb src={claimThumbSrc(w)} name={contact} />
-                <div className="min-w-0 flex-1">
-                  <p className="ceo-claim-card__id">#{w.id}</p>
-                  <p className="ceo-claim-card__title">{title}</p>
-                  {meta.length ? (
-                    <div className="ceo-claim-card__meta">
-                      {meta.map((line, i) => (
-                        <span key={`${i}-${line}`}>{line}</span>
-                      ))}
-                    </div>
+              <li key={w.id}>
+                <FastLink
+                  href={`/account/warranties/${w.id}`}
+                  className="ceo-claim-card"
+                >
+                  <ClaimThumb src={claimThumbSrc(w)} name={contact} />
+                  <div className="min-w-0 flex-1">
+                    <p className="ceo-claim-card__id">#{w.id}</p>
+                    <p className="ceo-claim-card__title">{title}</p>
+                    {meta.length ? (
+                      <div className="ceo-claim-card__meta">
+                        {meta.map((line, i) => (
+                          <span key={`${i}-${line}`}>{line}</span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                  {w.status_label ? (
+                    <StatusBadge
+                      label={w.status_label}
+                      color={w.status_color}
+                    />
                   ) : null}
-                </div>
-                {w.status_label ? (
-                  <StatusBadge
-                    label={w.status_label}
-                    color={w.status_color}
-                  />
-                ) : null}
-              </FastLink>
+                </FastLink>
+              </li>
             );
-          }}
-        />
+          })}
+        </ul>
       )}
 
-      {showFilters ? null : (
-        <FastLink href="/account/warranties/new" className="ceo-fab">
-          <PlusIcon className="h-4 w-4" />
-          New Claim
-        </FastLink>
-      )}
+      <FastLink href="/account/warranties/new" className="ceo-fab">
+        <PlusIcon className="h-4 w-4" />
+        New Claim
+      </FastLink>
     </div>
   );
 }

@@ -3956,6 +3956,13 @@ body.ceo-warranty-theme {
   outline: none;
 }
 
+.ceo-menu-select--inline > button > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ceo-inline-select.ceo-menu-select--inline > button {
   padding: 0.2rem 0;
   font-size: 0.8rem;
@@ -3999,15 +4006,26 @@ body.ceo-warranty-theme {
 .ceo-menu-select__sheet {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
   width: min(28rem, 100%);
   max-height: min(70dvh, 28rem);
-  overflow: auto;
+  overflow: hidden;
   border-radius: 1.1rem;
   border: 1px solid #3a4250;
   background: #1a1f27;
   color: #f4f7fb;
   padding: 0.45rem;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+.ceo-menu-select__options {
+  overflow: auto;
+  min-height: 0;
+}
+
+.ceo-menu-select__sheet.has-search {
+  height: min(70dvh, 28rem);
 }
 
 .ceo-menu-select__sheet-title {
@@ -4029,7 +4047,7 @@ body.ceo-warranty-theme {
   background: #12161c;
   color: #f4f7fb;
   padding: 0.65rem 0.75rem;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .ceo-menu-select__empty {
@@ -5681,15 +5699,17 @@ div.ceo-accordion__row {
   }
 
   .ceo-claim-filter {
-    flex-direction: column;
-    align-items: stretch;
     gap: 0.4rem;
   }
 
-  .ceo-claim-filter__label,
+  .ceo-claim-filter__label {
+    flex: 0 1 34%;
+    padding: 0.7rem 0.75rem;
+    font-size: 0.72rem;
+  }
+
   .ceo-claim-filter__value {
-    flex: none;
-    width: 100%;
+    padding-right: 0.65rem;
   }
 
   .ceo-warranty-stat {

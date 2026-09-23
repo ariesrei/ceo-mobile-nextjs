@@ -527,27 +527,27 @@ export function HomeScreen({
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              className="ceo-home-bell"
-              aria-label="Notifications"
-              onClick={() => setShowNotes(true)}
-            >
-              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
-                <path
-                  d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M10 18.5a2 2 0 0 0 4 0"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
+          <button
+            type="button"
+            className="ceo-home-bell"
+            aria-label="Notifications"
+            onClick={() => setShowNotes(true)}
+          >
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
+              <path
+                d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M10 18.5a2 2 0 0 0 4 0"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
             {isOpsHome ? (
               <span className="ceo-ops-avatar" aria-hidden>
                 {initial}
@@ -560,8 +560,8 @@ export function HomeScreen({
           <div className="ceo-ops-hero__phone">
             <p className="text-[clamp(1rem,4.2vw,1.25rem)] font-normal text-white/90 md:text-[24px]">{greeting}</p>
             <p className="mt-1 text-[clamp(1.65rem,8vw,2.125rem)] font-semibold leading-none tracking-tight text-white md:text-[48px]">
-              {name} <span aria-hidden>👋</span>
-            </p>
+            {name} <span aria-hidden>👋</span>
+          </p>
           </div>
           {isOpsHome ? (
             <div className="ceo-ops-hero__wide">
@@ -768,9 +768,9 @@ export function HomeScreen({
         ? createPortal(
             <div
               className="ceo-ops-notes"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="ceo-home-notes-title"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ceo-home-notes-title"
               onClick={(e) => {
                 if (e.target === e.currentTarget) setShowNotes(false);
               }}
@@ -779,9 +779,9 @@ export function HomeScreen({
                 <h2 id="ceo-home-notes-title">Notifications</h2>
                 <p>You have no new notifications.</p>
                 <button type="button" onClick={() => setShowNotes(false)}>
-                  Close
-                </button>
-              </div>
+              Close
+            </button>
+          </div>
             </div>,
             document.body
           )
