@@ -15,7 +15,7 @@ export default async function WarrantyVendorPage({ params }: Props) {
   const { id } = await params;
 
   return (
-    <WarrantyShell title="Vendor" backHref="/account/warranties/vendors">
+    <WarrantyShell title="Company" backHref="/account/warranties/vendors">
       <WarrantyStaffGate
         confirmed={decision === "staff"}
         fallbackHref="/account/warranties"

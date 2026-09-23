@@ -7,7 +7,7 @@ import type {
 } from "@/lib/warranties";
 import { warrantyBucketCounts } from "@/lib/warranties";
 import { apiGet, queryString } from "./api";
-import { asArray, asNumber, asRecord, readListPayload } from "./validate";
+import { asArray, asBoolean, asNumber, asRecord, readListPayload } from "./validate";
 
 const EMPTY: WarrantySummary = {
   open: 0,
@@ -122,12 +122,32 @@ export async function loadWarrantyOptions(input: {
         label: String(vendorRow.label || vendorRow.company || "Vendor"),
         company: String(vendorRow.company || ""),
         address: String(vendorRow.address || ""),
+        company_phone: String(vendorRow.company_phone || ""),
         phone: String(vendorRow.phone || ""),
+        mobile: String(vendorRow.mobile || ""),
         email: String(vendorRow.email || ""),
         first_name: String(vendorRow.first_name || ""),
         last_name: String(vendorRow.last_name || ""),
         contact_name: String(vendorRow.contact_name || ""),
+        salutation: String(vendorRow.salutation || ""),
+        job_title: String(vendorRow.job_title || ""),
+        rating: String(vendorRow.rating || ""),
+        contact_type: String(vendorRow.contact_type || "Sub-Contractor"),
+        coi_expiration: String(vendorRow.coi_expiration || ""),
+        opt_email: asBoolean(vendorRow.opt_email),
+        opt_sms: asBoolean(vendorRow.opt_sms),
+        avatar: String(vendorRow.avatar || ""),
         trades: asArray(vendorRow.trades) as WarrantyChoice[],
+        staff: asArray(vendorRow.staff).map((row) => {
+          const item = asRecord(row) || {};
+          return {
+            name: String(item.name || ""),
+            job_title: String(item.job_title || ""),
+            email: String(item.email || ""),
+            phone: String(item.phone || ""),
+            active: asBoolean(item.active),
+          };
+        }),
       }
     : null;
   return {

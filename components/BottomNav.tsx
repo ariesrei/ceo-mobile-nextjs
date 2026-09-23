@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -11,8 +11,8 @@ import {
   type AppProfile,
 } from "@/lib/app-profile";
 import { applyNavVisibility, menuHref } from "@/lib/navigation";
-import { clearBrowserTokens } from "@/lib/browser-session";
 import type { MenuItem, NavigationResponse } from "@/lib/types";
+import { LogoutOverlay, useLogout } from "./ui/LogoutOverlay";
 
 const ICONS: Record<string, string> = {
   home: "M4 11.5 12 4l8 7.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-8.5Z",
@@ -370,7 +370,7 @@ export function BottomNav({
   appProfile?: AppProfile | null;
 } = {}) {
   const pathname = usePathname();
-  const router = useRouter();
+  const { loggingOut, logout } = useLogout();
   const themeLock = useRef(true);
   const [menus, setMenus] = useState<MenuItem[]>([]);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -387,10 +387,6 @@ export function BottomNav({
 
   const community =
     variant !== "warranty" && getBuildAppProfile() !== "warranty";
-
-  useEffect(() => {
-    setDocked(true);
-  }, []);
 
   useEffect(() => {
     const ops = community;
@@ -418,6 +414,7 @@ export function BottomNav({
     } catch {
       /* ignore */
     }
+    setDocked(true);
     fetch("/api/wp/navigation")
       .then((r) => r.json())
       .then((data: NavigationResponse) => {
@@ -494,13 +491,6 @@ export function BottomNav({
           })),
         ];
 
-  async function logout() {
-    clearBrowserTokens();
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
-    router.refresh();
-  }
-
   const ui = (
     <>
       <nav
@@ -549,7 +539,9 @@ export function BottomNav({
       </nav>
 
       {moreOpen ? (
-        <MoreSheet onClose={() => setMoreOpen(false)}>
+        <MoreSheet onClose={() => {
+          if (!loggingOut) setMoreOpen(false);
+        }}>
             <p className="mb-3 text-sm font-semibold">More</p>
             <ul className="space-y-2">
               {warranty ? (
@@ -617,24 +609,25 @@ export function BottomNav({
             <button
               type="button"
               className="mt-4 w-full rounded-xl px-4 py-3 text-sm font-semibold text-[var(--muted)]"
+              disabled={loggingOut}
               onClick={logout}
             >
-              Log out
+              {loggingOut ? "Logging out…" : "Log out"}
             </button>
             <button
               type="button"
               className="mt-2 w-full rounded-xl border border-[var(--border)] px-4 py-3 text-sm font-semibold"
+              disabled={loggingOut}
               onClick={() => setMoreOpen(false)}
             >
               Close
             </button>
         </MoreSheet>
       ) : null}
+      <LogoutOverlay show={loggingOut} />
     </>
   );
 
-  if (docked && typeof document !== "undefined") {
-    return createPortal(ui, document.body);
-  }
-  return ui;
+  if (!docked || typeof document === "undefined") return null;
+  return createPortal(ui, document.body);
 }

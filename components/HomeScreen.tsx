@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { clearBrowserTokens } from "@/lib/browser-session";
 import { createPortal } from "react-dom";
 import {
   getBuildAppProfile,
@@ -24,6 +22,7 @@ import { AccountMenu } from "./AccountMenu";
 import { BottomNav } from "./BottomNav";
 import { FastLink } from "./FastLink";
 import { EmptyState, ListGo, ListSkeleton } from "./ui/ListState";
+import { LogoutOverlay, useLogout } from "./ui/LogoutOverlay";
 
 const RESIDENT_HOME_IDS = [
   "profile",
@@ -240,7 +239,7 @@ export function HomeScreen({
   firstName?: string;
   appProfile?: AppProfile | null;
 }) {
-  const router = useRouter();
+  const { loggingOut, logout } = useLogout();
   const [showNotes, setShowNotes] = useState(false);
   const [notesReady, setNotesReady] = useState(false);
   const [greeting, setGreeting] = useState("Good morning,");
@@ -450,13 +449,9 @@ export function HomeScreen({
               type="button"
               className="ceo-ops-rail__tool"
               data-tone="rose"
-              aria-label="Log out"
-              onClick={async () => {
-                clearBrowserTokens();
-                await fetch("/api/auth/logout", { method: "POST" });
-                router.push("/login");
-                router.refresh();
-              }}
+              aria-label={loggingOut ? "Logging out" : "Log out"}
+              disabled={loggingOut}
+              onClick={logout}
             >
               <svg viewBox="0 0 24 24">
                 <path
@@ -764,6 +759,7 @@ export function HomeScreen({
         appProfile={appProfile}
         variant={isWarrantyProfile(appProfile) ? "warranty" : "app"}
       />
+      <LogoutOverlay show={loggingOut} />
       {showNotes && notesReady
         ? createPortal(
             <div

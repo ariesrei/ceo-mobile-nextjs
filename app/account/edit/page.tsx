@@ -37,6 +37,7 @@ export default async function EditProfilePage({ searchParams }: Props) {
         backHref="/account/profile"
         clientName={branding.name}
         clientLogo={branding.logo}
+        showNav={false}
       >
         <ClientWpRecord
           path="/profile"
@@ -54,6 +55,7 @@ export default async function EditProfilePage({ searchParams }: Props) {
     <WarrantyShell
       title="Edit Profile"
       backHref="/account/profile?from=warranty"
+      showNav={false}
     >
       <ClientWpRecord
         path="/profile"

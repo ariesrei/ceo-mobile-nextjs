@@ -68,17 +68,36 @@ export type WarrantyListResponse = {
   status: string;
 };
 
+export type WarrantyVendorStaff = {
+  name: string;
+  job_title?: string;
+  email?: string;
+  phone?: string;
+  active?: boolean;
+};
+
 export type WarrantyVendor = {
   id: number | string;
   label: string;
   company?: string;
   address?: string;
+  company_phone?: string;
   phone?: string;
+  mobile?: string;
   email?: string;
   first_name?: string;
   last_name?: string;
   contact_name?: string;
+  salutation?: string;
+  job_title?: string;
+  rating?: string;
+  contact_type?: string;
+  coi_expiration?: string;
+  opt_email?: boolean;
+  opt_sms?: boolean;
+  avatar?: string;
   trades?: WarrantyChoice[];
+  staff?: WarrantyVendorStaff[];
 };
 
 export type WarrantyOptions = {

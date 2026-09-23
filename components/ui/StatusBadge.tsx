@@ -1,5 +1,39 @@
 import type { CSSProperties } from "react";
 
+function rgbFromCss(color: string): [number, number, number] | null {
+  const key = color.trim().toLowerCase();
+  if (key === "black") return [0, 0, 0];
+  if (key === "white") return [255, 255, 255];
+  const hex = key.replace(/^#/, "");
+  if (hex.length === 3 && /^[0-9a-f]+$/.test(hex)) {
+    return [
+      parseInt(hex[0] + hex[0], 16),
+      parseInt(hex[1] + hex[1], 16),
+      parseInt(hex[2] + hex[2], 16),
+    ];
+  }
+  if (hex.length === 6 && /^[0-9a-f]+$/.test(hex)) {
+    return [
+      parseInt(hex.slice(0, 2), 16),
+      parseInt(hex.slice(2, 4), 16),
+      parseInt(hex.slice(4, 6), 16),
+    ];
+  }
+  const rgb = key.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+  if (rgb) return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])];
+  return null;
+}
+
+/** Desktop Closed is often black — invisible on the dark app. */
+function usableStatusColor(color?: string): string | undefined {
+  if (!color?.trim()) return undefined;
+  const rgb = rgbFromCss(color);
+  if (!rgb) return color;
+  const luminance = (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255;
+  if (luminance < 0.4) return undefined;
+  return color;
+}
+
 export function statusTone(
   label?: string
 ): "progress" | "warn" | "done" | "info" | "danger" {
@@ -73,7 +107,8 @@ export function StatusBadge({
   color?: string;
 }) {
   if (!label) return null;
-  const intra = Boolean(color && !short);
+  const safeColor = usableStatusColor(color);
+  const intra = Boolean(safeColor && !short);
   const className = [
     "ceo-status",
     intra ? "ceo-status--intra" : `ceo-status--${statusTone(label)}`,
@@ -86,7 +121,7 @@ export function StatusBadge({
       className={className}
       style={
         intra
-          ? ({ ["--status-color"]: color } as CSSProperties)
+          ? ({ ["--status-color"]: safeColor } as CSSProperties)
           : undefined
       }
     >
