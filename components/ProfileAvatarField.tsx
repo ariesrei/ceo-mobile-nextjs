@@ -59,6 +59,7 @@ export function ProfileAvatarField({
   initials,
   uploadUrl = "/api/wp/profile/media",
   parentId,
+  userId,
   title = "Profile photo",
   subtitle = "Photo changes are submitted for staff review.",
   onPendingChange,
@@ -67,6 +68,7 @@ export function ProfileAvatarField({
   initials: string;
   uploadUrl?: string;
   parentId?: number;
+  userId?: number | string;
   title?: string;
   subtitle?: string;
   onPendingChange?: (pending: { id: number; url: string } | null) => void;
@@ -90,6 +92,7 @@ export function ProfileAvatarField({
         body: JSON.stringify({
           image,
           ...(parentId ? { parent_id: parentId, pet_id: parentId } : {}),
+          ...(userId ? { user_id: userId } : {}),
         }),
       });
       const data = (await res.json()) as {

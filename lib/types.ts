@@ -73,6 +73,9 @@ export type Profile = {
   website: string;
   phone: string;
   mobile: string;
+  company_phone?: string;
+  coi_expiration?: string;
+  payment_terms?: string;
   allergies: string;
   emergency_contact: string;
   opt_email: boolean;

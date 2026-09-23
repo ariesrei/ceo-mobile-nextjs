@@ -3706,8 +3706,6 @@ body.ceo-warranty-theme {
   color: var(--muted);
 }
 
-/* Vendors have no avatar in WordPress, so the row is marked with the first
-   letter of the company name in place of one. */
 .ceo-vendor-mark {
   display: inline-flex;
   align-items: center;
@@ -3715,11 +3713,18 @@ body.ceo-warranty-theme {
   width: 2.1rem;
   height: 2.1rem;
   flex: 0 0 auto;
+  overflow: hidden;
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent);
   font-size: 0.85rem;
   font-weight: 800;
+}
+
+.ceo-vendor-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .ceo-vendor-profile {
@@ -3730,9 +3735,33 @@ body.ceo-warranty-theme {
 }
 
 .ceo-vendor-profile .ceo-vendor-mark {
-  width: 2.8rem;
-  height: 2.8rem;
-  font-size: 1.05rem;
+  width: 4.5rem;
+  height: 4.5rem;
+  font-size: 1.45rem;
+}
+
+.ceo-vendor-open-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.ceo-vendor-open-counts span {
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.ceo-vendor-open-counts strong {
+  color: var(--ink);
+  font-weight: 750;
+}
+
+.ceo-vendor-trade__staff {
+  margin-top: 0.75rem;
 }
 
 .ceo-vendor-profile__name {

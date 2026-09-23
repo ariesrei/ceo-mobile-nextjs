@@ -19,6 +19,9 @@ export function toProfile(raw: unknown): Profile | null {
     website: asString(row.website),
     phone: asString(row.phone),
     mobile: asString(row.mobile),
+    company_phone: asString(row.company_phone),
+    coi_expiration: asString(row.coi_expiration),
+    payment_terms: asString(row.payment_terms),
     allergies: asString(row.allergies),
     emergency_contact: asString(row.emergency_contact),
     opt_email: Boolean(row.opt_email),
@@ -36,8 +39,9 @@ export function toProfile(raw: unknown): Profile | null {
   };
 }
 
-export async function getProfile() {
-  const res = await apiGet("/api/wp/profile");
+export async function getProfile(userId?: number | string) {
+  const qs = userId ? `?user_id=${encodeURIComponent(String(userId))}` : "";
+  const res = await apiGet(`/api/wp/profile${qs}`);
   if (!res.ok) return { ok: false as const, item: null };
   const item = toProfile(res.data);
   return item

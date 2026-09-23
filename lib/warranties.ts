@@ -1,4 +1,8 @@
-export type WarrantyChoice = { id: number | string; label: string };
+export type WarrantyChoice = {
+  id: number | string;
+  label: string;
+  avatar?: string;
+};
 
 export type WarrantyPhoto = {
   id: number;
@@ -74,6 +78,26 @@ export type WarrantyVendorStaff = {
   email?: string;
   phone?: string;
   active?: boolean;
+  notify?: boolean;
+};
+
+export type WarrantyVendorTrade = WarrantyChoice & {
+  coverage?: string;
+  priority?: string;
+  sla?: string;
+  staff?: WarrantyVendorStaff[];
+};
+
+export type WarrantyVendorOpenItem = {
+  type: string;
+  type_label?: string;
+  id: number;
+  unit?: string;
+  resident?: string;
+  status?: string;
+  date?: string;
+  due?: string;
+  description?: string;
 };
 
 export type WarrantyVendor = {
@@ -93,11 +117,14 @@ export type WarrantyVendor = {
   rating?: string;
   contact_type?: string;
   coi_expiration?: string;
+  payment_terms?: string;
   opt_email?: boolean;
   opt_sms?: boolean;
   avatar?: string;
-  trades?: WarrantyChoice[];
+  can_edit?: boolean;
+  trades?: WarrantyVendorTrade[];
   staff?: WarrantyVendorStaff[];
+  open_items?: WarrantyVendorOpenItem[];
 };
 
 export type WarrantyOptions = {
@@ -108,6 +135,7 @@ export type WarrantyOptions = {
   trades: WarrantyChoice[];
   subcontractors?: WarrantyChoice[];
   vendor?: WarrantyVendor | null;
+  open_items?: WarrantyVendorOpenItem[];
   can_edit: boolean;
   can_create: boolean;
   is_staff: boolean;
