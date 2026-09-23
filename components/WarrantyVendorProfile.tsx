@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type {
+  WarrantyChoice,
   WarrantyItem,
   WarrantyVendor,
   WarrantyVendorOpenItem,
@@ -16,10 +17,19 @@ import {
 import { getProfile } from "@/lib/helpers/profile";
 import { ClaimThumb, claimContactName, claimMetaLines, claimThumbSrc } from "./ClaimThumb";
 import { FastLink } from "./FastLink";
+import { WarrantyVendorForm } from "./WarrantyVendorForm";
+import { WarrantyVendorStaffForm } from "./WarrantyVendorStaffForm";
+import { WarrantyVendorTradeForm } from "./WarrantyVendorTradeForm";
+import { Button } from "./ui/Button";
 import { EmptyState, ListSkeleton } from "./ui/ListState";
 import { StatusBadge } from "./ui/StatusBadge";
 
 type Tab = "company" | "trade" | "staff" | "open";
+type Editor =
+  | null
+  | { kind: "company" }
+  | { kind: "trade"; id?: number | string }
+  | { kind: "staff"; id?: number };
 
 function Info({ label, value }: { label: string; value?: string }) {
   const text = (value || "").trim();
@@ -37,10 +47,20 @@ function onOff(on?: boolean) {
 }
 
 function staffKey(person: WarrantyVendorStaff) {
-  return (person.email || person.name || "").trim().toLowerCase();
+  return String(person.id || person.email || person.name || "").trim().toLowerCase();
 }
 
-function StaffCard({ person }: { person: WarrantyVendorStaff }) {
+function compactBtn(className = "") {
+  return `!px-3 !py-2 text-xs ${className}`.trim();
+}
+
+function StaffCard({
+  person,
+  action,
+}: {
+  person: WarrantyVendorStaff;
+  action?: ReactNode;
+}) {
   return (
     <div className="ceo-claim-card">
       <span className="ceo-vendor-mark" aria-hidden>
@@ -55,8 +75,10 @@ function StaffCard({ person }: { person: WarrantyVendorStaff }) {
         </div>
       </div>
       <div className="ceo-claim-card__chips">
+        {person.is_primary ? <StatusBadge label="Primary" /> : null}
         {person.active ? <StatusBadge label="Active" /> : null}
         {person.notify ? <StatusBadge label="Notify" /> : null}
+        {action}
       </div>
     </div>
   );
@@ -64,9 +86,12 @@ function StaffCard({ person }: { person: WarrantyVendorStaff }) {
 
 export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
   const [tab, setTab] = useState<Tab>("company");
+  const [editor, setEditor] = useState<Editor>(null);
   const [vendor, setVendor] = useState<WarrantyVendor | null>(null);
   const [items, setItems] = useState<WarrantyItem[]>([]);
   const [openRows, setOpenRows] = useState<WarrantyVendorOpenItem[]>([]);
+  const [tradeTypes, setTradeTypes] = useState<WarrantyChoice[]>([]);
+  const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -129,12 +154,15 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
           opt_sms: fromApi?.opt_sms ?? profile?.opt_sms,
           avatar:
             fromApi?.avatar || profile?.avatar || fallback?.avatar || "",
+          can_edit: Boolean(fromApi?.can_edit ?? options?.can_edit),
           trades,
           staff,
           open_items: fromApi?.open_items || options?.open_items || [],
         };
         setVendor(next);
         setOpenRows(next.open_items || []);
+        setTradeTypes(options?.trade_types || []);
+        setCanEdit(Boolean(options?.is_staff && options?.can_edit));
         const seen = new Set<number>();
         setItems(
           [...open, ...closed].filter((item) => {
@@ -185,6 +213,39 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
   const maintenanceCount = maintenanceOpen.length;
   const totalOpen = warrantyCount + maintenanceCount;
 
+  function selectTab(next: Tab) {
+    setTab(next);
+    setEditor(null);
+  }
+
+  function upsertTrade(next: WarrantyVendorTrade) {
+    setVendor((prev) => {
+      if (!prev) return prev;
+      const rows = prev.trades || [];
+      const index = rows.findIndex((row) => String(row.id) === String(next.id));
+      const tradesNext =
+        index >= 0
+          ? rows.map((row, i) => (i === index ? { ...row, ...next } : row))
+          : [...rows, next];
+      return { ...prev, trades: tradesNext };
+    });
+    setEditor(null);
+  }
+
+  function upsertStaff(next: WarrantyVendorStaff) {
+    setVendor((prev) => {
+      if (!prev) return prev;
+      const rows = prev.staff || [];
+      const index = rows.findIndex((row) => staffKey(row) === staffKey(next));
+      const staffNext =
+        index >= 0
+          ? rows.map((row, i) => (i === index ? { ...row, ...next } : row))
+          : [...rows, next];
+      return { ...prev, staff: staffNext };
+    });
+    setEditor(null);
+  }
+
   if (loading) return <ListSkeleton rows={4} height={78} />;
   if (!vendor) return <EmptyState>Vendor not found.</EmptyState>;
 
@@ -195,6 +256,9 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
     { id: "staff", label: "Staff" },
     { id: "open", label: "Open Items" },
   ];
+  const editingCompany = editor?.kind === "company";
+  const addingTrade = editor?.kind === "trade" && editor.id == null;
+  const addingStaff = editor?.kind === "staff" && editor.id == null;
 
   return (
     <div className="space-y-4">
@@ -221,7 +285,7 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
             key={item.id}
             type="button"
             className={`ceo-claim-tab${tab === item.id ? " is-active" : ""}`}
-            onClick={() => setTab(item.id)}
+            onClick={() => selectTab(item.id)}
           >
             {item.label}
           </button>
@@ -230,85 +294,274 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
 
       {tab === "company" ? (
         <div className="space-y-4">
-          <section className="ceo-warranty-detail">
-            <p className="ceo-section-label">Company information</p>
-            <Info label="Company" value={name} />
-            <Info label="Company address" value={vendor.address} />
-            <Info
-              label="Company phone"
-              value={vendor.company_phone || vendor.phone}
+          {canEdit ? (
+            <div className="ceo-vendor-tab-head">
+              <p className="ceo-section-label">Company</p>
+              {editingCompany ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className={compactBtn()}
+                  onClick={() => setEditor(null)}
+                >
+                  Cancel
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  className={compactBtn()}
+                  onClick={() => setEditor({ kind: "company" })}
+                >
+                  Edit company
+                </Button>
+              )}
+            </div>
+          ) : null}
+          {editingCompany ? (
+            <WarrantyVendorForm
+              vendor={vendor}
+              onSaved={(next) => {
+                setVendor(next);
+                setEditor(null);
+              }}
             />
-            <Info label="COI expiration" value={vendor.coi_expiration} />
-            <Info label="Payment terms" value={vendor.payment_terms} />
-          </section>
-          <section className="ceo-warranty-detail">
-            <p className="ceo-section-label">Contact information</p>
-            <Info label="Salutation" value={vendor.salutation} />
-            <Info label="First name" value={vendor.first_name} />
-            <Info label="Last name" value={vendor.last_name} />
-            <Info
-              label="Contact type"
-              value={vendor.contact_type || "Sub-Contractor"}
-            />
-            <Info label="Email" value={vendor.email} />
-            <Info label="Phone number" value={vendor.phone} />
-            <Info label="Mobile number" value={vendor.mobile} />
-            <Info label="Job title" value={vendor.job_title} />
-            <Info label="Rating" value={vendor.rating} />
-          </section>
-          <section className="ceo-warranty-detail">
-            <p className="ceo-section-label">Notifications</p>
-            <Info label="Email notification" value={onOff(vendor.opt_email)} />
-            <Info label="SMS notification" value={onOff(vendor.opt_sms)} />
-          </section>
+          ) : (
+            <>
+              <section className="ceo-warranty-detail">
+                <p className="ceo-section-label">Company information</p>
+                <Info label="Company" value={name} />
+                <Info label="Company address" value={vendor.address} />
+                <Info
+                  label="Company phone"
+                  value={vendor.company_phone || vendor.phone}
+                />
+                <Info label="COI expiration" value={vendor.coi_expiration} />
+                <Info label="Payment terms" value={vendor.payment_terms} />
+              </section>
+              <section className="ceo-warranty-detail">
+                <p className="ceo-section-label">Contact information</p>
+                <Info label="Salutation" value={vendor.salutation} />
+                <Info label="First name" value={vendor.first_name} />
+                <Info label="Last name" value={vendor.last_name} />
+                <Info
+                  label="Contact type"
+                  value={vendor.contact_type || "Sub-Contractor"}
+                />
+                <Info label="Email" value={vendor.email} />
+                <Info label="Phone number" value={vendor.phone} />
+                <Info label="Mobile number" value={vendor.mobile} />
+                <Info label="Job title" value={vendor.job_title} />
+                <Info label="Rating" value={vendor.rating} />
+              </section>
+              <section className="ceo-warranty-detail">
+                <p className="ceo-section-label">Notifications</p>
+                <Info label="Email notification" value={onOff(vendor.opt_email)} />
+                <Info label="SMS notification" value={onOff(vendor.opt_sms)} />
+              </section>
+            </>
+          )}
         </div>
       ) : null}
 
       {tab === "trade" ? (
-        trades.length ? (
-          <div className="space-y-3">
-            {trades.map((trade) => (
-              <section
-                key={String(trade.id)}
-                className="ceo-warranty-detail ceo-vendor-trade"
-              >
-                <p className="ceo-section-label">{trade.label}</p>
-                <Info label="Coverage area" value={trade.coverage} />
-                <Info label="Priority rank" value={trade.priority} />
-                <Info label="SLA hours" value={trade.sla} />
-                {(trade.staff || []).length ? (
-                  <ul className="ceo-claim-list ceo-vendor-trade__staff">
-                    {trade.staff!.map((person, index) => (
-                      <li key={`${staffKey(person) || index}`}>
-                        <StaffCard person={person} />
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </section>
-            ))}
-          </div>
-        ) : (
-          <EmptyState subtitle="Trades for this company will show here.">
-            No trades
-          </EmptyState>
-        )
+        <div className="space-y-3">
+          {canEdit ? (
+            <div className="ceo-vendor-tab-head">
+              <p className="ceo-section-label">Trades</p>
+              {addingTrade ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className={compactBtn()}
+                  onClick={() => setEditor(null)}
+                >
+                  Cancel
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  className={compactBtn()}
+                  onClick={() => setEditor({ kind: "trade" })}
+                >
+                  New trade
+                </Button>
+              )}
+            </div>
+          ) : null}
+          {addingTrade ? (
+            <section className="ceo-warranty-detail">
+              <WarrantyVendorTradeForm
+                vendorId={vendorId}
+                tradeTypes={tradeTypes}
+                staff={staff}
+                onSaved={upsertTrade}
+              />
+            </section>
+          ) : null}
+          {trades.length ? (
+            trades.map((trade) => {
+              const editing =
+                editor?.kind === "trade" &&
+                editor.id != null &&
+                String(editor.id) === String(trade.id);
+              return (
+                <section
+                  key={String(trade.id)}
+                  className="ceo-warranty-detail ceo-vendor-trade"
+                >
+                  <div className="ceo-vendor-card-head">
+                    <p className="ceo-section-label">{trade.label}</p>
+                    {canEdit && trade.trade_id ? (
+                      editing ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className={compactBtn()}
+                          onClick={() => setEditor(null)}
+                        >
+                          Cancel
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className={compactBtn()}
+                          onClick={() =>
+                            setEditor({ kind: "trade", id: trade.id })
+                          }
+                        >
+                          Edit
+                        </Button>
+                      )
+                    ) : null}
+                  </div>
+                  {editing ? (
+                    <WarrantyVendorTradeForm
+                      vendorId={vendorId}
+                      trade={trade}
+                      tradeTypes={tradeTypes}
+                      staff={staff}
+                      onSaved={upsertTrade}
+                    />
+                  ) : (
+                    <>
+                      <Info label="Coverage area" value={trade.coverage} />
+                      <Info label="Priority rank" value={trade.priority} />
+                      <Info label="SLA hours" value={trade.sla} />
+                      {(trade.staff || []).length ? (
+                        <ul className="ceo-claim-list ceo-vendor-trade__staff">
+                          {trade.staff!.map((person, index) => (
+                            <li key={`${staffKey(person) || index}`}>
+                              <StaffCard person={person} />
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </>
+                  )}
+                </section>
+              );
+            })
+          ) : addingTrade ? null : (
+            <EmptyState subtitle="Trades for this company will show here.">
+              No trades
+            </EmptyState>
+          )}
+        </div>
       ) : null}
 
       {tab === "staff" ? (
-        staff.length ? (
-          <ul className="ceo-claim-list">
-            {staff.map((person, index) => (
-              <li key={`${staffKey(person) || index}`}>
-                <StaffCard person={person} />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <EmptyState subtitle="Staff for this company will show here.">
-            No staff
-          </EmptyState>
-        )
+        <div className="space-y-3">
+          {canEdit ? (
+            <div className="ceo-vendor-tab-head">
+              <p className="ceo-section-label">Staff</p>
+              {addingStaff ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className={compactBtn()}
+                  onClick={() => setEditor(null)}
+                >
+                  Cancel
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  className={compactBtn()}
+                  onClick={() => setEditor({ kind: "staff" })}
+                >
+                  New staff
+                </Button>
+              )}
+            </div>
+          ) : null}
+          {addingStaff ? (
+            <section className="ceo-warranty-detail">
+              <WarrantyVendorStaffForm
+                vendorId={vendorId}
+                onSaved={upsertStaff}
+              />
+            </section>
+          ) : null}
+          {staff.length ? (
+            <ul className="ceo-claim-list">
+              {staff.map((person, index) => {
+                const editing =
+                  editor?.kind === "staff" &&
+                  editor.id != null &&
+                  editor.id === person.id;
+                return (
+                  <li key={`${staffKey(person) || index}`}>
+                    {editing ? (
+                      <section className="ceo-warranty-detail">
+                        <div className="ceo-vendor-card-head">
+                          <p className="ceo-section-label">
+                            {person.name || "Staff"}
+                          </p>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className={compactBtn()}
+                            onClick={() => setEditor(null)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                        <WarrantyVendorStaffForm
+                          vendorId={vendorId}
+                          person={person}
+                          onSaved={upsertStaff}
+                        />
+                      </section>
+                    ) : (
+                      <StaffCard
+                        person={person}
+                        action={
+                          canEdit && person.id ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className={compactBtn("!min-h-0")}
+                              onClick={() =>
+                                setEditor({ kind: "staff", id: person.id })
+                              }
+                            >
+                              Edit
+                            </Button>
+                          ) : null
+                        }
+                      />
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : addingStaff ? null : (
+            <EmptyState subtitle="Staff for this company will show here.">
+              No staff
+            </EmptyState>
+          )}
+        </div>
       ) : null}
 
       {tab === "open" ? (
@@ -343,7 +596,12 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
                         {row.due ? <span>Due {row.due}</span> : null}
                       </div>
                     </div>
-                    {row.status ? <StatusBadge label={row.status} /> : null}
+                    <div className="ceo-claim-card__chips">
+                      {row.status ? <StatusBadge label={row.status} /> : null}
+                      {row.type === "warranty" ? (
+                        <span className="ceo-vendor-view">View</span>
+                      ) : null}
+                    </div>
                   </div>
                 );
                 return (
@@ -400,6 +658,7 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
                         {isWarrantyExpiring(item) ? (
                           <StatusBadge label="Expired" />
                         ) : null}
+                        <span className="ceo-vendor-view">View</span>
                       </div>
                     </FastLink>
                   </li>

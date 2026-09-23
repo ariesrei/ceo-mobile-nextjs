@@ -73,19 +73,23 @@ export type WarrantyListResponse = {
 };
 
 export type WarrantyVendorStaff = {
+  id?: number;
   name: string;
   job_title?: string;
   email?: string;
   phone?: string;
   active?: boolean;
   notify?: boolean;
+  is_primary?: boolean;
 };
 
 export type WarrantyVendorTrade = WarrantyChoice & {
+  trade_id?: number;
   coverage?: string;
   priority?: string;
   sla?: string;
   staff?: WarrantyVendorStaff[];
+  staff_ids?: number[];
 };
 
 export type WarrantyVendorOpenItem = {
@@ -133,6 +137,7 @@ export type WarrantyOptions = {
   statuses: WarrantyChoice[];
   locations?: WarrantyChoice[];
   trades: WarrantyChoice[];
+  trade_types?: WarrantyChoice[];
   subcontractors?: WarrantyChoice[];
   vendor?: WarrantyVendor | null;
   open_items?: WarrantyVendorOpenItem[];

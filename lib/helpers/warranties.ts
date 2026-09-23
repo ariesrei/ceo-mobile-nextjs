@@ -9,7 +9,7 @@ import type {
   WarrantyVendorTrade,
 } from "@/lib/warranties";
 import { warrantyBucketCounts } from "@/lib/warranties";
-import { apiGet, queryString } from "./api";
+import { apiGet, apiPost, queryString } from "./api";
 import {
   asArray,
   asBoolean,
@@ -132,7 +132,9 @@ export async function saveWarrantyVendor(
 
 function mapVendorStaff(item: unknown): WarrantyVendorStaff {
   const person = asRecord(item) || {};
+  const id = asNumber(person.id);
   return {
+    id: id || undefined,
     name: String(person.name || ""),
     job_title: String(person.job_title || ""),
     email: String(person.email || ""),
@@ -140,18 +142,27 @@ function mapVendorStaff(item: unknown): WarrantyVendorStaff {
     active: asBoolean(person.active),
     notify:
       person.notify === undefined ? undefined : asBoolean(person.notify),
+    is_primary: asBoolean(person.is_primary),
   };
 }
 
 function mapVendorTrade(item: unknown): WarrantyVendorTrade {
   const trade = asRecord(item) || {};
+  const staff = asArray(trade.staff).map(mapVendorStaff);
+  const staffIds = asArray(trade.staff_ids)
+    .map((value) => asNumber(value))
+    .filter((value) => value > 0);
   return {
     id: asNumber(trade.id) || String(trade.id || ""),
+    trade_id: asNumber(trade.trade_id) || undefined,
     label: String(trade.label || ""),
     coverage: String(trade.coverage || ""),
     priority: String(trade.priority || ""),
     sla: String(trade.sla || ""),
-    staff: asArray(trade.staff).map(mapVendorStaff),
+    staff,
+    staff_ids: staffIds.length
+      ? staffIds
+      : staff.map((person) => person.id || 0).filter((value) => value > 0),
   };
 }
 
@@ -230,6 +241,7 @@ export async function loadWarrantyOptions(input: {
     statuses: asArray(row.statuses) as WarrantyChoice[],
     locations: asArray(row.locations) as WarrantyChoice[],
     trades: asArray(row.trades) as WarrantyChoice[],
+    trade_types: asArray(row.trade_types) as WarrantyChoice[],
     subcontractors: asArray(row.subcontractors).map((item) => {
       const choice = asRecord(item) || {};
       return {
@@ -245,5 +257,57 @@ export async function loadWarrantyOptions(input: {
     is_staff: Boolean(row.is_staff),
     current_user: asNumber(row.current_user),
     default_status_id: asNumber(row.default_status_id) || undefined,
+  };
+}
+
+export async function saveWarrantyVendorTrade(
+  vendorId: number | string,
+  payload: {
+    id?: number;
+    trade_id: number;
+    coverage?: string;
+    priority?: string;
+    sla?: string;
+    staff_ids?: number[];
+  }
+): Promise<{ ok: boolean; message?: string; trade?: WarrantyVendorTrade }> {
+  const result = await apiPost("/api/wp/warranties/options", {
+    action: "save_trade",
+    subcontractor_id: vendorId,
+    ...payload,
+  });
+  if (!result.ok) return { ok: false, message: result.message };
+  const data = asRecord(result.data) || {};
+  return {
+    ok: true,
+    message: String(data.message || "Trade saved."),
+    trade: data.trade ? mapVendorTrade(data.trade) : undefined,
+  };
+}
+
+export async function saveWarrantyVendorStaff(
+  vendorId: number | string,
+  payload: {
+    id?: number;
+    name: string;
+    job_title?: string;
+    email?: string;
+    phone?: string;
+    active?: boolean;
+    notify?: boolean;
+    is_primary?: boolean;
+  }
+): Promise<{ ok: boolean; message?: string; staff?: WarrantyVendorStaff }> {
+  const result = await apiPost("/api/wp/warranties/options", {
+    action: "save_staff",
+    subcontractor_id: vendorId,
+    ...payload,
+  });
+  if (!result.ok) return { ok: false, message: result.message };
+  const data = asRecord(result.data) || {};
+  return {
+    ok: true,
+    message: String(data.message || "Staff saved."),
+    staff: data.staff ? mapVendorStaff(data.staff) : undefined,
   };
 }
