@@ -9,20 +9,16 @@ import {
 import {
   loadAllWarrantyClaims,
   loadWarrantyOptions,
+  mapWarrantyVendor,
 } from "@/lib/helpers/warranties";
+import { getProfile } from "@/lib/helpers/profile";
 import { ClaimThumb, claimContactName, claimMetaLines, claimThumbSrc } from "./ClaimThumb";
 import { FastLink } from "./FastLink";
+import { WarrantyVendorForm } from "./WarrantyVendorForm";
 import { EmptyState, ListSkeleton } from "./ui/ListState";
 import { StatusBadge } from "./ui/StatusBadge";
 
-type Tab = "company" | "trade" | "staff" | "open";
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: "company", label: "Company" },
-  { id: "trade", label: "Trade" },
-  { id: "staff", label: "Staff" },
-  { id: "open", label: "Open Items" },
-];
+type Tab = "company" | "edit" | "trade" | "staff" | "open";
 
 function Info({ label, value }: { label: string; value?: string }) {
   const text = (value || "").trim();
@@ -42,6 +38,7 @@ function onOff(on?: boolean) {
 export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
   const [tab, setTab] = useState<Tab>("company");
   const [vendor, setVendor] = useState<WarrantyVendor | null>(null);
+  const [canEdit, setCanEdit] = useState(false);
   const [items, setItems] = useState<WarrantyItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -52,18 +49,41 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
       loadAllWarrantyClaims("open"),
       loadAllWarrantyClaims("closed"),
     ])
-      .then(([options, open, closed]) => {
+      .then(async ([options, open, closed]) => {
         if (cancelled) return;
         const fromApi = options?.vendor;
         const fallback = (options?.subcontractors || []).find(
           (row) => String(row.id) === vendorId
         );
-        setVendor(
-          fromApi ||
-            (fallback
-              ? { id: fallback.id, label: fallback.label, company: fallback.label }
-              : { id: vendorId, label: "Vendor" })
-        );
+        const isOwn = String(options?.current_user || "") === vendorId;
+        let next = fromApi
+          ? {
+              ...fromApi,
+              avatar: fromApi.avatar || fallback?.avatar || "",
+            }
+          : fallback
+            ? {
+                id: fallback.id,
+                label: fallback.label,
+                company: fallback.label,
+                avatar: fallback.avatar,
+              }
+            : { id: vendorId, label: "Vendor" };
+        if (isOwn) {
+          const mine = await getProfile();
+          if (cancelled) return;
+          if (mine.ok && mine.item) {
+            next =
+              mapWarrantyVendor({
+                ...next,
+                ...mine.item,
+                id: vendorId,
+                label: mine.item.company || next.label,
+              }) || next;
+          }
+        }
+        setCanEdit(isOwn && Boolean(options?.can_edit));
+        setVendor(next);
         const seen = new Set<number>();
         setItems(
           [...open, ...closed].filter((item) => {
@@ -95,28 +115,36 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
   if (!vendor) return <EmptyState>Vendor not found.</EmptyState>;
 
   const name = vendor.company || vendor.label;
+  const tabs: { id: Tab; label: string }[] = [
+    { id: "company", label: "Company" },
+    ...(canEdit ? [{ id: "edit" as const, label: "Edit Company" }] : []),
+    { id: "trade", label: "Trades" },
+    { id: "staff", label: "Staff" },
+    { id: "open", label: "Open Items" },
+  ];
 
   return (
     <div className="space-y-4">
       <section className="ceo-vendor-profile">
-        {vendor.avatar ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={vendor.avatar} alt="" className="ceo-vendor-avatar" />
-        ) : (
-          <span className="ceo-vendor-mark" aria-hidden>
-            {name.slice(0, 1).toUpperCase()}
-          </span>
-        )}
+        <span className="ceo-vendor-mark" aria-hidden>
+          {vendor.avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={vendor.avatar} alt="" />
+          ) : (
+            name.slice(0, 1).toUpperCase()
+          )}
+        </span>
         <div className="min-w-0">
           <p className="ceo-vendor-profile__name">{name}</p>
-          <p className="text-sm text-[var(--muted)]">
-            {vendor.contact_type || "Sub-Contractor"}
+          <p className="mt-1 flex flex-wrap items-center gap-1.5">
+            <StatusBadge label="Active" />
+            <StatusBadge label={vendor.contact_type || "Sub-Contractor"} />
           </p>
         </div>
       </section>
 
       <div className="ceo-claim-tabs">
-        {TABS.map((item) => (
+        {tabs.map((item) => (
           <button
             key={item.id}
             type="button"
@@ -131,30 +159,38 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
       {tab === "company" ? (
         <div className="space-y-4">
           <section className="ceo-warranty-detail">
-            <p className="ceo-section-label">Company information</p>
+            <p className="ceo-section-label">Company Information</p>
             <Info label="Company" value={name} />
-            <Info label="Company address" value={vendor.address} />
-            <Info label="Company phone" value={vendor.company_phone || vendor.phone} />
-            <Info label="COI expiration" value={vendor.coi_expiration} />
+            <Info label="Company Address" value={vendor.address} />
+            <Info label="Company Phone" value={vendor.company_phone || vendor.phone} />
+            <Info label="COI Expiration" value={vendor.coi_expiration} />
+            <Info label="Payment Terms" value={vendor.payment_terms} />
           </section>
           <section className="ceo-warranty-detail">
-            <p className="ceo-section-label">Contact information</p>
-            <Info label="Salutation" value={vendor.salutation} />
-            <Info label="First name" value={vendor.first_name} />
-            <Info label="Last name" value={vendor.last_name} />
-            <Info label="Contact type" value={vendor.contact_type || "Sub-Contractor"} />
-            <Info label="Email" value={vendor.email} />
-            <Info label="Phone number" value={vendor.phone} />
-            <Info label="Mobile number" value={vendor.mobile} />
-            <Info label="Job title" value={vendor.job_title} />
+            <p className="ceo-section-label">Contact Information</p>
+            <Info label="Salutation / Dear" value={vendor.salutation} />
+            <Info label="First Name" value={vendor.first_name} />
+            <Info label="Last Name" value={vendor.last_name} />
+            <Info label="Email Address" value={vendor.email} />
+            <Info label="Contact Type" value={vendor.contact_type || "Sub-Contractor"} />
+            <Info label="Phone Number" value={vendor.phone} />
+            <Info label="Mobile Number" value={vendor.mobile} />
+            <Info label="Job Title" value={vendor.job_title} />
             <Info label="Rating" value={vendor.rating} />
           </section>
           <section className="ceo-warranty-detail">
             <p className="ceo-section-label">Notifications</p>
-            <Info label="Email notification" value={onOff(vendor.opt_email)} />
-            <Info label="SMS notification" value={onOff(vendor.opt_sms)} />
+            <Info label="Email Notification Enable" value={onOff(vendor.opt_email)} />
+            <Info label="SMS Notification Enable" value={onOff(vendor.opt_sms)} />
           </section>
         </div>
+      ) : null}
+
+      {tab === "edit" && canEdit ? (
+        <WarrantyVendorForm
+          vendor={vendor}
+          onSaved={(next) => setVendor((prev) => ({ ...prev, ...next }))}
+        />
       ) : null}
 
       {tab === "trade" ? (
@@ -203,7 +239,19 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
       ) : null}
 
       {tab === "open" ? (
-        openItems.length ? (
+        <div className="space-y-3">
+          <div className="ceo-vendor-open-counts">
+            <span>
+              <strong>{openItems.length}</strong> Warranties
+            </span>
+            <span>
+              <strong>0</strong> Maintenance
+            </span>
+            <span>
+              <strong>{openItems.length}</strong> Total
+            </span>
+          </div>
+        {openItems.length ? (
           <ul className="ceo-claim-list">
             {openItems.map((item) => {
               const title =
@@ -251,7 +299,8 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
           <EmptyState subtitle="Open claims assigned to this vendor will show here.">
             No open items
           </EmptyState>
-        )
+        )}
+        </div>
       ) : null}
     </div>
   );

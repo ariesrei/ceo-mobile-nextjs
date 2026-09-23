@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const MAX_EDGE = 1200;
 const JPEG_QUALITY = 0.86;
@@ -61,6 +61,7 @@ export function ProfileAvatarField({
   parentId,
   title = "Profile photo",
   subtitle = "Photo changes are submitted for staff review.",
+  immediate = false,
   onPendingChange,
 }: {
   avatar?: string;
@@ -69,6 +70,7 @@ export function ProfileAvatarField({
   parentId?: number;
   title?: string;
   subtitle?: string;
+  immediate?: boolean;
   onPendingChange?: (pending: { id: number; url: string } | null) => void;
 }) {
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -77,6 +79,10 @@ export function ProfileAvatarField({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    setPreview(avatar || "");
+  }, [avatar]);
 
   async function uploadFile(file: File) {
     setUploading(true);
@@ -101,7 +107,12 @@ export function ProfileAvatarField({
         throw new Error(data.message || "Could not upload photo.");
       }
       setPreview(data.url);
-      setMessage(data.message || "Photo ready. Submit the form for review.");
+      setMessage(
+        data.message ||
+          (immediate
+            ? "Photo saved."
+            : "Photo ready. Submit the form for review.")
+      );
       onPendingChange?.({ id: data.id, url: data.url });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not upload photo.");

@@ -1,4 +1,8 @@
-export type WarrantyChoice = { id: number | string; label: string };
+export type WarrantyChoice = {
+  id: number | string;
+  label: string;
+  avatar?: string;
+};
 
 export type WarrantyPhoto = {
   id: number;
@@ -93,9 +97,11 @@ export type WarrantyVendor = {
   rating?: string;
   contact_type?: string;
   coi_expiration?: string;
+  payment_terms?: string;
   opt_email?: boolean;
   opt_sms?: boolean;
   avatar?: string;
+  can_edit?: boolean;
   trades?: WarrantyChoice[];
   staff?: WarrantyVendorStaff[];
 };
