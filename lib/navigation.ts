@@ -57,10 +57,19 @@ function isWarrantyAllowed(item: MenuItem): boolean {
 }
 
 /** Apply product + temporary module visibility. */
+<<<<<<< HEAD
 export function applyMenuVisibility(menus: MenuItem[]): MenuItem[] {
   // Cookie/site can be "warranty" (Fort Whipple, middleware default) while
   // unlocked :3000 still shows Operations. Only the warranty APK hides ops.
   const warrantyLocked = getBuildAppProfile() === "warranty";
+=======
+export function applyMenuVisibility(
+  menus: MenuItem[],
+  profile?: AppProfile | null
+): MenuItem[] {
+  const warrantyLocked =
+    getBuildAppProfile() === "warranty" || profile === "warranty";
+>>>>>>> parent of 7fca6b2 (internal parcels)
   return menus.map((m) => {
     if (isHiddenMenu(m)) {
       return { ...m, enabled: false };
@@ -91,21 +100,6 @@ export function enabledMenus(
   const filtered = applyNavVisibility(nav, profile);
   if (!filtered?.menus?.length) return [];
   return filtered.menus.filter((m) => m.enabled);
-}
-
-const STAFF_ROLES = new Set([
-  "staff_user",
-  "building_admin",
-  "client_admin",
-  "administrator",
-]);
-
-export function navHasStaffRole(
-  nav?: Pick<NavigationResponse, "roles" | "role_primary"> | null
-): boolean {
-  if (!nav) return false;
-  if (nav.role_primary && STAFF_ROLES.has(nav.role_primary)) return true;
-  return (nav.roles || []).some((role) => STAFF_ROLES.has(role));
 }
 
 /** Staff chrome only when WP marked that path `group: staff`. Unknown ≠ staff. */

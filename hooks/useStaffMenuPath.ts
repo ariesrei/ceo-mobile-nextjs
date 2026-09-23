@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  applyNavVisibility,
-  menuHasStaffPath,
-  navHasStaffRole,
-} from "@/lib/navigation";
+import { applyNavVisibility, menuHasStaffPath } from "@/lib/navigation";
 import type { NavigationResponse } from "@/lib/types";
 
 /** Browser nav. SSR is often WAF-blocked so staff looks like a resident. */
@@ -21,13 +17,12 @@ export function useStaffMenuPath(path: string, initial = false) {
         if (cancelled) return;
         if (!data.upstream_blocked) {
           const menus = applyNavVisibility(data)?.menus || data.menus || [];
-          setStaff(menuHasStaffPath(menus, path) || navHasStaffRole(data));
+          setStaff(menuHasStaffPath(menus, path));
         }
         setReady(true);
       })
       .catch(() => {
-        // Failed nav is unknown — do not treat the user as a resident.
-        if (!cancelled) setReady(initial);
+        if (!cancelled) setReady(true);
       });
     return () => {
       cancelled = true;

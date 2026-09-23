@@ -2842,10 +2842,6 @@ body.ceo-ops-theme {
   border: 1px solid rgba(240, 113, 103, 0.35);
 }
 
-.ceo-parcel-board {
-  padding-bottom: 5.5rem;
-}
-
 .ceo-fab {
   position: fixed;
   right: max(var(--app-pad), calc(50vw - (var(--app-max) / 2) + var(--app-pad)));

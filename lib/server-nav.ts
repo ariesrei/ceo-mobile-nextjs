@@ -19,12 +19,7 @@ import {
   getBuildAppProfile,
   resolveDisplayAppProfile,
 } from "./app-profile";
-import {
-  applyNavVisibility,
-  isPathAllowed,
-  menuHasStaffPath,
-  navHasStaffRole,
-} from "./navigation";
+import { applyNavVisibility, isPathAllowed, menuHasStaffPath } from "./navigation";
 import { serverFetch } from "./server-fetch";
 import { isWafBlockedResult } from "./wp-error";
 
@@ -201,9 +196,8 @@ export function staffMenuDecision(
   nav: NavigationResponse | null | undefined,
   path: string
 ): StaffMenuDecision {
-  if (!nav || nav.upstream_blocked || !nav.menus?.length) return "unknown";
-  if (menuHasStaffPath(nav.menus, path) || navHasStaffRole(nav)) return "staff";
-  return "resident";
+  if (!nav || nav.upstream_blocked) return "unknown";
+  return menuHasStaffPath(nav.menus, path) ? "staff" : "resident";
 }
 
 export function isStaffMenuPath(

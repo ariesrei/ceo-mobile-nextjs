@@ -35,7 +35,11 @@ export default async function EditParcelPage({ params }: Props) {
     >
       <StaffPathGate
         path="/account/parcels"
+<<<<<<< HEAD
         confirmed={decision === "staff" || decision === "unknown"}
+=======
+        confirmed={decision === "staff"}
+>>>>>>> parent of 7fca6b2 (internal parcels)
         fallbackHref="/account/parcels"
       >
         <ClientWpRecord
