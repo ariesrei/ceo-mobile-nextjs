@@ -7,14 +7,7 @@ import type {
 } from "@/lib/warranties";
 import { warrantyBucketCounts } from "@/lib/warranties";
 import { apiGet, queryString } from "./api";
-import {
-  asArray,
-  asBoolean,
-  asNumber,
-  asPhotoUrl,
-  asRecord,
-  readListPayload,
-} from "./validate";
+import { asArray, asBoolean, asNumber, asRecord, readListPayload } from "./validate";
 
 const EMPTY: WarrantySummary = {
   open: 0,
@@ -23,62 +16,6 @@ const EMPTY: WarrantySummary = {
   assigned: 0,
   expiring: 0,
 };
-
-function firstPhoto(row: Record<string, unknown>) {
-  for (const key of [
-    "avatar",
-    "custom_avatar",
-    "photo",
-    "image",
-    "picture",
-    "logo",
-  ]) {
-    const url = asPhotoUrl(row[key]);
-    if (url) return url;
-  }
-  return "";
-}
-
-export function mapWarrantyVendor(raw: unknown): WarrantyVendor | null {
-  const row = asRecord(raw);
-  if (!row) return null;
-  const id = asNumber(row.id) || String(row.id || "");
-  if (id === "" || id === "0") return null;
-  return {
-    id,
-    label: String(row.label || row.company || "Vendor"),
-    company: String(row.company || ""),
-    address: String(row.address || row.subcon_company_address || ""),
-    company_phone: String(row.company_phone || row.subcon_company_phone || ""),
-    phone: String(row.phone || row.phonenumber || ""),
-    mobile: String(row.mobile || row.mobilenumber || ""),
-    email: String(row.email || row.ceo_email || ""),
-    first_name: String(row.first_name || ""),
-    last_name: String(row.last_name || ""),
-    contact_name: String(row.contact_name || row.full_name || ""),
-    salutation: String(row.salutation || ""),
-    job_title: String(row.job_title || ""),
-    rating: String(row.rating || ""),
-    contact_type: String(row.contact_type || "Sub-Contractor"),
-    coi_expiration: String(row.coi_expiration || row.subcon_coi_expiration || ""),
-    payment_terms: String(row.payment_terms || row.subcon_payment_terms || ""),
-    opt_email: asBoolean(row.opt_email),
-    opt_sms: asBoolean(row.opt_sms),
-    avatar: firstPhoto(row),
-    can_edit: asBoolean(row.can_edit),
-    trades: asArray(row.trades) as WarrantyChoice[],
-    staff: asArray(row.staff).map((item) => {
-      const staff = asRecord(item) || {};
-      return {
-        name: String(staff.name || ""),
-        job_title: String(staff.job_title || ""),
-        email: String(staff.email || ""),
-        phone: String(staff.phone || ""),
-        active: asBoolean(staff.active),
-      };
-    }),
-  };
-}
 
 function uniqueClaims(items: WarrantyItem[]): WarrantyItem[] {
   const seen = new Set<number>();
@@ -167,28 +104,6 @@ export async function saveWarrantyPhotos(
   return { ok: res.ok, message: data.message };
 }
 
-export async function saveWarrantyVendor(
-  vendorId: number | string,
-  payload: Record<string, unknown>
-): Promise<{ ok: boolean; message?: string; vendor: WarrantyVendor | null }> {
-  const res = await fetch("/api/wp/profile", {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const data = (await res.json()) as { message?: string };
-  return {
-    ok: res.ok,
-    message: data.message,
-    vendor: res.ok
-      ? mapWarrantyVendor({
-          id: vendorId,
-          ...payload,
-        })
-      : null,
-  };
-}
-
 export async function loadWarrantyOptions(input: {
   subcontractorId?: number | string;
 } = {}): Promise<WarrantyOptions | null> {
@@ -200,21 +115,48 @@ export async function loadWarrantyOptions(input: {
   if (!result.ok) return null;
   const row = asRecord(result.data);
   if (!row) return null;
-  const vendor = mapWarrantyVendor(row.vendor);
+  const vendorRow = asRecord(row.vendor);
+  const vendor: WarrantyVendor | null = vendorRow
+    ? {
+        id: asNumber(vendorRow.id) || String(vendorRow.id || ""),
+        label: String(vendorRow.label || vendorRow.company || "Vendor"),
+        company: String(vendorRow.company || ""),
+        address: String(vendorRow.address || ""),
+        company_phone: String(vendorRow.company_phone || ""),
+        phone: String(vendorRow.phone || ""),
+        mobile: String(vendorRow.mobile || ""),
+        email: String(vendorRow.email || ""),
+        first_name: String(vendorRow.first_name || ""),
+        last_name: String(vendorRow.last_name || ""),
+        contact_name: String(vendorRow.contact_name || ""),
+        salutation: String(vendorRow.salutation || ""),
+        job_title: String(vendorRow.job_title || ""),
+        rating: String(vendorRow.rating || ""),
+        contact_type: String(vendorRow.contact_type || "Sub-Contractor"),
+        coi_expiration: String(vendorRow.coi_expiration || ""),
+        opt_email: asBoolean(vendorRow.opt_email),
+        opt_sms: asBoolean(vendorRow.opt_sms),
+        avatar: String(vendorRow.avatar || ""),
+        trades: asArray(vendorRow.trades) as WarrantyChoice[],
+        staff: asArray(vendorRow.staff).map((row) => {
+          const item = asRecord(row) || {};
+          return {
+            name: String(item.name || ""),
+            job_title: String(item.job_title || ""),
+            email: String(item.email || ""),
+            phone: String(item.phone || ""),
+            active: asBoolean(item.active),
+          };
+        }),
+      }
+    : null;
   return {
     types: asArray(row.types) as WarrantyChoice[],
     units: asArray(row.units) as WarrantyChoice[],
     statuses: asArray(row.statuses) as WarrantyChoice[],
     locations: asArray(row.locations) as WarrantyChoice[],
     trades: asArray(row.trades) as WarrantyChoice[],
-    subcontractors: asArray(row.subcontractors).map((item) => {
-      const choice = asRecord(item) || {};
-      return {
-        id: asNumber(choice.id) || String(choice.id || ""),
-        label: String(choice.label || choice.company || ""),
-        avatar: firstPhoto(choice),
-      };
-    }),
+    subcontractors: asArray(row.subcontractors) as WarrantyChoice[],
     vendor,
     can_edit: Boolean(row.can_edit),
     can_create: Boolean(row.can_create),

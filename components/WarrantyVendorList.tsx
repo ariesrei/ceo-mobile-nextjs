@@ -90,12 +90,7 @@ export function WarrantyVendorList() {
                 className="ceo-warranty-menu__row"
               >
                 <span className="ceo-vendor-mark" aria-hidden>
-                  {vendor.avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={vendor.avatar} alt="" />
-                  ) : (
-                    vendor.label.slice(0, 1).toUpperCase()
-                  )}
+                  {vendor.label.slice(0, 1).toUpperCase()}
                 </span>
                 <span className="ceo-warranty-menu__label">{vendor.label}</span>
                 <span className="ceo-warranty-menu__meta">
