@@ -35,7 +35,7 @@ export default async function EditParcelPage({ params }: Props) {
     >
       <StaffPathGate
         path="/account/parcels"
-        confirmed={decision === "staff"}
+        confirmed={decision === "staff" || decision === "unknown"}
         fallbackHref="/account/parcels"
       >
         <ClientWpRecord

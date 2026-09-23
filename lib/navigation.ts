@@ -1,6 +1,5 @@
 import {
   getBuildAppProfile,
-  normalizeAppProfile,
   WARRANTY_MENU_ALLOWLIST,
   type AppProfile,
 } from "./app-profile";
@@ -53,28 +52,15 @@ function isHiddenMenu(item: MenuItem): boolean {
   );
 }
 
-function resolveProfile(
-  nav?: NavigationResponse | null,
-  profile?: AppProfile | null
-): AppProfile | null {
-  return (
-    normalizeAppProfile(profile) ||
-    normalizeAppProfile(nav?.app_profile) ||
-    null
-  );
-}
-
 function isWarrantyAllowed(item: MenuItem): boolean {
   return (WARRANTY_MENU_ALLOWLIST as readonly string[]).includes(item.id);
 }
 
 /** Apply product + temporary module visibility. */
-export function applyMenuVisibility(
-  menus: MenuItem[],
-  profile?: AppProfile | null
-): MenuItem[] {
-  const warrantyLocked =
-    getBuildAppProfile() === "warranty" || profile === "warranty";
+export function applyMenuVisibility(menus: MenuItem[]): MenuItem[] {
+  // Cookie/site can be "warranty" (Fort Whipple, middleware default) while
+  // unlocked :3000 still shows Operations. Only the warranty APK hides ops.
+  const warrantyLocked = getBuildAppProfile() === "warranty";
   return menus.map((m) => {
     if (isHiddenMenu(m)) {
       return { ...m, enabled: false };
@@ -90,11 +76,11 @@ export function applyNavVisibility(
   nav: NavigationResponse | null | undefined,
   profile?: AppProfile | null
 ): NavigationResponse | null {
+  void profile;
   if (!nav) return null;
-  const resolved = resolveProfile(nav, profile);
   return {
     ...nav,
-    menus: applyMenuVisibility(nav.menus || [], resolved),
+    menus: applyMenuVisibility(nav.menus || []),
   };
 }
 
@@ -105,6 +91,21 @@ export function enabledMenus(
   const filtered = applyNavVisibility(nav, profile);
   if (!filtered?.menus?.length) return [];
   return filtered.menus.filter((m) => m.enabled);
+}
+
+const STAFF_ROLES = new Set([
+  "staff_user",
+  "building_admin",
+  "client_admin",
+  "administrator",
+]);
+
+export function navHasStaffRole(
+  nav?: Pick<NavigationResponse, "roles" | "role_primary"> | null
+): boolean {
+  if (!nav) return false;
+  if (nav.role_primary && STAFF_ROLES.has(nav.role_primary)) return true;
+  return (nav.roles || []).some((role) => STAFF_ROLES.has(role));
 }
 
 /** Staff chrome only when WP marked that path `group: staff`. Unknown ≠ staff. */

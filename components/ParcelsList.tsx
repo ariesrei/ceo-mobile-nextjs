@@ -186,7 +186,7 @@ export function ParcelsList() {
   const filterCount = activeFilterCount(filters);
 
   return (
-    <div className="space-y-4">
+    <div className="ceo-parcel-board space-y-4">
       {SHOW_CLAIMED_TAB ? (
         <div className="ceo-claim-tabs">
           <button
@@ -292,7 +292,9 @@ export function ParcelsList() {
                       <button
                         type="button"
                         className="text-xs font-semibold text-[var(--accent)]"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           setSignoutError("");
                           setPickupType(
                             pickupTypes.includes("Quick Signout")
@@ -308,6 +310,7 @@ export function ParcelsList() {
                     <Link
                       href={`/account/parcels/${p.id}/edit`}
                       className="text-xs font-semibold text-[var(--accent)]"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       Edit
                     </Link>

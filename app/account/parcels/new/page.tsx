@@ -27,7 +27,7 @@ export default async function NewParcelPage() {
     >
       <StaffPathGate
         path="/account/parcels"
-        confirmed={decision === "staff"}
+        confirmed={decision === "staff" || decision === "unknown"}
         fallbackHref="/account/parcels"
       >
         <Card>
