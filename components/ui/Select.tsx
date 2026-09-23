@@ -12,6 +12,7 @@ type Props = {
   id?: string;
   disabled?: boolean;
   required?: boolean;
+  searchable?: boolean;
 };
 
 export function Select({
@@ -25,6 +26,7 @@ export function Select({
   id,
   disabled,
   required,
+  searchable,
 }: Props) {
   const inputId = id || name || label.replace(/\s+/g, "-").toLowerCase();
   return (
@@ -37,6 +39,7 @@ export function Select({
         value={value == null ? "" : String(value)}
         disabled={disabled}
         placeholder={placeholder}
+        searchable={searchable}
         options={options}
         onChange={(next) =>
           onChange?.({ target: { name, value: next } })

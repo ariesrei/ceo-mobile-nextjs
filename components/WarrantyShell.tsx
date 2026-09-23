@@ -1,6 +1,7 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
+import { setWarrantyChromeCookie } from "@/lib/app-profile";
 import { BottomNav } from "./BottomNav";
 import { FastLink } from "./FastLink";
 import { useWarrantyBrand } from "./WarrantyBrand";
@@ -25,6 +26,10 @@ export function WarrantyShell({
   showNav?: boolean;
 }) {
   const brand = useWarrantyBrand();
+
+  useEffect(() => {
+    setWarrantyChromeCookie(true);
+  }, []);
 
   return (
     <div
@@ -73,7 +78,7 @@ export function WarrantyShell({
             {action ??
               (brand.logo ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={brand.logo} alt={brand.name} className="h-7 w-auto max-w-[72px] object-contain" />
+                <img src={brand.logo} alt={brand.name} className="ceo-warranty-topbar__logo" />
               ) : (
                 <span className="ceo-warranty-iconbtn ceo-warranty-iconbtn--empty" />
               ))}

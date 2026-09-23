@@ -30,14 +30,18 @@ function uniqueClaims(items: WarrantyItem[]): WarrantyItem[] {
 }
 
 export async function loadWarrantySummary(): Promise<WarrantySummary> {
-  const [openRes, closedRes] = await Promise.all([
-    apiGet("/api/wp/warranties?status=open&per_page=50"),
-    apiGet("/api/wp/warranties?status=closed&per_page=50"),
+  const [openRes, closedRes, expiringRes] = await Promise.all([
+    apiGet("/api/wp/warranties?status=open&per_page=80"),
+    apiGet("/api/wp/warranties?status=closed&per_page=80"),
+    apiGet("/api/wp/warranties?status=expiring&per_page=200"),
   ]);
 
   const openItems = openRes.ok ? asItems(openRes.data) : [];
   const closedItems = closedRes.ok ? asItems(closedRes.data) : [];
-  return warrantyBucketCounts(uniqueClaims([...openItems, ...closedItems]));
+  const expiringItems = expiringRes.ok ? asItems(expiringRes.data) : [];
+  return warrantyBucketCounts(
+    uniqueClaims([...openItems, ...closedItems, ...expiringItems])
+  );
 }
 
 export function emptyWarrantySummary(): WarrantySummary {
@@ -45,7 +49,7 @@ export function emptyWarrantySummary(): WarrantySummary {
 }
 
 export async function loadWarrantyClaims(
-  status: "open" | "closed" | "all" = "open",
+  status: "open" | "closed" | "all" | "expiring" = "open",
   input: { search?: string; perPage?: number; page?: number } = {}
 ): Promise<{ items: WarrantyItem[]; total: number }> {
   const qs = queryString({
@@ -63,8 +67,41 @@ export async function loadWarrantyClaims(
   };
 }
 
-export async function loadWarrantyOptions(): Promise<WarrantyOptions | null> {
-  const result = await apiGet("/api/wp/warranties/options?lite=1");
+export async function saveWarrantyPhotos(
+  record: WarrantyItem,
+  photoIds: number[]
+): Promise<{ ok: boolean; message?: string }> {
+  const res = await fetch(`/api/wp/warranties/${record.id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      warranty_type: record.warranty_type,
+      warranty_unit: record.warranty_unit,
+      warranty_first_name: record.warranty_first_name,
+      warranty_last_name: record.warranty_last_name,
+      warranty_email_address: record.warranty_email_address,
+      warranty_tel_number: record.warranty_tel_number,
+      warranty_describe_the_request:
+        record.warranty_describe_the_request_single ||
+        record.warranty_describe_the_request,
+      warranty_describe_the_request_single:
+        record.warranty_describe_the_request_single ||
+        record.warranty_describe_the_request,
+      warranty_photo: photoIds,
+    }),
+  });
+  const data = (await res.json()) as { message?: string };
+  return { ok: res.ok, message: data.message };
+}
+
+export async function loadWarrantyOptions(input: {
+  subcontractorId?: number | string;
+} = {}): Promise<WarrantyOptions | null> {
+  const qs = queryString({
+    lite: 1,
+    subcontractor_id: input.subcontractorId,
+  });
+  const result = await apiGet(`/api/wp/warranties/options?${qs}`);
   if (!result.ok) return null;
   const row = asRecord(result.data);
   if (!row) return null;

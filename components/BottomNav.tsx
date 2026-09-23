@@ -552,7 +552,7 @@ export function BottomNav({
                     <>
                       <li>
                         <Link
-                          href="/account/profile"
+                          href="/account/profile?from=warranty"
                           className="flex items-center justify-between rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm font-semibold"
                           onClick={() => setMoreOpen(false)}
                         >
@@ -562,7 +562,7 @@ export function BottomNav({
                       </li>
                       <li>
                         <Link
-                          href="/account/edit"
+                          href="/account/edit?from=warranty"
                           className="flex items-center justify-between rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm font-semibold"
                           onClick={() => setMoreOpen(false)}
                         >
@@ -582,30 +582,6 @@ export function BottomNav({
                       <span aria-hidden>→</span>
                     </Link>
                   </li>
-                  {isStaff ? (
-                    <li>
-                      <Link
-                        href="/account/warranties/reports"
-                        className="flex items-center justify-between rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm font-semibold"
-                        onClick={() => setMoreOpen(false)}
-                      >
-                        Reports
-                        <span aria-hidden>→</span>
-                      </Link>
-                    </li>
-                  ) : null}
-                  {isStaff ? (
-                    <li>
-                      <Link
-                        href="/account/warranties/settings"
-                        className="flex items-center justify-between rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm font-semibold"
-                        onClick={() => setMoreOpen(false)}
-                      >
-                        Warranty Settings
-                        <span aria-hidden>→</span>
-                      </Link>
-                    </li>
-                  ) : null}
                 </>
               ) : null}
               {moreItems.map((item) => (

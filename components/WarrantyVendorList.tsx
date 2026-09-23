@@ -84,7 +84,7 @@ export function WarrantyVendorList() {
             return (
               <FastLink
                 key={id}
-                href={`/account/warranties/claims?tab=open&assignee=${encodeURIComponent(id)}`}
+                href={`/account/warranties/vendors/${encodeURIComponent(id)}`}
                 className="ceo-warranty-menu__row"
               >
                 <span className="ceo-vendor-mark" aria-hidden>

@@ -45,6 +45,8 @@ export type WarrantyItem = {
   photos?: WarrantyPhoto[];
   can_edit?: boolean;
   is_closed?: boolean;
+  /** From desktop Target Due (expired or within 45 days). */
+  is_expiring?: boolean;
 };
 
 export type WarrantySummary = {
@@ -155,6 +157,27 @@ export function isWarrantyInProgress(w: WarrantyItem): boolean {
   return s.includes("progress") || Boolean(w.is_assigned);
 }
 
+/** Desktop `ceo_warranty_parse_target_due_timestamp` / Quality Details date. */
+export function parseWarrantyDueDate(raw?: string): Date | null {
+  const value = (raw || "").trim();
+  if (!value) return null;
+  if (/^\d{8}$/.test(value)) {
+    const date = new Date(
+      Number(value.slice(0, 4)),
+      Number(value.slice(4, 6)) - 1,
+      Number(value.slice(6, 8))
+    );
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  const us = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (us) {
+    const date = new Date(Number(us[3]), Number(us[1]) - 1, Number(us[2]));
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 /** Same buckets as the Claims tabs — home overview must use this. */
 export function warrantyBucketCounts(items: WarrantyItem[]): WarrantySummary {
   const stats: WarrantySummary = {
@@ -177,14 +200,19 @@ export function warrantyBucketCounts(items: WarrantyItem[]): WarrantySummary {
   return stats;
 }
 
+/**
+ * Desktop Quality Details / reports: Target Due on or before today is expired.
+ * Home tile also includes due dates inside the next 45 days (WP summary).
+ */
 export function isWarrantyExpiring(w: WarrantyItem, withinDays = 45): boolean {
-  const due = (w.warranty_sources_target_due || "").trim();
-  if (!due || isWarrantyClosed(w)) return false;
-  const parsed = new Date(due);
-  if (Number.isNaN(parsed.getTime())) return false;
+  if (isWarrantyClosed(w)) return false;
+  if (w.is_expiring) return true;
+  const parsed = parseWarrantyDueDate(w.warranty_sources_target_due);
+  if (!parsed) return false;
+  parsed.setHours(0, 0, 0, 0);
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const limit = new Date(now);
   limit.setDate(limit.getDate() + withinDays);
-  return parsed >= now && parsed <= limit;
+  return parsed.getTime() <= limit.getTime();
 }

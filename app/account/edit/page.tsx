@@ -1,26 +1,34 @@
 import { AppShell } from "@/components/AppShell";
 import { ClientWpRecord } from "@/components/ClientWpRecord";
 import { EditProfileView } from "@/components/wp-record-views";
-import { showOpsCommunityUi } from "@/lib/app-profile";
+import { WarrantyShell } from "@/components/WarrantyShell";
+import {
+  COOKIE_WARRANTY_CHROME,
+  keepWarrantyChrome,
+  showOpsCommunityUi,
+} from "@/lib/app-profile";
+import { cookies } from "next/headers";
 import {
   getServerAppProfile,
   getServerClientBranding,
-  getServerClientName,
   requireAuth,
-  requireMenuPath,
 } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
 import type { Profile } from "@/lib/types";
 
-export default async function EditProfilePage() {
+type Props = { searchParams?: Promise<{ from?: string }> };
+
+export default async function EditProfilePage({ searchParams }: Props) {
   const profile = await getServerAppProfile();
-  const [result, branding, clientName] = await Promise.all([
+  const from = (await searchParams)?.from;
+  const chromeCookie = (await cookies()).get(COOKIE_WARRANTY_CHROME)?.value;
+  const warrantyChrome = keepWarrantyChrome(from, chromeCookie);
+  const [result, branding] = await Promise.all([
     wpFetchServer<Profile>("/app/profile"),
     getServerClientBranding(),
-    getServerClientName(),
   ]);
 
-  if (showOpsCommunityUi(profile)) {
+  if (showOpsCommunityUi(profile) && !warrantyChrome) {
     await requireAuth();
     return (
       <AppShell
@@ -40,13 +48,12 @@ export default async function EditProfilePage() {
     );
   }
 
-  await requireMenuPath("/account/edit");
+  await requireAuth();
+
   return (
-    <AppShell
+    <WarrantyShell
       title="Edit Profile"
-      subtitle="Changes may require staff approval."
-      backHref="/account/profile"
-      clientName={clientName}
+      backHref="/account/profile?from=warranty"
     >
       <ClientWpRecord
         path="/profile"
@@ -54,6 +61,6 @@ export default async function EditProfilePage() {
         error={result.error || "Profile unavailable."}
         as={EditProfileView}
       />
-    </AppShell>
+    </WarrantyShell>
   );
 }

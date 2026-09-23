@@ -16,7 +16,11 @@ function Field({ label, value }: { label: string; value?: string }) {
   );
 }
 
-export function ProfileBoard() {
+export function ProfileBoard({
+  editHref = "/account/edit",
+}: {
+  editHref?: string;
+}) {
   const [item, setItem] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -51,7 +55,7 @@ export function ProfileBoard() {
           ) : (
             <span aria-hidden>{initial}</span>
           )}
-          <FastLink href="/account/edit" className="ceo-profile__edit" aria-label="Edit profile">
+          <FastLink href={editHref} className="ceo-profile__edit" aria-label="Edit profile">
             <svg viewBox="0 0 24 24" aria-hidden>
               <path
                 d="M4 17.5V20h2.5l8.4-8.4-2.5-2.5L4 17.5Zm13.7-8.2a1 1 0 0 0 0-1.4l-1.6-1.6a1 1 0 0 0-1.4 0l-1.2 1.2 2.5 2.5 1.7-1.7Z"

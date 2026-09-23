@@ -62,8 +62,17 @@ export function ChoiceChips({
   );
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [query, setQuery] = useState("");
   const startedOnField = useRef(false);
   const listId = useId();
+  const showSearch = chips.length >= 8;
+  const visible = showSearch
+    ? chips.filter((option) => {
+        const term = query.trim().toLowerCase();
+        if (!term) return true;
+        return option.label.toLowerCase().includes(term);
+      })
+    : chips;
 
   useEffect(() => {
     setMounted(true);
@@ -115,7 +124,18 @@ export function ChoiceChips({
               className="ceo-menu-select__sheet"
             >
               <p className="ceo-menu-select__sheet-title">{label}</p>
-              {chips.map((option) => {
+              {showSearch ? (
+                <input
+                  type="search"
+                  className="ceo-menu-select__search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search…"
+                  aria-label={`Search ${label}`}
+                  autoFocus
+                />
+              ) : null}
+              {visible.map((option) => {
                 const on = idsForLabel(options, option.label).some((id) =>
                   selected.has(id)
                 );
@@ -142,6 +162,9 @@ export function ChoiceChips({
                   </button>
                 );
               })}
+              {showSearch && !visible.length ? (
+                <p className="ceo-menu-select__empty">No matches.</p>
+              ) : null}
             </div>
           </div>,
           document.body
@@ -165,6 +188,7 @@ export function ChoiceChips({
           onClick={() => {
             if (!startedOnField.current) return;
             startedOnField.current = false;
+            setQuery("");
             setOpen((v) => !v);
           }}
         >

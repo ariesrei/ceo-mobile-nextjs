@@ -101,7 +101,6 @@ export function WarrantyForm({
   });
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -115,7 +114,7 @@ export function WarrantyForm({
         setUnits(data.units || []);
         setLocations(data.locations || []);
         setIsStaff(Boolean(data.is_staff));
-        if (!record?.status_label) {
+        if (isEdit && !record?.status_label) {
           const preferred = readWarrantySettings().defaultStatus;
           const match =
             (preferred &&
@@ -226,6 +225,8 @@ export function WarrantyForm({
           label="Unit"
           name="warranty_unit"
           required
+          searchable
+          placeholder="Search unit…"
           value={form.warranty_unit}
           onChange={(e) =>
             setForm((f) => ({ ...f, warranty_unit: e.target.value }))
@@ -233,7 +234,7 @@ export function WarrantyForm({
           options={toSelectOptions(units)}
         />
       </div>
-      {isStaff && !sectioned && statusLabel ? (
+      {isEdit && isStaff && !sectioned && statusLabel ? (
         <div className="space-y-1.5">
           <span className="text-sm font-medium text-[var(--muted)]">Status</span>
           <p className="ceo-field-box">{statusLabel}</p>
@@ -363,7 +364,7 @@ export function WarrantyForm({
   const attachments = (
     <CameraCapturePhotos
       variant="tiles"
-      label="Photos / Documents"
+      label="Photos"
       photos={photos}
       onChange={setPhotos}
       uploadUrl="/api/wp/warranties/media"
@@ -407,7 +408,7 @@ export function WarrantyForm({
           <Section title="Description & Notes">{description}</Section>
           <Section title="Dates & Times">{datesAndTimes}</Section>
           <Section
-            title="Photos & Documents"
+            title="Photos"
             meta={photos.length ? `${photos.length} attached` : undefined}
           >
             {attachments}
@@ -424,12 +425,7 @@ export function WarrantyForm({
               </span>
               <ChevronRightIcon className="ceo-accordion__chev" />
             </FastLink>
-          ) : (
-            <div className="ceo-accordion__row">
-              <span className="ceo-accordion__title">Status</span>
-              <span className="ceo-accordion__meta">{statusLabel || "—"}</span>
-            </div>
-          )}
+          ) : null}
 
           {record?.id ? (
             <FastLink
@@ -442,12 +438,7 @@ export function WarrantyForm({
               </span>
               <ChevronRightIcon className="ceo-accordion__chev" />
             </FastLink>
-          ) : (
-            <div className="ceo-accordion__row">
-              <span className="ceo-accordion__title">Assigned Subcontractor</span>
-              <span className="ceo-accordion__meta">Unassigned</span>
-            </div>
-          )}
+          ) : null}
 
           <Section title="Internal Notes">
             <p className="text-sm text-[var(--muted)]">
@@ -462,19 +453,6 @@ export function WarrantyForm({
         <Button type="submit" disabled={loading} className="w-full">
           {submitLabel}
         </Button>
-
-        <button
-          type="button"
-          className="ceo-btn-danger-outline w-full"
-          onClick={() =>
-            setNotice("Archiving connects to WordPress in a later pass.")
-          }
-        >
-          Archive Claim
-        </button>
-        {notice ? (
-          <p className="text-center text-xs text-[var(--muted)]">{notice}</p>
-        ) : null}
       </form>
     );
   }

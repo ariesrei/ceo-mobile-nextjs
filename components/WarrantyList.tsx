@@ -79,6 +79,7 @@ export function WarrantyList({
   const [tab, setTab] = useState<Tab>(() => parseTab(initialTab, isStaff));
   const [openItems, setOpenItems] = useState<WarrantyItem[]>([]);
   const [closedItems, setClosedItems] = useState<WarrantyItem[]>([]);
+  const [expiringItems, setExpiringItems] = useState<WarrantyItem[]>([]);
   const [types, setTypes] = useState<WarrantyChoice[]>([]);
   const [statuses, setStatuses] = useState<WarrantyChoice[]>([]);
   const [subcontractors, setSubcontractors] = useState<WarrantyChoice[]>([]);
@@ -101,18 +102,21 @@ export function WarrantyList({
     let cancelled = false;
     setLoading(true);
     Promise.all([
-      loadWarrantyClaims("open", { search, perPage: 50 }),
-      loadWarrantyClaims("closed", { search, perPage: 50 }),
+      loadWarrantyClaims("open", { search, perPage: 80 }),
+      loadWarrantyClaims("closed", { search, perPage: 80 }),
+      loadWarrantyClaims("expiring", { search, perPage: 200 }),
     ])
-      .then(([open, closed]) => {
+      .then(([open, closed, expiring]) => {
         if (cancelled) return;
         setOpenItems(open.items);
         setClosedItems(closed.items);
+        setExpiringItems(expiring.items);
       })
       .catch(() => {
         if (cancelled) return;
         setOpenItems([]);
         setClosedItems([]);
+        setExpiringItems([]);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -151,12 +155,12 @@ export function WarrantyList({
 
   const all = useMemo(() => {
     const seen = new Set<number>();
-    return [...openItems, ...closedItems].filter((w) => {
+    return [...openItems, ...closedItems, ...expiringItems].filter((w) => {
       if (seen.has(w.id)) return false;
       seen.add(w.id);
       return true;
     });
-  }, [openItems, closedItems]);
+  }, [openItems, closedItems, expiringItems]);
 
   const typeOptions = useMemo(
     () =>

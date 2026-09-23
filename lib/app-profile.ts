@@ -2,6 +2,7 @@ export type AppProfile = "warranty" | "operations";
 
 export const COOKIE_APP_PROFILE = "ceo_app_profile";
 export const COOKIE_SITE_PROFILE = "ceo_site_app_profile";
+export const COOKIE_WARRANTY_CHROME = "ceo_warranty_chrome";
 
 export const WARRANTY_MENU_ALLOWLIST = [
   "warranties",
@@ -121,6 +122,25 @@ export function showOpsCommunityUi(appProfile?: AppProfile | null): boolean {
   if (getBuildAppProfile() === "warranty") return false;
   if (getBuildAppProfile() === "operations") return true;
   return appProfile === "operations";
+}
+
+/** Profile/Edit opened from ClaimTrack must keep warranty tabs, not ops. */
+export function keepWarrantyChrome(
+  from?: string | null,
+  chromeCookie?: string | null
+): boolean {
+  return (
+    getBuildAppProfile() === "warranty" ||
+    from === "warranty" ||
+    chromeCookie === "1"
+  );
+}
+
+export function setWarrantyChromeCookie(on: boolean) {
+  if (typeof document === "undefined") return;
+  document.cookie = `${COOKIE_WARRANTY_CHROME}=${on ? "1" : ""}; Path=/; SameSite=Lax; Max-Age=${
+    on ? 60 * 60 * 12 : 0
+  }`;
 }
 
 /** Pets/Vehicles My Assets. Ops build and unlocked web; Warranty APK keeps Additional Information. */

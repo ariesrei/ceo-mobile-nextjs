@@ -1,22 +1,29 @@
 import { AppShell } from "@/components/AppShell";
-import { ClientWpRecord } from "@/components/ClientWpRecord";
 import { ProfileBoard } from "@/components/ProfileBoard";
-import { ProfileView } from "@/components/wp-record-views";
-import { showOpsCommunityUi } from "@/lib/app-profile";
+import { WarrantyShell } from "@/components/WarrantyShell";
+import {
+  COOKIE_WARRANTY_CHROME,
+  keepWarrantyChrome,
+  showOpsCommunityUi,
+} from "@/lib/app-profile";
 import {
   getServerAppProfile,
   getServerClientBranding,
-  getServerClientName,
   requireAuth,
-  requireMenuPath,
 } from "@/lib/server-nav";
-import { wpFetchServer } from "@/lib/wp";
-import type { Profile } from "@/lib/types";
+import { cookies } from "next/headers";
 
-export default async function ProfilePage() {
+type Props = { searchParams?: Promise<{ from?: string }> };
+
+export default async function ProfilePage({ searchParams }: Props) {
   const profile = await getServerAppProfile();
-  if (showOpsCommunityUi(profile)) {
-    await requireAuth();
+  const from = (await searchParams)?.from;
+  const chromeCookie = (await cookies()).get(COOKIE_WARRANTY_CHROME)?.value;
+  const warrantyChrome = keepWarrantyChrome(from, chromeCookie);
+
+  await requireAuth();
+
+  if (showOpsCommunityUi(profile) && !warrantyChrome) {
     const branding = await getServerClientBranding();
     return (
       <AppShell
@@ -30,20 +37,9 @@ export default async function ProfilePage() {
     );
   }
 
-  await requireMenuPath("/account/profile");
-  const [result, clientName] = await Promise.all([
-    wpFetchServer<Profile>("/app/profile"),
-    getServerClientName(),
-  ]);
-
   return (
-    <AppShell title="My Profile" backHref="/account" clientName={clientName}>
-      <ClientWpRecord
-        path="/profile"
-        initial={result.data}
-        error={result.error}
-        as={ProfileView}
-      />
-    </AppShell>
+    <WarrantyShell title="My Profile" backHref="/account/warranties">
+      <ProfileBoard editHref="/account/edit?from=warranty" />
+    </WarrantyShell>
   );
 }

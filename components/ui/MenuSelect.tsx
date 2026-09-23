@@ -14,6 +14,7 @@ type Props = {
   className?: string;
   variant?: "inline" | "field";
   id?: string;
+  searchable?: boolean;
   "aria-label"?: string;
 };
 
@@ -26,10 +27,12 @@ export function MenuSelect({
   className = "",
   variant = "field",
   id,
+  searchable,
   "aria-label": ariaLabel,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [query, setQuery] = useState("");
   const listId = useId();
   const items =
     placeholder != null
@@ -37,6 +40,14 @@ export function MenuSelect({
       : options;
   const current =
     items.find((o) => String(o.id) === String(value)) || items[0];
+  const showSearch = Boolean(searchable) || options.length >= 12;
+  const visible = showSearch
+    ? items.filter((o) => {
+        const term = query.trim().toLowerCase();
+        if (!term) return true;
+        return o.label.toLowerCase().includes(term);
+      })
+    : items;
 
   useEffect(() => {
     setMounted(true);
@@ -79,7 +90,18 @@ export function MenuSelect({
               {ariaLabel ? (
                 <p className="ceo-menu-select__sheet-title">{ariaLabel}</p>
               ) : null}
-              {items.map((o) => {
+              {showSearch ? (
+                <input
+                  type="search"
+                  className="ceo-menu-select__search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search…"
+                  aria-label={ariaLabel ? `Search ${ariaLabel}` : "Search"}
+                  autoFocus
+                />
+              ) : null}
+              {visible.map((o) => {
                 const active = String(o.id) === String(value);
                 return (
                   <button
@@ -102,6 +124,9 @@ export function MenuSelect({
                   </button>
                 );
               })}
+              {showSearch && !visible.length ? (
+                <p className="ceo-menu-select__empty">No matches.</p>
+              ) : null}
             </div>
           </div>,
           document.body
@@ -120,7 +145,10 @@ export function MenuSelect({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listId}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          setQuery("");
+          setOpen((v) => !v);
+        }}
       >
         <span>{current?.label || placeholder || "Select…"}</span>
       </button>

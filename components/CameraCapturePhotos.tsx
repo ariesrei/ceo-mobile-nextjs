@@ -180,7 +180,7 @@ export function CameraCapturePhotos({
             <span aria-hidden className="text-base leading-none">
               +
             </span>
-            {uploading ? "Adding…" : "Add More"}
+            {uploading ? "Adding…" : "Add Photo"}
           </button>
         </div>
 
@@ -234,7 +234,7 @@ export function CameraCapturePhotos({
         onClick={() => inputRef.current?.click()}
         className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 text-sm font-semibold text-[var(--ink)] disabled:opacity-60"
       >
-        {uploading ? "Adding photo…" : "Take photo"}
+        {uploading ? "Adding photo…" : "Add Photo"}
       </button>
 
       {errorNote}

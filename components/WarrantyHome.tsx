@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getBuildAppProfile } from "@/lib/app-profile";
+import { getBuildAppProfile, setWarrantyChromeCookie } from "@/lib/app-profile";
 import {
   emptyWarrantySummary,
   loadWarrantySummary,
@@ -14,11 +14,12 @@ import { splitPropertyName, useWarrantyBrand } from "./WarrantyBrand";
 import {
   ArrowLeftIcon,
   BuildingIcon,
-  ChartIcon,
   ClipboardIcon,
   ClockIcon,
+  ChartIcon,
   FilterIcon,
   PlusIcon,
+  SettingsIcon,
   UsersIcon,
 } from "./ui/Icons";
 
@@ -61,6 +62,7 @@ export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
 
   useEffect(() => {
     setGreeting(greetingLabel());
+    setWarrantyChromeCookie(true);
   }, []);
 
   useEffect(() => {
@@ -124,7 +126,7 @@ export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
               <img
                 src={brand.logo}
                 alt=""
-                className="h-8 w-8 shrink-0 rounded-md object-contain"
+                className="ceo-warranty-hero__logo"
               />
             ) : (
               <span className="ceo-warranty-hero__mark" aria-hidden>
@@ -164,7 +166,6 @@ export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
             <section className="ceo-warranty-overview">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold">Warranty Overview</p>
-                <span className="ceo-warranty-overview__period">This Month</span>
               </div>
               <div className="ceo-warranty-stats">
                 <FastLink
@@ -245,16 +246,20 @@ export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
                 <span className="ceo-warranty-menu__label">Search & Filters</span>
               </FastLink>
               {staff ? (
-                <FastLink
-                  href="/account/warranties/reports"
-                  prefetch={false}
-                  className="ceo-warranty-menu__row"
-                >
+                <span className="ceo-warranty-menu__row is-soon">
                   <span className="ceo-warranty-menu__icon">
                     <ChartIcon className="h-[18px] w-[18px]" />
                   </span>
                   <span className="ceo-warranty-menu__label">Reports</span>
-                </FastLink>
+                </span>
+              ) : null}
+              {staff ? (
+                <span className="ceo-warranty-menu__row is-soon">
+                  <span className="ceo-warranty-menu__icon">
+                    <SettingsIcon className="h-[18px] w-[18px]" />
+                  </span>
+                  <span className="ceo-warranty-menu__label">Warranty Settings</span>
+                </span>
               ) : null}
             </nav>
           </>

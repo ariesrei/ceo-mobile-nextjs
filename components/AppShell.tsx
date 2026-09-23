@@ -9,6 +9,7 @@ import {
   saveConnectConfig,
   getConnectConfig,
 } from "@/lib/connect";
+import { setWarrantyChromeCookie } from "@/lib/app-profile";
 import { trackShortcutPath } from "@/lib/helpers/shortcuts";
 import { useClientBrand } from "./ClientBrandProvider";
 import { BottomNav } from "./BottomNav";
@@ -47,6 +48,10 @@ export function AppShell({
   useEffect(() => {
     trackShortcutPath(pathname);
   }, [pathname]);
+
+  useEffect(() => {
+    if (layout === "community") setWarrantyChromeCookie(false);
+  }, [layout]);
   const [clientName, setClientName] = useState(() => {
     if (isRealClientName(clientNameProp)) return clientNameProp.trim();
     if (isRealClientName(brand.name)) return brand.name.trim();

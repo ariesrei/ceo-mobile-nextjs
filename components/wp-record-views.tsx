@@ -81,7 +81,7 @@ export function ProfileView({ data }: { data: Profile }) {
             </div>
           )}
           <Link
-            href="/account/edit"
+            href="/account/edit?from=warranty"
             className="absolute -bottom-1 -right-1 rounded-full bg-[var(--accent)] px-2.5 py-1 text-[10px] font-extrabold text-[#081014]"
           >
             Edit

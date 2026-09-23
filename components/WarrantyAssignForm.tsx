@@ -7,6 +7,7 @@ import type {
   WarrantyItem,
   WarrantyOptions,
 } from "@/lib/warranties";
+import { loadWarrantyOptions } from "@/lib/helpers/warranties";
 import { readWarrantySettings } from "@/lib/warranty-settings";
 import { ClaimThumb, claimContactName, claimMetaLines, claimThumbSrc } from "./ClaimThumb";
 import { DateField } from "./ui/DateField";
@@ -15,17 +16,20 @@ import { SearchIcon } from "./ui/Icons";
 export function WarrantyAssignForm({ record }: { record: WarrantyItem }) {
   const router = useRouter();
   const [subcontractors, setSubcontractors] = useState<WarrantyChoice[]>([]);
+  const [trades, setTrades] = useState<WarrantyChoice[]>([]);
   const [vendorSearch, setVendorSearch] = useState("");
   const [form, setForm] = useState({
     warranty_sources_subcontractors: record.warranty_sources_subcontractors
       ? String(record.warranty_sources_subcontractors)
       : "",
+    warranty_sources_trade: (record.warranty_sources_trade || []).map(String),
     warranty_sources_target_due: record.warranty_sources_target_due || "",
     warranty_sources_internal_note: record.warranty_sources_internal_note || "",
   });
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [tradesLoading, setTradesLoading] = useState(false);
 
   useEffect(() => {
     fetch("/api/wp/warranties/options?lite=1")
@@ -36,7 +40,11 @@ export function WarrantyAssignForm({ record }: { record: WarrantyItem }) {
         const preferred = readWarrantySettings().defaultAssignee;
         if (record.warranty_sources_subcontractors || !preferred) return;
         if (vendors.some((v) => String(v.id) === preferred)) {
-          setForm((f) => ({ ...f, warranty_sources_subcontractors: preferred }));
+          setForm((f) => ({
+            ...f,
+            warranty_sources_subcontractors: preferred,
+            warranty_sources_trade: [],
+          }));
         }
       })
       .catch(() => undefined);
@@ -47,6 +55,38 @@ export function WarrantyAssignForm({ record }: { record: WarrantyItem }) {
     if (!term) return subcontractors;
     return subcontractors.filter((s) => s.label.toLowerCase().includes(term));
   }, [subcontractors, vendorSearch]);
+
+  useEffect(() => {
+    const subId = form.warranty_sources_subcontractors;
+    if (!subId) {
+      setTrades([]);
+      setTradesLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setTradesLoading(true);
+    loadWarrantyOptions({ subcontractorId: subId })
+      .then((data) => {
+        if (cancelled) return;
+        const next = data?.trades || [];
+        setTrades(next);
+        setForm((f) => ({
+          ...f,
+          warranty_sources_trade: f.warranty_sources_trade.filter((id) =>
+            next.some((t) => String(t.id) === id)
+          ),
+        }));
+      })
+      .catch(() => {
+        if (!cancelled) setTrades([]);
+      })
+      .finally(() => {
+        if (!cancelled) setTradesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [form.warranty_sources_subcontractors]);
 
   const selectedLabel =
     subcontractors.find(
@@ -61,7 +101,11 @@ export function WarrantyAssignForm({ record }: { record: WarrantyItem }) {
   const assignMeta = claimMetaLines(record, assignTitle);
 
   function selectVendor(id: string) {
-    setForm((f) => ({ ...f, warranty_sources_subcontractors: id }));
+    setForm((f) => ({
+      ...f,
+      warranty_sources_subcontractors: id,
+      warranty_sources_trade: [],
+    }));
   }
 
   async function onSubmit(e: FormEvent) {
@@ -77,7 +121,9 @@ export function WarrantyAssignForm({ record }: { record: WarrantyItem }) {
           warranty_sources_subcontractors: Number(
             form.warranty_sources_subcontractors
           ),
-          warranty_sources_trade: [],
+          warranty_sources_trade: form.warranty_sources_trade
+            .map(Number)
+            .filter((id) => id > 0),
           warranty_sources_target_due: form.warranty_sources_target_due,
           warranty_sources_internal_note:
             form.warranty_sources_internal_note.trim() ||
@@ -178,6 +224,47 @@ export function WarrantyAssignForm({ record }: { record: WarrantyItem }) {
         )}
       </fieldset>
 
+      <fieldset className="space-y-2">
+        <legend className="ceo-section-label">Trades</legend>
+        {tradesLoading ? (
+          <p className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-sm text-[var(--muted)]">
+            Loading trades…
+          </p>
+        ) : trades.length ? (
+          <ul className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-3">
+            {trades.map((trade) => {
+              const id = String(trade.id);
+              const checked = form.warranty_sources_trade.includes(id);
+              return (
+                <li key={id}>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() =>
+                        setForm((f) => ({
+                          ...f,
+                          warranty_sources_trade: checked
+                            ? f.warranty_sources_trade.filter((x) => x !== id)
+                            : [...f.warranty_sources_trade, id],
+                        }))
+                      }
+                    />
+                    {trade.label}
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-sm text-[var(--muted)]">
+            {form.warranty_sources_subcontractors
+              ? "No trades found for this subcontractor."
+              : "Select a subcontractor to load trades."}
+          </p>
+        )}
+      </fieldset>
+
       <DateField
         label="Estimated Start Date"
         showClear={false}
@@ -204,6 +291,7 @@ export function WarrantyAssignForm({ record }: { record: WarrantyItem }) {
         disabled={
           loading ||
           !form.warranty_sources_subcontractors ||
+          !form.warranty_sources_trade.length ||
           !form.warranty_sources_target_due
         }
       >
