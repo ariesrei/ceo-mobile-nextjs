@@ -6,7 +6,12 @@ export function statusTone(
   const s = (label || "").toLowerCase();
   /* Matched on "denied"/"deny" rather than "den", which also appears inside
      "resident". */
-  if (s.includes("denied") || s.includes("deny") || s.includes("reject")) {
+  if (
+    s.includes("denied") ||
+    s.includes("deny") ||
+    s.includes("reject") ||
+    s.includes("expired")
+  ) {
     return "danger";
   }
   if (

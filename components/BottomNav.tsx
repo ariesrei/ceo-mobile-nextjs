@@ -68,6 +68,10 @@ const OUTLINE_ICONS: Record<string, string> = {
     "M4.4 7.2h15.2A1.2 1.2 0 0 1 20.8 8.4v7.2a1.2 1.2 0 0 1-1.2 1.2H4.4A1.2 1.2 0 0 1 3.2 15.6V8.4A1.2 1.2 0 0 1 4.4 7.2ZM6.4 10.4h5.2M6.4 13.4h7.2",
   more_grid:
     "M4.6 4.6h5.2v5.2H4.6V4.6Zm9.6 0h5.2v5.2h-5.2V4.6ZM4.6 14.2h5.2v5.2H4.6v-5.2Zm9.6 0h5.2v5.2h-5.2v-5.2Z",
+  profile:
+    "M12 11.4a3.4 3.4 0 1 0-3.4-3.4A3.4 3.4 0 0 0 12 11.4ZM5.6 19.2v-.6c0-1.7 2.7-3.4 6.4-3.4s6.4 1.7 6.4 3.4v.6",
+  edit_profile:
+    "M5 16.8V19h2.2l7.6-7.6-2.2-2.2L5 16.8Zm11.8-7.4a.9.9 0 0 0 0-1.3l-1.4-1.4a.9.9 0 0 0-1.3 0l-1 1 2.2 2.2 1.5-1.5Z",
 };
 
 /**
@@ -79,6 +83,13 @@ const WARRANTY_TABS = [
   { id: "home", label: "Home", path: "/account/warranties" },
   { id: "claims", label: "Claims", path: "/account/warranties/claims" },
   { id: "vendors", label: "Vendors", path: "/account/warranties/vendors" },
+];
+
+const WARRANTY_RESIDENT_TABS = [
+  { id: "home", label: "Home", path: "/account/warranties" },
+  { id: "claims", label: "Claims", path: "/account/warranties/claims" },
+  { id: "profile", label: "My Profile", path: "/account/profile?from=warranty" },
+  { id: "edit_profile", label: "Edit Profile", path: "/account/edit?from=warranty" },
 ];
 
 const COMMUNITY_TABS = [
@@ -469,7 +480,9 @@ export function BottomNav({
           : enabled.filter((m) => !tabPaths.has(m.path));
 
   const tabs = warranty
-    ? WARRANTY_TABS.filter((tab) => isStaff || tab.id !== "vendors")
+    ? isStaff
+      ? WARRANTY_TABS
+      : WARRANTY_RESIDENT_TABS
     : community
       ? COMMUNITY_TABS
       : [
@@ -498,13 +511,17 @@ export function BottomNav({
         style={{ ["--nav-cols" as string]: String(tabs.length + 1) }}
       >
         {tabs.map((tab) => {
+          const tabPath = tab.path.split("?")[0];
           /* A module landing page is a prefix of every screen beneath it, so it
              has to match exactly or it would light up on all of them. */
           const exact =
-            tab.path === "/account" || tab.path === "/account/warranties";
+            tabPath === "/account" || tabPath === "/account/warranties";
           const active = exact
-            ? pathname === tab.path
-            : pathname.startsWith(tab.path);
+            ? pathname === tabPath
+            : tab.id === "claims"
+              ? pathname.startsWith("/account/warranties/claims") ||
+                /^\/account\/warranties\/\d+/.test(pathname)
+              : pathname.startsWith(tabPath);
           return (
             <Link
               key={tab.id}
@@ -548,7 +565,7 @@ export function BottomNav({
                         <span aria-hidden>→</span>
                       </Link>
                     </li>
-                  ) : (
+                  ) : isStaff ? (
                     <>
                       <li>
                         <Link
@@ -571,7 +588,7 @@ export function BottomNav({
                         </Link>
                       </li>
                     </>
-                  )}
+                  ) : null}
                   <li>
                     <Link
                       href="/account/warranties/claims?filters=1"

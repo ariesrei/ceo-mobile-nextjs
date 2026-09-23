@@ -347,12 +347,17 @@ export function WarrantyList({
                       </div>
                     ) : null}
                   </div>
-                  {w.status_label ? (
-                    <StatusBadge
-                      label={w.status_label}
-                      color={w.status_color}
-                    />
-                  ) : null}
+                  <div className="ceo-claim-card__chips">
+                    {w.status_label ? (
+                      <StatusBadge
+                        label={w.status_label}
+                        color={w.status_color}
+                      />
+                    ) : null}
+                    {isWarrantyExpiring(w) ? (
+                      <StatusBadge label="Expired" />
+                    ) : null}
+                  </div>
                 </FastLink>
               </li>
             );

@@ -2,36 +2,41 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { WarrantyChoice, WarrantyItem } from "@/lib/warranties";
-import { loadWarrantyClaims, loadWarrantyOptions } from "@/lib/helpers/warranties";
+import { vendorClaimCountLabel } from "@/lib/warranties";
+import {
+  loadAllWarrantyClaims,
+  loadWarrantyOptions,
+} from "@/lib/helpers/warranties";
 import { FastLink } from "./FastLink";
-import { EmptyState } from "./ui/ListState";
+import { EmptyState, ListSkeleton } from "./ui/ListState";
 import { SearchIcon, ChevronRightIcon } from "./ui/Icons";
 
-/**
- * Vendors are WordPress users with the `sub_contractor` role, surfaced by
- * /app/warranties/options as {id, label} where the label is the company name.
- * There is no dedicated vendor endpoint, so the open-claim tally is counted
- * here from the same claim list the rest of the module already loads.
- */
 export function WarrantyVendorList() {
   const [vendors, setVendors] = useState<WarrantyChoice[]>([]);
-  const [openItems, setOpenItems] = useState<WarrantyItem[]>([]);
+  const [claims, setClaims] = useState<WarrantyItem[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    loadWarrantyOptions()
-      .then((options) => {
+    Promise.all([
+      loadWarrantyOptions(),
+      loadAllWarrantyClaims("open"),
+      loadAllWarrantyClaims("closed"),
+    ])
+      .then(([options, open, closed]) => {
         if (cancelled) return;
         setVendors(options?.subcontractors || []);
-        setLoading(false);
-        return loadWarrantyClaims("open", { perPage: 20 });
+        const seen = new Set<number>();
+        setClaims(
+          [...open, ...closed].filter((item) => {
+            if (seen.has(item.id)) return false;
+            seen.add(item.id);
+            return true;
+          })
+        );
       })
-      .then((open) => {
-        if (!cancelled && open) setOpenItems(open.items);
-      })
-      .catch(() => {
+      .finally(() => {
         if (!cancelled) setLoading(false);
       });
     return () => {
@@ -39,15 +44,17 @@ export function WarrantyVendorList() {
     };
   }, []);
 
-  const openPerVendor = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const item of openItems) {
+  const claimsPerVendor = useMemo(() => {
+    const map = new Map<string, WarrantyItem[]>();
+    for (const item of claims) {
       const id = String(item.warranty_sources_subcontractors || "");
       if (!id || id === "0") continue;
-      counts.set(id, (counts.get(id) || 0) + 1);
+      const rows = map.get(id) || [];
+      rows.push(item);
+      map.set(id, rows);
     }
-    return counts;
-  }, [openItems]);
+    return map;
+  }, [claims]);
 
   const visible = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -71,16 +78,11 @@ export function WarrantyVendorList() {
       </div>
 
       {loading ? (
-        <div className="space-y-2">
-          <div className="ceo-skel h-[60px] rounded-2xl" />
-          <div className="ceo-skel h-[60px] rounded-2xl" />
-          <div className="ceo-skel h-[60px] rounded-2xl" />
-        </div>
+        <ListSkeleton rows={4} height={60} />
       ) : visible.length ? (
         <nav className="ceo-warranty-menu">
           {visible.map((vendor) => {
             const id = String(vendor.id);
-            const count = openPerVendor.get(id) || 0;
             return (
               <FastLink
                 key={id}
@@ -92,7 +94,7 @@ export function WarrantyVendorList() {
                 </span>
                 <span className="ceo-warranty-menu__label">{vendor.label}</span>
                 <span className="ceo-warranty-menu__meta">
-                  {count} open
+                  {vendorClaimCountLabel(claimsPerVendor.get(id) || [])}
                 </span>
                 <ChevronRightIcon className="ceo-warranty-menu__chev" />
               </FastLink>

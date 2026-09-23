@@ -3,6 +3,7 @@ import type {
   WarrantyItem,
   WarrantyOptions,
   WarrantySummary,
+  WarrantyVendor,
 } from "@/lib/warranties";
 import { warrantyBucketCounts } from "@/lib/warranties";
 import { apiGet, queryString } from "./api";
@@ -114,6 +115,21 @@ export async function loadWarrantyOptions(input: {
   if (!result.ok) return null;
   const row = asRecord(result.data);
   if (!row) return null;
+  const vendorRow = asRecord(row.vendor);
+  const vendor: WarrantyVendor | null = vendorRow
+    ? {
+        id: asNumber(vendorRow.id) || String(vendorRow.id || ""),
+        label: String(vendorRow.label || vendorRow.company || "Vendor"),
+        company: String(vendorRow.company || ""),
+        address: String(vendorRow.address || ""),
+        phone: String(vendorRow.phone || ""),
+        email: String(vendorRow.email || ""),
+        first_name: String(vendorRow.first_name || ""),
+        last_name: String(vendorRow.last_name || ""),
+        contact_name: String(vendorRow.contact_name || ""),
+        trades: asArray(vendorRow.trades) as WarrantyChoice[],
+      }
+    : null;
   return {
     types: asArray(row.types) as WarrantyChoice[],
     units: asArray(row.units) as WarrantyChoice[],
@@ -121,6 +137,7 @@ export async function loadWarrantyOptions(input: {
     locations: asArray(row.locations) as WarrantyChoice[],
     trades: asArray(row.trades) as WarrantyChoice[],
     subcontractors: asArray(row.subcontractors) as WarrantyChoice[],
+    vendor,
     can_edit: Boolean(row.can_edit),
     can_create: Boolean(row.can_create),
     is_staff: Boolean(row.is_staff),

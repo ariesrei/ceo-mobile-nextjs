@@ -92,7 +92,7 @@ export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
   const fromOperations = getBuildAppProfile() === "operations";
 
   return (
-    <div className="ceo-app ceo-warranty ceo-warranty-home mx-auto min-h-dvh w-full pb-28">
+    <div className="ceo-app ceo-warranty ceo-warranty-home ceo-warranty--with-nav mx-auto min-h-dvh w-full">
       <section
         className={`ceo-warranty-hero${
           brand.hero ? "" : " ceo-warranty-hero--flat"
@@ -120,12 +120,10 @@ export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
               </FastLink>
             ) : null}
             {brand.logo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={brand.logo}
-                alt=""
-                className="ceo-warranty-hero__logo"
-              />
+              <span className="ceo-brand-avatar ceo-brand-avatar--hero">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={brand.logo} alt="" />
+              </span>
             ) : (
               <span className="ceo-warranty-hero__mark" aria-hidden>
                 <BuildingIcon className="h-5 w-5" />

@@ -68,6 +68,19 @@ export type WarrantyListResponse = {
   status: string;
 };
 
+export type WarrantyVendor = {
+  id: number | string;
+  label: string;
+  company?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  contact_name?: string;
+  trades?: WarrantyChoice[];
+};
+
 export type WarrantyOptions = {
   types: WarrantyChoice[];
   units: WarrantyChoice[];
@@ -75,6 +88,7 @@ export type WarrantyOptions = {
   locations?: WarrantyChoice[];
   trades: WarrantyChoice[];
   subcontractors?: WarrantyChoice[];
+  vendor?: WarrantyVendor | null;
   can_edit: boolean;
   can_create: boolean;
   is_staff: boolean;
@@ -198,6 +212,16 @@ export function warrantyBucketCounts(items: WarrantyItem[]): WarrantySummary {
     if (isWarrantyExpiring(item)) stats.expiring += 1;
   }
   return stats;
+}
+
+/** Same Open / In Progress / Closed buckets as Claims tabs. */
+export function vendorClaimCountLabel(items: WarrantyItem[]): string {
+  const stats = warrantyBucketCounts(items);
+  const parts: string[] = [];
+  if (stats.open) parts.push(`${stats.open} open`);
+  if (stats.in_progress) parts.push(`${stats.in_progress} in progress`);
+  if (stats.closed) parts.push(`${stats.closed} closed`);
+  return parts.join(" · ") || "No claims";
 }
 
 /**

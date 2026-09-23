@@ -33,8 +33,8 @@ export function WarrantyShell({
 
   return (
     <div
-      className={`ceo-app ceo-warranty mx-auto min-h-dvh w-full ${
-        showNav ? "pb-28" : "pb-10"
+      className={`ceo-app ceo-warranty mx-auto min-h-dvh w-full${
+        showNav ? " ceo-warranty--with-nav" : ""
       }`}
     >
       <header
@@ -77,8 +77,10 @@ export function WarrantyShell({
           <div className="ceo-warranty-topbar__action">
             {action ??
               (brand.logo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={brand.logo} alt={brand.name} className="ceo-warranty-topbar__logo" />
+                <span className="ceo-brand-avatar ceo-brand-avatar--topbar">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={brand.logo} alt={brand.name} />
+                </span>
               ) : (
                 <span className="ceo-warranty-iconbtn ceo-warranty-iconbtn--empty" />
               ))}
@@ -86,7 +88,7 @@ export function WarrantyShell({
         </div>
       </header>
 
-      <main className="px-[var(--app-pad)] pt-4">{children}</main>
+      <main className="ceo-warranty__body">{children}</main>
       {showNav ? <BottomNav variant="warranty" /> : null}
     </div>
   );

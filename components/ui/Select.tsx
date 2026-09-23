@@ -1,5 +1,6 @@
 import { FieldLabel } from "./FieldLabel";
 import { MenuSelect } from "./MenuSelect";
+import { Typeahead } from "./Typeahead";
 
 type Props = {
   label: string;
@@ -30,21 +31,34 @@ export function Select({
 }: Props) {
   const inputId = id || name || label.replace(/\s+/g, "-").toLowerCase();
   return (
-    <label className="block space-y-1.5" htmlFor={inputId}>
+    <div className="block space-y-1.5">
       <FieldLabel label={label} required={required} />
-      <MenuSelect
-        id={inputId}
-        variant="field"
-        className={className}
-        value={value == null ? "" : String(value)}
-        disabled={disabled}
-        placeholder={placeholder}
-        searchable={searchable}
-        options={options}
-        onChange={(next) =>
-          onChange?.({ target: { name, value: next } })
-        }
-      />
-    </label>
+      {searchable ? (
+        <Typeahead
+          id={inputId}
+          aria-label={label}
+          value={value == null ? "" : String(value)}
+          disabled={disabled}
+          placeholder={placeholder}
+          options={options}
+          onChange={(next) =>
+            onChange?.({ target: { name, value: next } })
+          }
+        />
+      ) : (
+        <MenuSelect
+          id={inputId}
+          variant="field"
+          className={className}
+          value={value == null ? "" : String(value)}
+          disabled={disabled}
+          placeholder={placeholder}
+          options={options}
+          onChange={(next) =>
+            onChange?.({ target: { name, value: next } })
+          }
+        />
+      )}
+    </div>
   );
 }

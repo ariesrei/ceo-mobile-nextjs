@@ -221,19 +221,19 @@ export function WarrantyForm({
           }
           options={toSelectOptions(types)}
         />
-        <Select
-          label="Unit"
-          name="warranty_unit"
-          required
-          searchable
-          placeholder="Search unit…"
-          value={form.warranty_unit}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, warranty_unit: e.target.value }))
-          }
-          options={toSelectOptions(units)}
-        />
       </div>
+      <Select
+        label="Unit"
+        name="warranty_unit"
+        required
+        searchable
+        placeholder="Type to search unit…"
+        value={form.warranty_unit}
+        onChange={(e) =>
+          setForm((f) => ({ ...f, warranty_unit: e.target.value }))
+        }
+        options={toSelectOptions(units)}
+      />
       {isEdit && isStaff && !sectioned && statusLabel ? (
         <div className="space-y-1.5">
           <span className="text-sm font-medium text-[var(--muted)]">Status</span>

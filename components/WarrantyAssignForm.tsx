@@ -68,7 +68,9 @@ export function WarrantyAssignForm({ record }: { record: WarrantyItem }) {
     loadWarrantyOptions({ subcontractorId: subId })
       .then((data) => {
         if (cancelled) return;
-        const next = data?.trades || [];
+        const next = data?.trades?.length
+          ? data.trades
+          : data?.vendor?.trades || [];
         setTrades(next);
         setForm((f) => ({
           ...f,
