@@ -1,0 +1,30 @@
+---
+description: Residents can only view record details. No edit and no update status. Staff own those actions.
+globs: "**/*.{ts,tsx}"
+alwaysApply: true
+---
+
+# Resident view-only records
+
+On parcels, guests, maintenance, and warranties, a resident (`group: "account"`) can open their own record and view the detail.
+
+Residents cannot:
+
+- Edit an existing record (`/edit`, save, or an Edit action)
+- Update status (`/status` or a status control)
+
+Those actions are staff-only. Gate them with `isStaffMenuPath()` on the server before the page renders. Hiding the button is not enough.
+
+```tsx
+// BAD — resident and staff share the edit page
+export default async function EditWarrantyPage() {
+  await requireAuth();
+  return <WarrantyForm />;
+}
+
+// GOOD
+const nav = await requireMenuPath("/account/warranties");
+if (!isStaffMenuPath(nav, "/account/warranties")) redirect("/account");
+```
+
+Profile, Edit Profile, and Additional Information are the resident's own account. This rule does not remove those screens.

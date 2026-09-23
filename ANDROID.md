@@ -22,6 +22,13 @@ npm run open:android
 
 In Android Studio pick **operationsDebug** or **warrantyDebug**, then Run.
 
+Two products means two APKs (or two Play AABs). Each flavor has its own launcher icon: green Operations seal and brown Warranty seal, from `ceo-mobile-nextjs/public/brand/`. Regenerate with `npm run assets:win` inside `ceo-mobile-nextjs-cap` before you build.
+
+```bat
+npm run build:android:win
+npm run build:android:warranty:debug
+```
+
 Signed unlisted bundles:
 
 ```bat

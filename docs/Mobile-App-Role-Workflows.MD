@@ -42,6 +42,15 @@ On mobile, Client Admin, Building Admin, and Staff User are one audience. A tile
 
 `role_primary` and `roles` come back on the navigation payload for display. Do not gate a new screen on those fields.
 
+### Resident record rule
+
+On parcels, guests, maintenance, and warranties, a resident can open their own record and **view the detail only**.
+
+- No edit. No `/edit` route, no Edit action, no save on an existing record.
+- No update status. No `/status` route and no status control.
+
+Edit and update status belong to staff and must call `isStaffMenuPath()` before the page renders. Profile, Edit Profile, and Additional Information stay available. Those are the resident's own account, not a property record.
+
 ## How a session reaches a home
 
 ```mermaid
@@ -71,7 +80,7 @@ flowchart TD
 
 ## Resident — Operations
 
-Own unit and own records. Residents submit warranty claims and view history. They do not run the property.
+Own unit and own records. On parcels, guests, maintenance, and warranties, residents view details only. They do not edit those records or update status.
 
 **Home tiles** (only when the module is on and the menu item is enabled):
 
@@ -80,17 +89,17 @@ Own unit and own records. Residents submit warranty claims and view history. The
 - Additional Information (`/account/additional-info`) — pets, vehicles, preferences; submissions can require staff approval
 - Reservations (`/account/reservations`)
 - Parcels (`/account/parcels`) — parcels for this resident
-- My Warranty (`/account/warranties`) — submit a claim and see own claims
+- My Warranty (`/account/warranties`) — own claims. Open a claim to view the detail. No edit and no update status.
 
 **Also on the resident menu when the module is on, usually under More:**
 
-- Guests (`/account/guests`) — this resident's guest history
-- Maintenance (`/account/maintenance`) — read-only history. Residents do not create work orders. See [Maintenance](../../docs/knowledge-base/Maintenance.MD).
+- Guests (`/account/guests`) — this resident's guest history. Detail is view-only.
+- Maintenance (`/account/maintenance`) — view history and detail only. Residents do not create work orders, edit them, or update status. See [Maintenance](../../docs/knowledge-base/Maintenance.MD).
 - History (`/account/history`)
 
 **Bottom nav:** Home (`/account`), Profile, Parcels, then More for the rest. Source: `RESIDENT_IDS` in `components/BottomNav.tsx`.
 
-**Residents do not get:** Contacts, Activities, parcel create/edit, property-wide search, warranty assign, warranty status changes, vendors, reports, or warranty settings.
+**Residents do not get:** Contacts, Activities, parcel create/edit, guest edit, maintenance edit, property-wide search, warranty edit, warranty assign, warranty status changes, vendors, reports, or warranty settings.
 
 ```mermaid
 flowchart TD
@@ -99,7 +108,7 @@ flowchart TD
   home --> extra[Additional information]
   home --> reservations[Reservations]
   home --> parcels[Own parcels]
-  home --> warranty[My Warranty form and own claims]
+  home --> warranty[Own warranty details view only]
   home --> more[More]
   more --> guests[Own guest history]
   more --> maintenance[Maintenance history read only]
@@ -144,7 +153,7 @@ Warranty-plan sites and the ClaimTrack store app. Same resident account rules, s
 
 **Home:**
 
-- My Warranty — submit a claim and see own claims (`/account/warranties`, `/account/warranties/new`)
+- My Warranty — own claims (`/account/warranties`). Detail is view-only. No edit and no update status.
 - My Profile
 - Edit Profile
 - Additional Information
@@ -152,7 +161,7 @@ Warranty-plan sites and the ClaimTrack store app. Same resident account rules, s
 
 **Bottom nav:** Home, My Warranty, More. Resident ClaimTrack chrome stays on `/account` as Home. It does not switch to the staff tab set (Claims directory, Vendors).
 
-Residents do not open vendors, reports, settings, assign, or status.
+Residents do not open vendors, reports, settings, assign, edit, or update status.
 
 ## Staff — ClaimTrack
 
@@ -181,7 +190,7 @@ flowchart TD
   entry[Open Warranty]
   role{Menu group for path}
   entry --> role
-  role -->|account| mine[Own claims and new claim form]
+  role -->|account| mine[Own claim detail view only]
   role -->|staff| dash[Staff dashboard]
   dash --> claims[All claims]
   dash --> detail[Claim detail]
@@ -197,10 +206,10 @@ These URLs are used by both roles. `requireMenuPath()` only checks that the path
 
 | Path | Resident (`group: account`) | Staff (`group: staff`) |
 |------|-----------------------------|------------------------|
-| `/account/parcels` | Own parcels | Property list, create, edit, assign resident |
-| `/account/guests` | Own guest history | Property list, create, edit |
-| `/account/maintenance` | Read-only history | Property list, create, edit, assign staff |
-| `/account/warranties` | Own claims and the new-claim form | Staff dashboard, all claims, assign, status, vendors, reports, settings |
+| `/account/parcels` | Own parcels, detail view only | Property list, create, edit, assign resident |
+| `/account/guests` | Own guest history, detail view only | Property list, create, edit |
+| `/account/maintenance` | History and detail view only | Property list, create, edit, assign staff, update status |
+| `/account/warranties` | Own claim detail view only | Staff dashboard, all claims, edit, assign, update status, vendors, reports, settings |
 
 ## Gate stack for a new screen
 
@@ -224,7 +233,7 @@ flowchart TD
 
 1. `requireAuth()` — JWT session. `app/account/layout.tsx` already does this for every account route.
 2. `requireMenuPath(path)` — the path must be an **enabled** menu item after the product filter.
-3. If the screen creates a record for someone else, assigns, changes status, opens vendors, reports, settings, or searches across units, also require `isStaffMenuPath(nav, path)`.
+3. If the screen edits an existing record, updates status, creates a record for someone else, assigns, opens vendors, reports, settings, or searches across units, also require `isStaffMenuPath(nav, path)`. A resident detail page renders the record with no Edit and no Update Status actions.
 4. Hiding a button in the client is not the gate. The page itself must redirect.
 
 A new screen belongs to one group. A resident tile must link to a resident component. A staff tile must link to a staff component. Do not mount `WarrantyHome` (or any staff dashboard) on a route that residents can open.
