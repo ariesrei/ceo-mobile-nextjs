@@ -16,11 +16,10 @@ import {
 import { getProfile } from "@/lib/helpers/profile";
 import { ClaimThumb, claimContactName, claimMetaLines, claimThumbSrc } from "./ClaimThumb";
 import { FastLink } from "./FastLink";
-import { WarrantyVendorForm } from "./WarrantyVendorForm";
 import { EmptyState, ListSkeleton } from "./ui/ListState";
 import { StatusBadge } from "./ui/StatusBadge";
 
-type Tab = "company" | "edit" | "trade" | "staff" | "open";
+type Tab = "company" | "trade" | "staff" | "open";
 
 function Info({ label, value }: { label: string; value?: string }) {
   const text = (value || "").trim();
@@ -66,7 +65,6 @@ function StaffCard({ person }: { person: WarrantyVendorStaff }) {
 export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
   const [tab, setTab] = useState<Tab>("company");
   const [vendor, setVendor] = useState<WarrantyVendor | null>(null);
-  const [canEdit, setCanEdit] = useState(false);
   const [items, setItems] = useState<WarrantyItem[]>([]);
   const [openRows, setOpenRows] = useState<WarrantyVendorOpenItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -135,12 +133,6 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
           staff,
           open_items: fromApi?.open_items || options?.open_items || [],
         };
-        const canTarget = Boolean(
-          (fromApi && String(fromApi.id) === vendorId) || profile
-        );
-        setCanEdit(
-          Boolean(options?.is_staff && options?.can_edit && canTarget)
-        );
         setVendor(next);
         setOpenRows(next.open_items || []);
         const seen = new Set<number>();
@@ -199,7 +191,6 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
   const name = vendor.company || vendor.label;
   const tabs: { id: Tab; label: string }[] = [
     { id: "company", label: "Company" },
-    ...(canEdit ? [{ id: "edit" as const, label: "Edit Company" }] : []),
     { id: "trade", label: "Trade" },
     { id: "staff", label: "Staff" },
     { id: "open", label: "Open Items" },
@@ -271,15 +262,6 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
             <Info label="SMS notification" value={onOff(vendor.opt_sms)} />
           </section>
         </div>
-      ) : null}
-
-      {tab === "edit" && canEdit ? (
-        <WarrantyVendorForm
-          vendor={vendor}
-          onSaved={(next) =>
-            setVendor((prev) => (prev ? { ...prev, ...next } : next))
-          }
-        />
       ) : null}
 
       {tab === "trade" ? (

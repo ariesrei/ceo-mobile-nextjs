@@ -108,6 +108,34 @@ export function navHasStaffRole(
   return (nav.roles || []).some((role) => STAFF_ROLES.has(role));
 }
 
+export type NavRole = "staff" | "resident" | "unknown";
+
+export function navRoleFromUser(
+  user?: { roles?: string[]; role_primary?: string } | null
+): NavRole {
+  if (!user) return "unknown";
+  if (navHasStaffRole({
+    roles: user.roles || [],
+    role_primary: user.role_primary || "",
+  })) {
+    return "staff";
+  }
+  if ((user.roles && user.roles.length) || user.role_primary) {
+    return "resident";
+  }
+  return "unknown";
+}
+
+/** Empty / blocked nav is unknown — never treat that as resident or staff. */
+export function navRoleFromNav(
+  nav?: NavigationResponse | null,
+  path = "/account/warranties"
+): NavRole {
+  if (!nav || nav.upstream_blocked || !nav.menus?.length) return "unknown";
+  if (menuHasStaffPath(nav.menus, path) || navHasStaffRole(nav)) return "staff";
+  return "resident";
+}
+
 /** Staff chrome only when WP marked that path `group: staff`. Unknown ≠ staff. */
 export function menuHasStaffPath(
   menus: MenuItem[] | undefined,

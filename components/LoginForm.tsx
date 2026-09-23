@@ -10,7 +10,9 @@ import {
   clearBrowserTokens,
   loginFromProperty,
   saveBrowserTokens,
+  writeStoredNavRole,
 } from "@/lib/browser-wp";
+import { navRoleFromUser } from "@/lib/navigation";
 import { clearConnectConfig } from "@/lib/connect";
 import { publicWpErrorMessage } from "@/lib/wp-error";
 import { AuthField } from "./auth/AuthField";
@@ -138,6 +140,11 @@ export function LoginForm({
           verified.data.access_token,
           verified.data.refresh_token
         );
+      }
+      const user = data.user || (verified.ok ? verified.data.user : null);
+      const navRole = navRoleFromUser(user);
+      if (navRole !== "unknown") {
+        writeStoredNavRole(navRole, user?.id);
       }
       if (data.user?.client_name && baseUrl) {
         remember({

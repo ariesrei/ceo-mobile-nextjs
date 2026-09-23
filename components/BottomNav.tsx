@@ -10,7 +10,17 @@ import {
   normalizeAppProfile,
   type AppProfile,
 } from "@/lib/app-profile";
-import { applyNavVisibility, menuHref } from "@/lib/navigation";
+import {
+  readStoredNavRole,
+  readStoredNavUser,
+  writeStoredNavRole,
+} from "@/lib/browser-session";
+import {
+  applyNavVisibility,
+  menuHref,
+  navRoleFromNav,
+  type NavRole,
+} from "@/lib/navigation";
 import type { MenuItem, NavigationResponse } from "@/lib/types";
 import { LogoutOverlay, useLogout } from "./ui/LogoutOverlay";
 
@@ -83,6 +93,7 @@ const WARRANTY_TABS = [
   { id: "home", label: "Home", path: "/account/warranties" },
   { id: "claims", label: "Claims", path: "/account/warranties/claims" },
   { id: "vendors", label: "Vendors", path: "/account/warranties/vendors" },
+  { id: "profile", label: "Profile", path: "/account/profile?from=warranty" },
 ];
 
 const WARRANTY_RESIDENT_TABS = [
@@ -373,6 +384,8 @@ export function BottomNav({
   const { loggingOut, logout } = useLogout();
   const themeLock = useRef(true);
   const [menus, setMenus] = useState<MenuItem[]>([]);
+  const [role, setRole] = useState<NavRole>(() => readStoredNavRole());
+  const [navReady, setNavReady] = useState(() => readStoredNavRole() !== "unknown");
   const [moreOpen, setMoreOpen] = useState(false);
   const [docked, setDocked] = useState(false);
   const [liveProfile, setLiveProfile] = useState<AppProfile | null>(() => {
@@ -403,12 +416,27 @@ export function BottomNav({
 
   useEffect(() => {
     const key = "ceo_nav_menus_v1";
+    const storedUser = readStoredNavUser();
     try {
       const raw = sessionStorage.getItem(key);
       if (raw) {
-        const parsed = JSON.parse(raw) as { at: number; menus: MenuItem[] };
-        if (parsed?.menus && Date.now() - parsed.at < 120_000) {
+        const parsed = JSON.parse(raw) as {
+          at: number;
+          menus: MenuItem[];
+          role?: NavRole;
+          userId?: string;
+        };
+        const sameUser =
+          !parsed.userId || !storedUser || parsed.userId === storedUser;
+        if (
+          sameUser &&
+          parsed?.menus?.length &&
+          Date.now() - parsed.at < 120_000
+        ) {
           setMenus(parsed.menus);
+          if (parsed.role === "staff" || parsed.role === "resident") {
+            setRole(parsed.role);
+          }
         }
       }
     } catch {
@@ -439,22 +467,35 @@ export function BottomNav({
         }
         const filtered = applyNavVisibility(data, nextProfile);
         const next = filtered?.menus || [];
+        const nextRole = navRoleFromNav(filtered);
         setMenus(next);
+        if (nextRole !== "unknown") {
+          setRole(nextRole);
+          writeStoredNavRole(nextRole);
+        }
         sessionStorage.setItem(
           key,
-          JSON.stringify({ at: Date.now(), menus: next })
+          JSON.stringify({
+            at: Date.now(),
+            menus: next,
+            role: nextRole,
+            userId: storedUser,
+          })
         );
       })
-      .catch(() => setMenus((prev) => prev));
+      .catch(() => setMenus((prev) => prev))
+      .finally(() => setNavReady(true));
   }, [appProfile]);
 
   const enabled = menus.filter((m) => m.enabled);
-  const isStaff = enabled.some((m) => m.group === "staff");
+  const isStaff = role === "staff";
   const primaryIds = isWarrantyProfile(liveProfile || appProfile)
     ? WARRANTY_IDS
-    : isStaff
+    : role === "staff"
       ? STAFF_IDS
-      : RESIDENT_IDS;
+      : role === "resident"
+        ? RESIDENT_IDS
+        : [];
   const primary = primaryIds
     .map((id) => enabled.find((m) => m.id === id))
     .filter((m): m is MenuItem => Boolean(m));
@@ -477,9 +518,11 @@ export function BottomNav({
           : enabled.filter((m) => !tabPaths.has(m.path));
 
   const tabs = warranty
-    ? isStaff
+    ? role === "staff"
       ? WARRANTY_TABS
-      : WARRANTY_RESIDENT_TABS
+      : role === "resident"
+        ? WARRANTY_RESIDENT_TABS
+        : []
     : community
       ? COMMUNITY_TABS
       : [
@@ -511,7 +554,10 @@ export function BottomNav({
             : tab.id === "claims"
               ? pathname.startsWith("/account/warranties/claims") ||
                 /^\/account\/warranties\/\d+/.test(pathname)
-              : pathname.startsWith(tabPath);
+              : tab.id === "profile"
+                ? pathname.startsWith("/account/profile") ||
+                  pathname.startsWith("/account/edit")
+                : pathname.startsWith(tabPath);
           return (
             <Link
               key={tab.id}
@@ -558,28 +604,16 @@ export function BottomNav({
                       </Link>
                     </li>
                   ) : isStaff ? (
-                    <>
-                      <li>
-                        <Link
-                          href="/account/profile?from=warranty"
-                          className="flex items-center justify-between rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm font-semibold"
-                          onClick={() => setMoreOpen(false)}
-                        >
-                          View Profile
-                          <span aria-hidden>→</span>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/account/edit?from=warranty"
-                          className="flex items-center justify-between rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm font-semibold"
-                          onClick={() => setMoreOpen(false)}
-                        >
-                          Edit Profile
-                          <span aria-hidden>→</span>
-                        </Link>
-                      </li>
-                    </>
+                    <li>
+                      <Link
+                        href="/account/edit?from=warranty"
+                        className="flex items-center justify-between rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm font-semibold"
+                        onClick={() => setMoreOpen(false)}
+                      >
+                        Edit Profile
+                        <span aria-hidden>→</span>
+                      </Link>
+                    </li>
                   ) : null}
                   <li>
                     <Link
@@ -629,5 +663,6 @@ export function BottomNav({
   );
 
   if (!docked || typeof document === "undefined") return null;
+  if (warranty && role === "unknown" && !navReady) return null;
   return createPortal(ui, document.body);
 }

@@ -4,6 +4,7 @@ import {
   getBrowserAccessToken,
   getBrowserRefreshToken,
   saveBrowserTokens,
+  writeStoredNavRole,
 } from "./browser-session";
 import { publicWpErrorMessage } from "./wp-error";
 import type { AuthTokens } from "./types";
@@ -218,4 +219,4 @@ export function installWpDirectFetch() {
   };
 }
 
-export { clearBrowserTokens, saveBrowserTokens };
+export { clearBrowserTokens, saveBrowserTokens, writeStoredNavRole };
