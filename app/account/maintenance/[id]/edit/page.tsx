@@ -20,8 +20,8 @@ export default async function EditMaintenancePage({ params }: Props) {
 
   return (
     <AppShell
-      title="Edit maintenance"
-      subtitle={community ? undefined : "Update request details"}
+      title="Work order"
+      subtitle={community ? undefined : "Request details"}
       backHref="/account/maintenance"
       layout={community ? "community" : "default"}
       clientName={branding.name}

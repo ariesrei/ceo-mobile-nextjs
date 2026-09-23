@@ -84,6 +84,8 @@ export function MaintenanceForm({
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isStaff, setIsStaff] = useState(Boolean(record?.can_edit));
+  const [canEdit, setCanEdit] = useState(Boolean(record?.can_edit));
 
   useEffect(() => {
     fetch("/api/wp/maintenance/options")
@@ -96,6 +98,8 @@ export function MaintenanceForm({
         setDepartments(data.departments || []);
         setStaff(data.staff || []);
         setSubcontractors(data.subcontractors || []);
+        if (typeof data.is_staff === "boolean") setIsStaff(data.is_staff);
+        if (typeof data.can_edit === "boolean") setCanEdit(data.can_edit);
         setForm((f) => {
           const next = { ...f };
           if (!next.maintenance_request_by && data.current_user) {
@@ -216,6 +220,45 @@ export function MaintenanceForm({
     }
   }
 
+  if (isEdit && !canEdit) {
+    return (
+      <dl className="ceo-wo-detail">
+        {[
+          ["Type", record?.type_label],
+          ["Status", record?.status_label],
+          ["Requested", record?.maintenance_date_request],
+          ["Unit", record?.unit_title],
+          ["Location", record?.location_label],
+          ["Description", record?.maintenance_description],
+          ["Notes", record?.maintenance_symptoms],
+        ]
+          .filter(([, value]) => Boolean(value))
+          .map(([label, value]) => (
+            <div key={label} className="ceo-wo-detail__row">
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        {record?.photos?.length ? (
+          <div className="ceo-wo-detail__row">
+            <dt>Photos</dt>
+            <dd className="flex flex-wrap gap-2">
+              {record.photos.map((photo) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={photo.id}
+                  src={photo.url}
+                  alt=""
+                  className="h-16 w-16 rounded-lg object-cover"
+                />
+              ))}
+            </dd>
+          </div>
+        ) : null}
+      </dl>
+    );
+  }
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="ceo-form-row">
@@ -228,39 +271,43 @@ export function MaintenanceForm({
             setForm({ ...form, maintenance_type: e.target.value })
           }
         />
-        <Select
-          label="Priority"
-          required
-          options={[
-            { id: "High", label: "High" },
-            { id: "Medium", label: "Medium" },
-            { id: "Low", label: "Low" },
-          ]}
-          value={form.maintenance_priority}
-          onChange={(e) =>
-            setForm({ ...form, maintenance_priority: e.target.value })
-          }
-        />
+        {isStaff ? (
+          <Select
+            label="Priority"
+            required
+            options={[
+              { id: "High", label: "High" },
+              { id: "Medium", label: "Medium" },
+              { id: "Low", label: "Low" },
+            ]}
+            value={form.maintenance_priority}
+            onChange={(e) =>
+              setForm({ ...form, maintenance_priority: e.target.value })
+            }
+          />
+        ) : null}
       </div>
-      <div className="ceo-form-row">
-        <DateField
-          label="Date of request"
-          value={form.maintenance_date_request}
-          onChange={(maintenance_date_request) =>
-            setForm({ ...form, maintenance_date_request })
-          }
-          required
-        />
-        <Select
-          label="Requested by"
-          required
-          options={toSelectOptions(staff)}
-          value={form.maintenance_request_by}
-          onChange={(e) =>
-            setForm({ ...form, maintenance_request_by: e.target.value })
-          }
-        />
-      </div>
+      {isStaff ? (
+        <div className="ceo-form-row">
+          <DateField
+            label="Date of request"
+            value={form.maintenance_date_request}
+            onChange={(maintenance_date_request) =>
+              setForm({ ...form, maintenance_date_request })
+            }
+            required
+          />
+          <Select
+            label="Requested by"
+            required
+            options={toSelectOptions(staff)}
+            value={form.maintenance_request_by}
+            onChange={(e) =>
+              setForm({ ...form, maintenance_request_by: e.target.value })
+            }
+          />
+        </div>
+      ) : null}
       <label className="block space-y-1.5">
         <span className="text-sm font-medium text-[var(--muted)]">
           Description
@@ -308,34 +355,36 @@ export function MaintenanceForm({
           }
         />
       </div>
-      <div className="ceo-form-row">
-        <Select
-          label="Department"
-          placeholder="Optional"
-          options={toSelectOptions(departments)}
-          value={form.maintenance_department}
-          onChange={(e) =>
-            setForm({ ...form, maintenance_department: e.target.value })
-          }
-        />
-        <Select
-          label="Personnel"
-          required
-          options={[
-            { id: "Internal", label: "Internal" },
-            { id: "External", label: "External" },
-          ]}
-          value={form.maintenance_source}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              maintenance_source: e.target.value,
-              maintenance_sources_trade: [],
-            })
-          }
-        />
-      </div>
-      {form.maintenance_source === "Internal" ? (
+      {isStaff ? (
+        <div className="ceo-form-row">
+          <Select
+            label="Department"
+            placeholder="Optional"
+            options={toSelectOptions(departments)}
+            value={form.maintenance_department}
+            onChange={(e) =>
+              setForm({ ...form, maintenance_department: e.target.value })
+            }
+          />
+          <Select
+            label="Personnel"
+            required
+            options={[
+              { id: "Internal", label: "Internal" },
+              { id: "External", label: "External" },
+            ]}
+            value={form.maintenance_source}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                maintenance_source: e.target.value,
+                maintenance_sources_trade: [],
+              })
+            }
+          />
+        </div>
+      ) : null}
+      {isStaff && form.maintenance_source === "Internal" ? (
         <Select
           label="Assigned person"
           placeholder="Optional"
@@ -346,7 +395,7 @@ export function MaintenanceForm({
           }
         />
       ) : null}
-      {form.maintenance_source === "External" ? (
+      {isStaff && form.maintenance_source === "External" ? (
         <>
           <Select
             label="Subcontractor"
@@ -428,15 +477,17 @@ export function MaintenanceForm({
           </label>
         </>
       ) : null}
-      <Select
-        label="Status"
-        required
-        options={toSelectOptions(statuses)}
-        value={form.maintenance_status}
-        onChange={(e) =>
-          setForm({ ...form, maintenance_status: e.target.value })
-        }
-      />
+      {isStaff ? (
+        <Select
+          label="Status"
+          required
+          options={toSelectOptions(statuses)}
+          value={form.maintenance_status}
+          onChange={(e) =>
+            setForm({ ...form, maintenance_status: e.target.value })
+          }
+        />
+      ) : null}
       <CameraCapturePhotos
         photos={photos}
         onChange={setPhotos}
@@ -460,7 +511,9 @@ export function MaintenanceForm({
           ? "Saving…"
           : isEdit
             ? "Update maintenance"
-            : "Create maintenance"}
+            : isStaff
+              ? "Create maintenance"
+              : "Submit request"}
       </Button>
     </form>
   );

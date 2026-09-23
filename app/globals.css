@@ -577,6 +577,8 @@ body.ceo-ops-theme {
   align-items: center;
   text-align: center;
   padding: 0.35rem 0 0.15rem;
+  color: inherit;
+  text-decoration: none;
 }
 
 .ceo-pass-create__plus {
@@ -989,7 +991,7 @@ body.ceo-ops-theme {
   position: fixed;
   right: 1.1rem;
   bottom: calc(5.6rem + env(safe-area-inset-bottom));
-  z-index: 70;
+  z-index: 90;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -1043,6 +1045,162 @@ body.ceo-ops-theme {
 .ceo-hist-tabs button.is-active {
   background: #2a3442;
   color: #fff;
+}
+
+.ceo-wo {
+  padding-bottom: 5.5rem;
+}
+
+.ceo-wo-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.2rem;
+  margin: 0.1rem 0 1.35rem;
+  padding: 0.22rem;
+  border-radius: 999px;
+  background: #151b24;
+}
+
+.ceo-wo-tabs button {
+  position: relative;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  padding: 0.62rem 0.7rem;
+  color: #8b95a3;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.ceo-wo-tabs button.is-active {
+  background: #e8edf3;
+  color: #111;
+  box-shadow: inset 0 2px 0 #2ec4b6;
+}
+
+.ceo-wo-group {
+  margin: 0 0 1.45rem;
+}
+
+.ceo-wo-group__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.7rem;
+  color: #d5dbe3;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.ceo-wo-group__dot {
+  width: 0.52rem;
+  height: 0.52rem;
+  border-radius: 999px;
+  background: #e6d4b3;
+}
+
+.ceo-wo-group--progress .ceo-wo-group__dot,
+.ceo-wo-group--scheduled .ceo-wo-group__dot {
+  background: #e0b34a;
+}
+
+.ceo-wo-group--completed .ceo-wo-group__dot {
+  background: #5ec98a;
+}
+
+.ceo-wo-list {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ceo-wo-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem 1.05rem;
+  border-radius: 1.15rem;
+  background: #151b24;
+  color: inherit;
+  text-decoration: none;
+}
+
+.ceo-wo-card__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.ceo-wo-card__body b {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.ceo-wo-card__body small {
+  display: block;
+  margin-top: 0.32rem;
+  color: #8b95a3;
+  font-size: 0.76rem;
+}
+
+.ceo-wo-card__go {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+  color: #7d8794;
+}
+
+.ceo-wo-fab {
+  position: fixed;
+  left: 50%;
+  bottom: calc(5.6rem + env(safe-area-inset-bottom));
+  z-index: 90;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: #e6d4b3;
+  color: #1a1408;
+  padding: 0.78rem 1.2rem 0.78rem 1rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.ceo-wo-fab span {
+  font-size: 1.15rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.ceo-wo-detail {
+  margin: 0;
+}
+
+.ceo-wo-detail__row {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ceo-wo-detail__row dt {
+  color: #8b95a3;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.ceo-wo-detail__row dd {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
 }
 
 .ceo-hist__heading {
@@ -2741,7 +2899,7 @@ body.ceo-ops-theme {
   right: max(var(--app-pad), calc(50vw - (var(--app-max) / 2) + var(--app-pad)));
   /* Clears the bottom nav plus the Android system navigation bar. */
   bottom: calc(5.5rem + env(safe-area-inset-bottom));
-  z-index: 40;
+  z-index: 90;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;

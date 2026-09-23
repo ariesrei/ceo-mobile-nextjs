@@ -43,7 +43,9 @@ export type MaintenanceListResponse = {
   page: number;
   per_page: number;
   can_edit: boolean;
+  can_create?: boolean;
   status: string;
+  scope?: string;
   show_completed_tab?: boolean;
 };
 
@@ -59,6 +61,7 @@ export type MaintenanceOptions = {
   priorities: string[];
   sources: string[];
   can_edit: boolean;
+  can_create?: boolean;
   current_user: number;
   show_completed_tab?: boolean;
   is_staff?: boolean;

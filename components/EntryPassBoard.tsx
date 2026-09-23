@@ -133,13 +133,13 @@ export function EntryPassBoard() {
       </div>
 
       {tab !== "history" ? (
-        <div className="ceo-pass-create">
-          <FastLink href={createHref} className="ceo-pass-create__plus" aria-label="Create a new pass">
+        <FastLink href={createHref} className="ceo-pass-create">
+          <span className="ceo-pass-create__plus" aria-hidden>
             +
-          </FastLink>
+          </span>
           <b>Create a New Pass</b>
           <p>Grant access to guests, service providers or deliveries.</p>
-        </div>
+        </FastLink>
       ) : null}
 
       <h2 className="ceo-pass-heading">

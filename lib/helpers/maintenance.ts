@@ -19,6 +19,7 @@ export type MaintenanceListResult =
       items: MaintenanceItem[];
       total: number;
       can_edit: boolean;
+      can_create: boolean;
       show_completed_tab: boolean;
       is_staff?: boolean;
     }
@@ -27,6 +28,7 @@ export type MaintenanceListResult =
       items: [];
       total: 0;
       can_edit: false;
+      can_create: false;
       show_completed_tab: false;
       is_staff?: undefined;
       error: AppError;
@@ -78,11 +80,13 @@ export function toMaintenanceItem(raw: unknown): MaintenanceItem | null {
 
 export async function listMaintenance(input: {
   status: MaintenanceStatus;
+  scope?: "mine" | "building";
   search?: string;
   perPage?: number;
 }): Promise<MaintenanceListResult> {
   const qs = queryString({
     status: input.status,
+    scope: input.scope,
     per_page: input.perPage ?? 50,
     search: input.search,
   });
@@ -93,6 +97,7 @@ export async function listMaintenance(input: {
       items: [],
       total: 0,
       can_edit: false,
+      can_create: false,
       show_completed_tab: false,
       error: res.error,
       message: res.message,
@@ -107,6 +112,10 @@ export async function listMaintenance(input: {
     items,
     total: payload.total || items.length,
     can_edit: payload.can_edit,
+    can_create:
+      payload.extra.can_create === undefined
+        ? payload.can_edit
+        : asBoolean(payload.extra.can_create),
     show_completed_tab: asBoolean(payload.extra.show_completed_tab),
     is_staff:
       payload.extra.is_staff === undefined

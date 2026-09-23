@@ -1,433 +1,187 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { MaintenanceChoice, MaintenanceItem } from "@/lib/maintenance";
-import { useStaffMenuPath } from "@/hooks/useStaffMenuPath";
-import {
-  listMaintenance,
-  loadMaintenanceOptions,
-  updateMaintenanceStatus,
-} from "@/lib/helpers/maintenance";
-import { ClaimThumb } from "./ClaimThumb";
+import type { MaintenanceItem } from "@/lib/maintenance";
+import { listMaintenance, loadMaintenanceOptions } from "@/lib/helpers/maintenance";
+import { FastLink } from "./FastLink";
 import { Card } from "./ui/Card";
-import {
-  ClaimSearch,
-  activeFilterCount,
-  availableChoices,
-  dateRangeField,
-  inDateRange,
-  withUnassigned,
-} from "./ui/ClaimSearch";
-import { PaginatedList } from "./ui/PaginatedList";
-import { StatusBadge } from "./ui/StatusBadge";
-import { MenuSelect } from "./ui/MenuSelect";
-import { PlusIcon } from "./ui/Icons";
+import { EmptyState, ListSkeleton } from "./ui/ListState";
+import { useHeldLoading } from "./ui/useLoadMore";
 
-type Tab = "internal" | "external" | "completed" | "open";
+type Scope = "mine" | "building";
+type GroupId = "progress" | "scheduled" | "completed";
 
-const EMPTY_FILTERS = { type: "", status: "", range: "", assignee: "" };
+const GROUPS: { id: GroupId; label: string }[] = [
+  { id: "progress", label: "In Progress" },
+  { id: "scheduled", label: "Scheduled" },
+  { id: "completed", label: "Completed" },
+];
+
+function workOrderGroup(statusLabel: string): GroupId {
+  const status = statusLabel.toLowerCase();
+  if (/(complete|closed|done|resolved)/.test(status)) return "completed";
+  if (/(progress|started|working|ongoing)/.test(status)) return "progress";
+  return "scheduled";
+}
+
+function workOrderTitle(item: MaintenanceItem) {
+  return item.maintenance_description || item.type_label || "Work order";
+}
+
+function formatWoDate(raw: string) {
+  const match = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return raw;
+  const date = new Date(Number(match[3]), Number(match[1]) - 1, Number(match[2]));
+  if (Number.isNaN(date.getTime())) return raw;
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export function MaintenanceList() {
-  const [status, setStatus] = useState<Tab>("open");
+  const [scope, setScope] = useState<Scope>("mine");
   const [items, setItems] = useState<MaintenanceItem[]>([]);
-  const [canEdit, setCanEdit] = useState(false);
-  const [showCompletedTab, setShowCompletedTab] = useState(false);
-  const { staff: navStaff } = useStaffMenuPath("/account/maintenance");
-  const [apiStaff, setApiStaff] = useState<boolean | undefined>(undefined);
-  const [types, setTypes] = useState<MaintenanceChoice[]>([]);
-  const [statuses, setStatuses] = useState<MaintenanceChoice[]>([]);
-  const [staff, setStaff] = useState<MaintenanceChoice[]>([]);
-  const [subcontractors, setSubcontractors] = useState<MaintenanceChoice[]>([]);
+  const [canCreate, setCanCreate] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-  const [draft, setDraft] = useState(EMPTY_FILTERS);
-  const [filters, setFilters] = useState(EMPTY_FILTERS);
-  const [reloadKey, setReloadKey] = useState(0);
-  const [statusModalId, setStatusModalId] = useState<number | null>(null);
-  const [statusValue, setStatusValue] = useState("");
-  const [savingStatus, setSavingStatus] = useState(false);
-  const [statusError, setStatusError] = useState("");
-
-  useEffect(() => {
-    const t = window.setTimeout(() => setSearch(searchInput.trim()), 350);
-    return () => window.clearTimeout(t);
-  }, [searchInput]);
+  const pending = useHeldLoading(loading);
 
   const loadList = useCallback(() => {
     setLoading(true);
     setError("");
-    listMaintenance({ status, search })
+    listMaintenance({ status: "all", scope, perPage: 80 })
       .then((data) => {
         if (!data.ok) {
-          setError(data.message || "Could not load maintenance.");
+          setError(data.message || "Could not load work orders.");
           setItems([]);
+          setCanCreate(false);
           return;
         }
         setItems(data.items);
-        setCanEdit(data.can_edit);
-        setShowCompletedTab(data.show_completed_tab);
-        if (typeof data.is_staff === "boolean") setApiStaff(data.is_staff);
+        setCanCreate(data.can_create);
       })
       .finally(() => setLoading(false));
-  }, [status, search]);
+  }, [scope]);
 
   useEffect(() => {
     loadList();
-  }, [loadList, reloadKey]);
+  }, [loadList]);
 
   useEffect(() => {
     loadMaintenanceOptions().then((data) => {
-      if (!data) return;
-      setTypes(data.types || []);
-      setStatuses(data.statuses || []);
-      setStaff(data.staff || []);
-      setSubcontractors(data.subcontractors || []);
-      if (typeof data.show_completed_tab === "boolean") {
-        setShowCompletedTab(data.show_completed_tab);
-      }
-      if (typeof data.is_staff === "boolean") {
-        setApiStaff(data.is_staff);
-      }
-      if (typeof data.can_edit === "boolean") {
-        setCanEdit(data.can_edit);
+      if (typeof data?.can_create === "boolean") {
+        setCanCreate(data.can_create);
       }
     });
   }, []);
 
-  async function confirmStatus() {
-    if (!statusModalId || !statusValue) return;
-    setSavingStatus(true);
-    setStatusError("");
-    try {
-      const data = await updateMaintenanceStatus(
-        statusModalId,
-        Number(statusValue)
-      );
-      if (!data.ok) {
-        setStatusError(data.message);
-        return;
-      }
-      setStatusModalId(null);
-      setReloadKey((k) => k + 1);
-    } finally {
-      setSavingStatus(false);
+  const grouped = useMemo(() => {
+    const next: Record<GroupId, MaintenanceItem[]> = {
+      progress: [],
+      scheduled: [],
+      completed: [],
+    };
+    for (const item of items) {
+      next[workOrderGroup(item.status_label)].push(item);
     }
-  }
-
-  const isStaff = apiStaff ?? navStaff;
-
-  useEffect(() => {
-    if (isStaff && status === "open") {
-      setStatus("internal");
-      return;
-    }
-    if (!isStaff && (status === "internal" || status === "external")) {
-      setStatus("open");
-      return;
-    }
-    if (!showCompletedTab && status === "completed") {
-      setStatus(isStaff ? "internal" : "open");
-    }
-  }, [isStaff, showCompletedTab, status]);
-
-  const tabs: { id: Tab; label: string }[] = isStaff
-    ? [
-        { id: "internal", label: "Internal" },
-        { id: "external", label: "External" },
-        ...(showCompletedTab
-          ? [{ id: "completed" as const, label: "Completed" }]
-          : []),
-      ]
-    : [
-        { id: "open", label: "Open" },
-        ...(showCompletedTab
-          ? [{ id: "completed" as const, label: "Completed" }]
-          : []),
-      ];
-
-  const typeOptions = useMemo(
-    () =>
-      availableChoices(
-        types,
-        items.map((item) => ({
-          id: item.maintenance_type,
-          label: item.type_label,
-        }))
-      ),
-    [types, items]
-  );
-  const statusOptions = useMemo(
-    () =>
-      availableChoices(
-        statuses,
-        items.map((item) => ({
-          id: item.maintenance_status,
-          label: item.status_label,
-        }))
-      ),
-    [statuses, items]
-  );
-  const assigneeOptions = useMemo(
-    () =>
-      withUnassigned(
-        availableChoices(
-          [...staff, ...subcontractors],
-          items.flatMap((item) => [
-            { id: item.maintenance_assigned_person, label: item.assigned_name },
-            {
-              id: item.maintenance_sources_subcontractors || "",
-              label: item.subcontractor_name || "",
-            },
-          ])
-        ),
-        items.some(
-          (item) =>
-            !item.maintenance_assigned_person &&
-            !item.maintenance_sources_subcontractors
-        )
-      ),
-    [staff, subcontractors, items]
-  );
-  const filterFields = useMemo(
-    () => [
-      ...(typeOptions.length
-        ? [{ key: "type", label: "Type", placeholder: "All Types", options: typeOptions }]
-        : []),
-      ...(statusOptions.length
-        ? [
-            {
-              key: "status",
-              label: "Status",
-              placeholder: "All Statuses",
-              options: statusOptions,
-            },
-          ]
-        : []),
-      dateRangeField(),
-      ...(assigneeOptions.length
-        ? [
-            {
-              key: "assignee",
-              label: "Assigned To",
-              placeholder: "All",
-              options: assigneeOptions,
-            },
-          ]
-        : []),
-    ],
-    [typeOptions, statusOptions, assigneeOptions]
-  );
-
-  const visible = useMemo(
-    () =>
-      items.filter((item) => {
-        if (filters.type && String(item.maintenance_type) !== filters.type) {
-          return false;
-        }
-        if (filters.status && String(item.maintenance_status) !== filters.status) {
-          return false;
-        }
-        if (filters.assignee === "unassigned" && item.maintenance_assigned_person) {
-          return false;
-        }
-        if (
-          filters.assignee &&
-          filters.assignee !== "unassigned" &&
-          String(item.maintenance_assigned_person || "") !== filters.assignee &&
-          String(item.maintenance_sources_subcontractors || "") !== filters.assignee
-        ) {
-          return false;
-        }
-        return inDateRange(item.maintenance_date_request, filters.range);
-      }),
-    [items, filters]
-  );
-  const filterCount = activeFilterCount(filters);
+    return next;
+  }, [items]);
 
   return (
-    <div className="space-y-4">
-      <div className="ceo-claim-tabs">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            className={`ceo-claim-tab${status === t.id ? " is-active" : ""}`}
-            onClick={() => setStatus(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
+    <div className="ceo-wo">
+      <div className="ceo-wo-tabs" role="tablist" aria-label="Work order lists">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={scope === "mine"}
+          className={scope === "mine" ? "is-active" : ""}
+          onClick={() => setScope("mine")}
+        >
+          My Requests
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={scope === "building"}
+          className={scope === "building" ? "is-active" : ""}
+          onClick={() => setScope("building")}
+        >
+          Building
+        </button>
       </div>
 
-      <ClaimSearch
-        query={searchInput}
-        onQuery={setSearchInput}
-        placeholder="Search unit, name, request…"
-        ariaLabel="Search maintenance"
-        fields={filterFields}
-        draft={draft}
-        onDraft={setDraft}
-        applied={filters}
-        open={showFilters}
-        onOpenChange={(next) => {
-          if (next) setDraft(filters);
-          setShowFilters(next);
-        }}
-        onClear={() => {
-          setDraft(EMPTY_FILTERS);
-          setFilters(EMPTY_FILTERS);
-        }}
-        onApply={() => {
-          setFilters(draft);
-          setShowFilters(false);
-        }}
-      />
-
-      {showFilters ? null : loading ? (
-        <div className="space-y-3">
-          <div className="ceo-skel h-[92px] rounded-2xl" />
-          <div className="ceo-skel h-[92px] rounded-2xl" />
-        </div>
+      {pending ? (
+        <ListSkeleton rows={3} height={78} />
       ) : error ? (
         <Card>
           <p className="text-sm text-[var(--danger)]">{error}</p>
         </Card>
-      ) : (
-        <PaginatedList
-          items={visible}
-          listClassName="ceo-claim-list"
-          emptyIcon={search || filterCount ? "search" : "inbox"}
-          emptyMessage={
-            search || filterCount ? "No matching requests" : "No work orders yet"
+      ) : !items.length ? (
+        <EmptyState
+          subtitle={
+            scope === "mine"
+              ? "Submit a request when something needs attention."
+              : "No building work orders yet."
           }
-          emptySubtitle={
-            search || filterCount
-              ? "Try another search or filter."
-              : "Submit a request when something needs attention."
-          }
-          getKey={(m) => m.id}
-          renderItem={(m) => (
-            <div className="ceo-claim-card">
-              <ClaimThumb
-                src={m.photos?.[0]?.url}
-                name={m.request_by_name || m.type_label || m.unit_title}
-              />
-              <div className="min-w-0 flex-1">
-                <p className="ceo-claim-card__title">
-                  {m.maintenance_description || m.type_label || "Work order"}
-                </p>
-                <div className="ceo-claim-card__meta">
-                  <span>
-                    {[
-                      m.type_label,
-                      m.unit_title ? `#${m.unit_title}` : "",
-                      m.maintenance_date_request,
-                      m.assigned_name,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </span>
-                </div>
-              </div>
-              <div className="flex shrink-0 flex-col items-end gap-2">
-                <StatusBadge label={m.status_label} short />
-                {canEdit ? (
-                  <>
-                    <button
-                      type="button"
-                      className="text-xs font-semibold text-[var(--accent)]"
-                      onClick={() => {
-                        setStatusError("");
-                        setStatusValue(
-                          m.maintenance_status
-                            ? String(m.maintenance_status)
-                            : statuses[0]
-                              ? String(statuses[0].id)
-                              : ""
-                        );
-                        setStatusModalId(m.id);
-                      }}
-                    >
-                      Status
-                    </button>
-                    <Link
-                      href={`/account/maintenance/${m.id}/edit`}
-                      className="text-xs font-semibold text-[var(--accent)]"
-                    >
-                      Edit
-                    </Link>
-                  </>
-                ) : null}
-              </div>
-            </div>
-          )}
-        />
-      )}
-
-      {statusModalId ? (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
-          role="dialog"
-          aria-modal="true"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setStatusModalId(null);
-          }}
         >
-          <div className="w-full max-w-md space-y-4 rounded-2xl bg-[var(--surface)] p-4">
-            <h2 className="font-display text-lg font-semibold">Update status</h2>
-            <label className="block space-y-1.5">
-              <span className="text-sm font-medium text-[var(--muted)]">
-                Status
-              </span>
-              <MenuSelect
-                variant="field"
-                aria-label="Status"
-                value={statusValue}
-                options={statuses.map((s) => ({
-                  id: s.id,
-                  label: s.label,
-                }))}
-                disabled={savingStatus}
-                onChange={setStatusValue}
-              />
-            </label>
-            {statusError ? (
-              <p className="rounded-xl bg-[#3a1c1c] px-3 py-2 text-sm text-[var(--danger)]">
-                {statusError}
-              </p>
-            ) : null}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className="flex-1 rounded-xl border border-[var(--border)] px-3 py-3 text-sm font-semibold"
-                disabled={savingStatus}
-                onClick={() => setStatusModalId(null)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="ceo-btn-accent flex-1 rounded-xl bg-[var(--accent)] px-3 py-3 text-sm font-semibold text-[#081014] disabled:opacity-60"
-                disabled={savingStatus || !statusValue}
-                onClick={confirmStatus}
-              >
-                {savingStatus ? "Saving…" : "Save status"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {showFilters || !canEdit ? null : (
-        <Link href="/account/maintenance/new" className="ceo-fab">
-          <PlusIcon className="h-4 w-4" />
-          New request
-        </Link>
+          {scope === "mine" ? "No requests yet" : "No work orders yet"}
+        </EmptyState>
+      ) : (
+        GROUPS.filter((group) => grouped[group.id].length).map((group) => (
+          <section
+            key={group.id}
+            className={`ceo-wo-group ceo-wo-group--${group.id}`}
+          >
+            <h2 className="ceo-wo-group__title">
+              <span className="ceo-wo-group__dot" aria-hidden />
+              {group.label}
+            </h2>
+            <ul className="ceo-wo-list">
+              {grouped[group.id].map((item) => (
+                <li key={item.id}>
+                  <FastLink
+                    href={`/account/maintenance/${item.id}/edit`}
+                    className="ceo-wo-card"
+                  >
+                    <span className="ceo-wo-card__body">
+                      <b>{workOrderTitle(item)}</b>
+                      <small>
+                        {`#WO-${item.id}`}
+                        {item.maintenance_date_request
+                          ? ` • ${formatWoDate(item.maintenance_date_request)}`
+                          : ""}
+                      </small>
+                    </span>
+                    <svg
+                      className="ceo-wo-card__go"
+                      viewBox="0 0 24 24"
+                      aria-hidden
+                    >
+                      <path
+                        d="M9 5.5 16 12l-7 6.5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </FastLink>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
       )}
+
+      {canCreate ? (
+        <FastLink href="/account/maintenance/new" className="ceo-wo-fab">
+          <span aria-hidden>+</span>
+          New Request
+        </FastLink>
+      ) : null}
     </div>
   );
 }
