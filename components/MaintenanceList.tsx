@@ -11,11 +11,17 @@ import { useHeldLoading } from "./ui/useLoadMore";
 type Scope = "mine" | "building";
 type GroupId = "progress" | "scheduled" | "completed";
 
-const GROUPS: { id: GroupId; label: string }[] = [
-  { id: "progress", label: "In Progress" },
-  { id: "scheduled", label: "Scheduled" },
-  { id: "completed", label: "Completed" },
-];
+const GROUP_LABEL: Record<GroupId, string> = {
+  progress: "In Progress",
+  scheduled: "Scheduled",
+  completed: "Completed",
+};
+
+const GROUP_ORDER: Record<GroupId, number> = {
+  progress: 0,
+  scheduled: 1,
+  completed: 2,
+};
 
 function workOrderGroup(statusLabel: string): GroupId {
   const status = statusLabel.toLowerCase();
@@ -77,26 +83,24 @@ export function MaintenanceList() {
     });
   }, []);
 
-  const grouped = useMemo(() => {
-    const next: Record<GroupId, MaintenanceItem[]> = {
-      progress: [],
-      scheduled: [],
-      completed: [],
-    };
-    for (const item of items) {
-      next[workOrderGroup(item.status_label)].push(item);
-    }
-    return next;
-  }, [items]);
+  const visible = useMemo(
+    () =>
+      [...items].sort(
+        (a, b) =>
+          GROUP_ORDER[workOrderGroup(a.status_label)] -
+          GROUP_ORDER[workOrderGroup(b.status_label)]
+      ),
+    [items]
+  );
 
   return (
     <div className="ceo-wo">
-      <div className="ceo-wo-tabs" role="tablist" aria-label="Work order lists">
+      <div className="ceo-claim-tabs" role="tablist" aria-label="Work order lists">
         <button
           type="button"
           role="tab"
           aria-selected={scope === "mine"}
-          className={scope === "mine" ? "is-active" : ""}
+          className={`ceo-claim-tab${scope === "mine" ? " is-active" : ""}`}
           onClick={() => setScope("mine")}
         >
           My Requests
@@ -105,7 +109,7 @@ export function MaintenanceList() {
           type="button"
           role="tab"
           aria-selected={scope === "building"}
-          className={scope === "building" ? "is-active" : ""}
+          className={`ceo-claim-tab${scope === "building" ? " is-active" : ""}`}
           onClick={() => setScope("building")}
         >
           Building
@@ -116,7 +120,18 @@ export function MaintenanceList() {
         <ListSkeleton rows={3} height={78} />
       ) : error ? (
         <Card>
-          <p className="text-sm text-[var(--danger)]">{error}</p>
+          <p className="text-sm text-[var(--danger)]">
+            {/network/i.test(error)
+              ? "Could not load work orders. Check the connection and try again."
+              : error}
+          </p>
+          <button
+            type="button"
+            className="mt-3 text-sm font-semibold text-[var(--accent)]"
+            onClick={loadList}
+          >
+            Try again
+          </button>
         </Card>
       ) : !items.length ? (
         <EmptyState
@@ -129,55 +144,51 @@ export function MaintenanceList() {
           {scope === "mine" ? "No requests yet" : "No work orders yet"}
         </EmptyState>
       ) : (
-        GROUPS.filter((group) => grouped[group.id].length).map((group) => (
-          <section
-            key={group.id}
-            className={`ceo-wo-group ceo-wo-group--${group.id}`}
-          >
-            <h2 className="ceo-wo-group__title">
-              <span className="ceo-wo-group__dot" aria-hidden />
-              {group.label}
-            </h2>
-            <ul className="ceo-wo-list">
-              {grouped[group.id].map((item) => (
-                <li key={item.id}>
-                  <FastLink
-                    href={`/account/maintenance/${item.id}/edit`}
-                    className="ceo-wo-card"
-                  >
-                    <span className="ceo-wo-card__body">
-                      <b>{workOrderTitle(item)}</b>
-                      <small>
-                        {`#WO-${item.id}`}
-                        {item.maintenance_date_request
-                          ? ` • ${formatWoDate(item.maintenance_date_request)}`
-                          : ""}
-                      </small>
+        <ul className="ceo-wo-list">
+          {visible.map((item) => {
+            const group = workOrderGroup(item.status_label);
+            return (
+              <li key={item.id}>
+                <FastLink
+                  href={`/account/maintenance/${item.id}/edit`}
+                  className="ceo-wo-card"
+                >
+                  <span className="ceo-wo-card__body">
+                    <span className={`ceo-wo-card__status ceo-wo-card__status--${group}`}>
+                      <span className="ceo-wo-card__dot" aria-hidden />
+                      {GROUP_LABEL[group]}
                     </span>
-                    <svg
-                      className="ceo-wo-card__go"
-                      viewBox="0 0 24 24"
-                      aria-hidden
-                    >
-                      <path
-                        d="M9 5.5 16 12l-7 6.5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </FastLink>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))
+                    <b>{workOrderTitle(item)}</b>
+                    <small>
+                      {`#WO-${item.id}`}
+                      {item.maintenance_date_request
+                        ? ` • ${formatWoDate(item.maintenance_date_request)}`
+                        : ""}
+                    </small>
+                  </span>
+                  <svg
+                    className="ceo-wo-card__go"
+                    viewBox="0 0 24 24"
+                    aria-hidden
+                  >
+                    <path
+                      d="M9 5.5 16 12l-7 6.5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </FastLink>
+              </li>
+            );
+          })}
+        </ul>
       )}
 
       {canCreate ? (
-        <FastLink href="/account/maintenance/new" className="ceo-wo-fab">
+        <FastLink href="/account/maintenance/new" className="ceo-class-fab">
           <span aria-hidden>+</span>
           New Request
         </FastLink>
