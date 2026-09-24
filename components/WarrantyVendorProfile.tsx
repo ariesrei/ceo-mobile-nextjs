@@ -183,7 +183,7 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
     };
   }, [vendorId]);
 
-  const trades = vendor?.trades || [];
+  const trades = useMemo(() => vendor?.trades || [], [vendor?.trades]);
   const staff = useMemo(() => {
     const rows = vendor?.staff || [];
     if (rows.length) return rows;

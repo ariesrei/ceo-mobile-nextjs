@@ -33,6 +33,7 @@ export function toProfile(raw: unknown): Profile | null {
     avatar: asPhotoUrl(row.avatar),
     unit: asString(row.unit),
     address: asString(row.address),
+    rating: asString(row.rating),
     editable_fields: Array.isArray(row.editable_fields)
       ? row.editable_fields.map((item) => asString(item)).filter(Boolean)
       : [],

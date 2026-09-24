@@ -87,6 +87,7 @@ export type Profile = {
   avatar: string;
   unit?: string;
   address?: string;
+  rating?: string;
   editable_fields: string[];
 };
 
