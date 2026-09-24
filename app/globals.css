@@ -3803,6 +3803,164 @@ body.ceo-warranty-theme {
   font-weight: 700;
 }
 
+.ceo-vendor-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.15rem 0 0.35rem;
+  text-align: center;
+}
+
+.ceo-vendor-hero__mark {
+  display: grid;
+  width: 5.4rem;
+  height: 5.4rem;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 1.7rem;
+  font-weight: 800;
+}
+
+.ceo-vendor-hero__mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ceo-vendor-hero b {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.ceo-vendor-hero em {
+  display: block;
+  margin-top: 0.15rem;
+  font-style: normal;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 500;
+}
+
+.ceo-vendor-card {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.95rem 1rem 1.05rem;
+  border-radius: 1.1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.ceo-vendor-card h2 {
+  margin: 0 0 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ceo-vendor-card-head h2 {
+  margin: 0;
+}
+
+.ceo-vendor-fact {
+  padding: 0.55rem 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.ceo-vendor-card > .ceo-vendor-fact:first-of-type,
+.ceo-vendor-stats > .ceo-vendor-fact:first-child {
+  border-top: 0;
+  padding-top: 0.2rem;
+}
+
+.ceo-vendor-fact small {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.ceo-vendor-fact p {
+  margin: 0.15rem 0 0;
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.ceo-vendor-stats {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.ceo-vendor-person {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 0 0;
+}
+
+.ceo-vendor-trade__staff .ceo-vendor-person,
+.ceo-vendor-app .ceo-claim-list .ceo-vendor-person {
+  padding: 0.85rem 0.15rem;
+}
+
+.ceo-vendor-person__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.ceo-vendor-person__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.ceo-vendor-person__name {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+
+.ceo-vendor-person__role,
+.ceo-vendor-person__meta {
+  margin: 0.12rem 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.ceo-vendor-person__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.ceo-vendor-app .ceo-claim-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ceo-vendor-app .ceo-claim-list > li + li {
+  border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.ceo-vendor-trade__staff {
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ceo-vendor-trade__staff > li + li {
+  border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+
 .ceo-vendor-avatar {
   width: 2.8rem;
   height: 2.8rem;

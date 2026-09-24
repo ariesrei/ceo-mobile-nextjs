@@ -35,9 +35,9 @@ function Info({ label, value }: { label: string; value?: string }) {
   const text = (value || "").trim();
   if (!text) return null;
   return (
-    <div>
-      <p className="text-xs text-[var(--muted)]">{label}</p>
-      <p className="mt-0.5 text-sm font-medium">{text}</p>
+    <div className="ceo-vendor-fact">
+      <small>{label}</small>
+      <p>{text}</p>
     </div>
   );
 }
@@ -62,23 +62,26 @@ function StaffCard({
   action?: ReactNode;
 }) {
   return (
-    <div className="ceo-claim-card">
+    <div className="ceo-vendor-person">
       <span className="ceo-vendor-mark" aria-hidden>
         {(person.name || "?").slice(0, 1).toUpperCase()}
       </span>
-      <div className="min-w-0 flex-1">
-        <p className="ceo-claim-card__title">{person.name || "Staff"}</p>
-        <div className="ceo-claim-card__meta">
-          {person.job_title ? <span>{person.job_title}</span> : null}
-          {person.email ? <span>{person.email}</span> : null}
-          {person.phone ? <span>{person.phone}</span> : null}
+      <div className="ceo-vendor-person__body">
+        <div className="ceo-vendor-person__top">
+          <p className="ceo-vendor-person__name">{person.name || "Staff"}</p>
+          {action}
         </div>
-      </div>
-      <div className="ceo-claim-card__chips">
-        {person.is_primary ? <StatusBadge label="Primary" /> : null}
-        {person.active ? <StatusBadge label="Active" /> : null}
-        {person.notify ? <StatusBadge label="Notify" /> : null}
-        {action}
+        {person.job_title ? (
+          <p className="ceo-vendor-person__role">{person.job_title}</p>
+        ) : null}
+        <p className="ceo-vendor-person__meta">
+          {[person.email, person.phone].filter(Boolean).join(" · ")}
+        </p>
+        <div className="ceo-vendor-person__pills">
+          {person.is_primary ? <StatusBadge label="Primary" /> : null}
+          {person.active ? <StatusBadge label="Active" /> : null}
+          {person.notify ? <StatusBadge label="Notify" /> : null}
+        </div>
       </div>
     </div>
   );
@@ -261,9 +264,9 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
   const addingStaff = editor?.kind === "staff" && editor.id == null;
 
   return (
-    <div className="space-y-4">
-      <section className="ceo-vendor-profile">
-        <span className="ceo-vendor-mark" aria-hidden>
+    <div className="ceo-vendor-app space-y-4">
+      <section className="ceo-vendor-hero">
+        <span className="ceo-vendor-hero__mark" aria-hidden>
           {vendor.avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={vendor.avatar} alt="" />
@@ -271,12 +274,8 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
             name.slice(0, 1).toUpperCase()
           )}
         </span>
-        <div className="min-w-0">
-          <p className="ceo-vendor-profile__name">{name}</p>
-          <p className="text-sm text-[var(--muted)]">
-            {vendor.contact_type || "Sub-Contractor"}
-          </p>
-        </div>
+        <b>{name}</b>
+        <em>{vendor.contact_type || "Sub-Contractor"}</em>
       </section>
 
       <div className="ceo-claim-tabs">
@@ -327,8 +326,8 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
             />
           ) : (
             <>
-              <section className="ceo-warranty-detail">
-                <p className="ceo-section-label">Company information</p>
+              <section className="ceo-vendor-card">
+                <h2>Company</h2>
                 <Info label="Company" value={name} />
                 <Info label="Company address" value={vendor.address} />
                 <Info
@@ -338,8 +337,8 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
                 <Info label="COI expiration" value={vendor.coi_expiration} />
                 <Info label="Payment terms" value={vendor.payment_terms} />
               </section>
-              <section className="ceo-warranty-detail">
-                <p className="ceo-section-label">Contact information</p>
+              <section className="ceo-vendor-card">
+                <h2>Contact</h2>
                 <Info label="Salutation" value={vendor.salutation} />
                 <Info label="First name" value={vendor.first_name} />
                 <Info label="Last name" value={vendor.last_name} />
@@ -351,10 +350,9 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
                 <Info label="Phone number" value={vendor.phone} />
                 <Info label="Mobile number" value={vendor.mobile} />
                 <Info label="Job title" value={vendor.job_title} />
-                <Info label="Rating" value={vendor.rating} />
               </section>
-              <section className="ceo-warranty-detail">
-                <p className="ceo-section-label">Notifications</p>
+              <section className="ceo-vendor-card">
+                <h2>Notifications</h2>
                 <Info label="Email notification" value={onOff(vendor.opt_email)} />
                 <Info label="SMS notification" value={onOff(vendor.opt_sms)} />
               </section>
@@ -407,10 +405,10 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
               return (
                 <section
                   key={String(trade.id)}
-                  className="ceo-warranty-detail ceo-vendor-trade"
+                  className="ceo-vendor-card ceo-vendor-trade"
                 >
                   <div className="ceo-vendor-card-head">
-                    <p className="ceo-section-label">{trade.label}</p>
+                    <h2>{trade.label}</h2>
                     {canEdit && trade.trade_id ? (
                       editing ? (
                         <Button
@@ -445,11 +443,13 @@ export function WarrantyVendorProfile({ vendorId }: { vendorId: string }) {
                     />
                   ) : (
                     <>
-                      <Info label="Coverage area" value={trade.coverage} />
-                      <Info label="Priority rank" value={trade.priority} />
-                      <Info label="SLA hours" value={trade.sla} />
+                      <div className="ceo-vendor-stats">
+                        <Info label="Coverage" value={trade.coverage} />
+                        <Info label="Priority" value={trade.priority} />
+                        <Info label="SLA" value={trade.sla} />
+                      </div>
                       {(trade.staff || []).length ? (
-                        <ul className="ceo-claim-list ceo-vendor-trade__staff">
+                        <ul className="ceo-vendor-trade__staff">
                           {trade.staff!.map((person, index) => (
                             <li key={`${staffKey(person) || index}`}>
                               <StaffCard person={person} />
