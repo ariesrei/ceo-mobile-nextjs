@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useBusyState } from "@/hooks/useBusyState";
 import { useConnectSession } from "@/hooks/useConnectSession";
 import type { AppProfile } from "@/lib/app-profile";
-import { forgotFromProperty } from "@/lib/browser-wp";
+import { appResetOrigin, forgotFromProperty } from "@/lib/browser-wp";
 import { publicWpErrorMessage } from "@/lib/wp-error";
 import { AuthScreen } from "./auth/AuthScreen";
 import { AuthField } from "./auth/AuthField";
@@ -34,7 +34,8 @@ export function ForgotPasswordForm(props: Props) {
     setSent("");
     busy.start();
     try {
-      const fromDevice = await forgotFromProperty(baseUrl, username);
+      const appOrigin = appResetOrigin();
+      const fromDevice = await forgotFromProperty(baseUrl, username, appOrigin);
       if (fromDevice.ok) {
         busy.setLoading(false);
         setSent(fromDevice.message);
@@ -48,7 +49,7 @@ export function ForgotPasswordForm(props: Props) {
       const res = await fetch("/api/auth/forgot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, baseUrl }),
+        body: JSON.stringify({ username, baseUrl, app_origin: appOrigin }),
       });
       const data = (await res.json()) as { message?: string };
       if (!res.ok) {

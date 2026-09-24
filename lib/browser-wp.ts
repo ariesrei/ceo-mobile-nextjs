@@ -35,9 +35,15 @@ function actionError(raw: unknown, fallback: string) {
   return message;
 }
 
+export function appResetOrigin(): string {
+  if (typeof window === "undefined") return "";
+  return window.location.origin;
+}
+
 export async function forgotFromProperty(
   baseUrl: string,
-  username: string
+  username: string,
+  appOrigin = appResetOrigin()
 ): Promise<{ ok: true; message: string } | PropertyAuthFail> {
   try {
     const res = await fetch(wpRestUrl(baseUrl, "/app/auth/forgot"), {
@@ -46,7 +52,7 @@ export async function forgotFromProperty(
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({ username }),
+      body: JSON.stringify({ username, app_origin: appOrigin }),
     });
     const rawBody = await res.text();
     const data = parseAuthBody(rawBody);

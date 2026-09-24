@@ -19,6 +19,19 @@ export function normalizeBaseUrl(input: string): string {
   return url.replace(/\/+$/, "");
 }
 
+/** Property URL from an app reset-password email (`?site=`). Reject junk schemes. */
+export function propertySiteFromQuery(raw: string): string {
+  const text = raw.trim();
+  if (!text) return "";
+  try {
+    const parsed = new URL(text);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return "";
+    return normalizeBaseUrl(parsed.origin + parsed.pathname);
+  } catch {
+    return "";
+  }
+}
+
 export function getConnectConfig(): ConnectConfig | null {
   if (typeof window === "undefined") return null;
   try {

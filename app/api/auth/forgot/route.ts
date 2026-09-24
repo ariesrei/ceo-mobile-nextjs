@@ -7,6 +7,7 @@ import { apiUrl, COOKIE_BASE_URL } from "@/lib/wp";
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const username = String(body.username || body.user_login || "").trim();
+  const appOrigin = String(body.app_origin || body.appOrigin || "").trim();
   const jar = await cookies();
   const baseUrl = String(body.baseUrl || jar.get(COOKIE_BASE_URL)?.value || "").replace(
     /\/+$/,
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
     const res = await serverFetch(apiUrl(baseUrl, "/app/auth/forgot"), {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ username }),
+      body: JSON.stringify({ username, app_origin: appOrigin }),
       cache: "no-store",
     });
     const rawBody = await res.text();

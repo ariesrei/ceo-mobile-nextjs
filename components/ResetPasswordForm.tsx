@@ -1,11 +1,12 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useBusyState } from "@/hooks/useBusyState";
 import { useConnectSession } from "@/hooks/useConnectSession";
 import type { AppProfile } from "@/lib/app-profile";
 import { resetFromProperty } from "@/lib/browser-wp";
+import { writeConnectConfig } from "@/lib/connect";
 import { publicWpErrorMessage } from "@/lib/wp-error";
 import { AuthScreen } from "./auth/AuthScreen";
 import { AuthField } from "./auth/AuthField";
@@ -30,8 +31,17 @@ export function ResetPasswordForm({ resetKey, login, ...props }: Props) {
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [done, setDone] = useState("");
-  const baseUrl = config?.baseUrl || props.fallbackBaseUrl || "";
+  const baseUrl = props.fallbackBaseUrl || config?.baseUrl || "";
   const propertyName = props.fallbackName || config?.clientName || "";
+
+  useEffect(() => {
+    switch (props.fallbackBaseUrl) {
+      case undefined:
+      case "":
+        return;
+    }
+    writeConnectConfig({ baseUrl: props.fallbackBaseUrl });
+  }, [props.fallbackBaseUrl]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
