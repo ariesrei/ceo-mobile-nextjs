@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useBusyState } from "@/hooks/useBusyState";
 import { useConnectSession } from "@/hooks/useConnectSession";
 import type { AppProfile } from "@/lib/app-profile";
+import { resetFromProperty } from "@/lib/browser-wp";
 import { publicWpErrorMessage } from "@/lib/wp-error";
 import { AuthScreen } from "./auth/AuthScreen";
 import { AuthField } from "./auth/AuthField";
@@ -45,6 +46,22 @@ export function ResetPasswordForm({ resetKey, login, ...props }: Props) {
     setDone("");
     busy.start();
     try {
+      const fromDevice = await resetFromProperty(baseUrl, {
+        key: resetKey,
+        login,
+        password,
+        password_confirm: confirm,
+      });
+      if (fromDevice.ok) {
+        busy.setLoading(false);
+        setDone(fromDevice.message);
+        return;
+      }
+      if (!fromDevice.network && fromDevice.status > 0 && fromDevice.status !== 403) {
+        busy.fail(fromDevice.error || "Could not reset password.");
+        return;
+      }
+
       const res = await fetch("/api/auth/reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -58,7 +75,12 @@ export function ResetPasswordForm({ resetKey, login, ...props }: Props) {
       });
       const data = (await res.json()) as { message?: string };
       if (!res.ok) {
-        busy.fail(publicWpErrorMessage(data.message, "Could not reset password."));
+        busy.fail(
+          publicWpErrorMessage(data.message, "Could not reset password.").replace(
+            "This property blocked the hosted app server. Sign-in and data now load from your device instead. Try again.",
+            "Could not reset the password. Try again."
+          )
+        );
         return;
       }
       busy.setLoading(false);

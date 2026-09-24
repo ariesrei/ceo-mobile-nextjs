@@ -8,10 +8,10 @@ import { CameraCapturePhotos } from "./CameraCapturePhotos";
 import { ClaimThumb, claimContactName, claimMetaLines, claimThumbSrc } from "./ClaimThumb";
 import { FastLink } from "./FastLink";
 import { EmptyState } from "./ui/ListState";
-import { FileIcon, ImageIcon } from "./ui/Icons";
+import { ImageIcon } from "./ui/Icons";
 
 type Tab = "details" | "updates" | "files" | "timeline";
-type FileFilter = "all" | "photos" | "documents";
+type FileFilter = "all" | "photos";
 
 type PathEvent = {
   actor: string;
@@ -39,15 +39,6 @@ function tradeLabel(record: WarrantyItem) {
 
 function isDocumentUrl(url: string) {
   return /\.(pdf|docx?|xlsx?|pptx?|txt)(\?|#|$)/i.test(url);
-}
-
-function fileNameFromUrl(url: string) {
-  try {
-    const name = decodeURIComponent(new URL(url).pathname.split("/").pop() || "");
-    return name || "Document";
-  } catch {
-    return url.split("/").pop() || "Document";
-  }
 }
 
 function claimPathEvents(record: WarrantyItem): PathEvent[] {
@@ -289,7 +280,6 @@ export function WarrantyClaimDetail({
               [
                 ["all", "All", null],
                 ["photos", "Photos", ImageIcon],
-                ["documents", "Documents", FileIcon],
               ] as const
             ).map(([id, label, Icon]) => (
               <button
@@ -304,7 +294,7 @@ export function WarrantyClaimDetail({
             ))}
           </div>
 
-          {fileFilter !== "documents" ? (
+          {fileFilter === "all" || fileFilter === "photos" ? (
             staff && canEdit ? (
               <div className="space-y-2">
                 <CameraCapturePhotos
@@ -337,36 +327,6 @@ export function WarrantyClaimDetail({
             )
           ) : null}
 
-          {fileFilter !== "photos" && documents.length ? (
-            <ul className="space-y-2">
-              {documents.map((doc) => (
-                <li key={doc.id}>
-                  <a
-                    href={doc.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="ceo-file-row"
-                  >
-                    <span className="ceo-doc-badge" aria-hidden>
-                      <FileIcon className="h-5 w-5" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="ceo-doc-name">{fileNameFromUrl(doc.url)}</p>
-                    </div>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-
-          {fileFilter === "documents" && !documents.length ? (
-            <EmptyState
-              icon="file"
-              subtitle="PDFs and other files on this claim will show here."
-            >
-              No documents
-            </EmptyState>
-          ) : null}
         </div>
       ) : null}
 

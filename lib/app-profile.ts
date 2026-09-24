@@ -124,16 +124,9 @@ export function showOpsCommunityUi(appProfile?: AppProfile | null): boolean {
   return appProfile === "operations";
 }
 
-/** Profile/Edit opened from ClaimTrack must keep warranty tabs, not ops. */
-export function keepWarrantyChrome(
-  from?: string | null,
-  chromeCookie?: string | null
-): boolean {
-  return (
-    getBuildAppProfile() === "warranty" ||
-    from === "warranty" ||
-    chromeCookie === "1"
-  );
+/** Profile/Edit keep ClaimTrack tabs only from Warranty — not a leftover cookie. */
+export function keepWarrantyChrome(from?: string | null): boolean {
+  return getBuildAppProfile() === "warranty" || from === "warranty";
 }
 
 export function setWarrantyChromeCookie(on: boolean) {

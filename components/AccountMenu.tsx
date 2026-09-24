@@ -70,7 +70,8 @@ const ACTION_LABELS: Record<string, string> = {
   maintenance: "Make a Request",
   reservations: "Reserve Amenity",
   additional_info: "View Documents",
-  edit_profile: "Update My Info",
+  edit_profile: "Edit Profile",
+  profile: "View Profile",
   contacts: "Contact Management",
   pay_balance: "Pay Balance",
 };

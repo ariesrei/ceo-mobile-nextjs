@@ -7,7 +7,13 @@ import { DateField } from "./ui/DateField";
 import { Input } from "./ui/Input";
 import { ProfileAvatarField } from "./ProfileAvatarField";
 
-export function EditProfileForm({ profile }: { profile: Profile }) {
+export function EditProfileForm({
+  profile,
+  onSaved,
+}: {
+  profile: Profile;
+  onSaved?: () => void | Promise<void>;
+}) {
   const [form, setForm] = useState({
     first_name: profile.first_name || "",
     last_name: profile.last_name || "",
@@ -56,6 +62,7 @@ export function EditProfileForm({ profile }: { profile: Profile }) {
         return;
       }
       setMessage(data.message || "Saved.");
+      await onSaved?.();
     } catch {
       setError("Network error.");
     } finally {

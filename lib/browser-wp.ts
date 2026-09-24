@@ -19,6 +19,90 @@ export function loginUrl(baseUrl: string): string {
   return wpRestUrl(baseUrl, "/app/auth/login");
 }
 
+type PropertyAuthFail = {
+  ok: false;
+  error: string;
+  status: number;
+  network: boolean;
+};
+
+function actionError(raw: unknown, fallback: string) {
+  const message = publicWpErrorMessage(raw, fallback);
+  if (message.includes("blocked the hosted app server")) return fallback;
+  return message;
+}
+
+export async function forgotFromProperty(
+  baseUrl: string,
+  username: string
+): Promise<{ ok: true; message: string } | PropertyAuthFail> {
+  try {
+    const res = await fetch(wpRestUrl(baseUrl, "/app/auth/forgot"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ username }),
+    });
+    const rawBody = await res.text();
+    const data = parseAuthBody(rawBody);
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: actionError(data.message || rawBody, "Could not send reset email."),
+        status: res.status,
+        network: false,
+      };
+    }
+    return {
+      ok: true,
+      message:
+        data.message ||
+        "If an account exists for that username or email, you will receive a password reset link shortly.",
+    };
+  } catch {
+    return { ok: false, error: "", status: 0, network: true };
+  }
+}
+
+export async function resetFromProperty(
+  baseUrl: string,
+  payload: {
+    key: string;
+    login: string;
+    password: string;
+    password_confirm: string;
+  }
+): Promise<{ ok: true; message: string } | PropertyAuthFail> {
+  try {
+    const res = await fetch(wpRestUrl(baseUrl, "/app/auth/reset"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    const rawBody = await res.text();
+    const data = parseAuthBody(rawBody);
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: actionError(data.message || rawBody, "Could not reset password."),
+        status: res.status,
+        network: false,
+      };
+    }
+    return {
+      ok: true,
+      message: data.message || "Password reset. You can sign in now.",
+    };
+  } catch {
+    return { ok: false, error: "", status: 0, network: true };
+  }
+}
+
 export function parseAuthBody(rawBody: string): AuthTokens & {
   message?: string;
   code?: string;

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import {
   getBuildAppProfile,
   isWarrantyProfile,
+  setWarrantyChromeCookie,
   showOpsCommunityUi,
   type AppProfile,
 } from "@/lib/app-profile";
@@ -26,19 +27,35 @@ import { LogoutOverlay, useLogout } from "./ui/LogoutOverlay";
 
 const RESIDENT_HOME_IDS = [
   "profile",
-  "edit_profile",
   "additional_info",
   "reservations",
   "parcels",
   "warranties",
 ];
 
-const WARRANTY_HOME_IDS = ["warranties", "profile", "edit_profile"];
+const WARRANTY_HOME_IDS = ["warranties", "profile"];
+
+const OPS_PROFILE_ITEMS: MenuItem[] = [
+  {
+    id: "profile",
+    label: "View Profile",
+    path: "/account/profile",
+    enabled: true,
+    group: "account",
+  },
+];
+
+function withOpsProfileItems(items: MenuItem[]): MenuItem[] {
+  const rest = items.filter(
+    (item) => item.id !== "profile" && item.id !== "edit_profile"
+  );
+  return [...OPS_PROFILE_ITEMS, ...rest];
+}
 
 const COMMUNITY_RAIL: MenuItem[] = [
   { id: "home", label: "Home", path: "/account", enabled: true, group: "account" },
   { id: "messaging", label: "Messages", path: "/account/messaging", enabled: true, group: "account" },
-  { id: "profile", label: "My Account", path: "/account/profile", enabled: true, group: "account" },
+  { id: "profile", label: "View Profile", path: "/account/profile", enabled: true, group: "account" },
   { id: "maintenance", label: "Make a Request", path: "/account/maintenance", enabled: true, group: "account" },
   { id: "reservations", label: "Amenities", path: "/account/reservations", enabled: true, group: "account" },
   { id: "events", label: "Events", path: "/account/events", enabled: true, group: "account" },
@@ -263,6 +280,10 @@ export function HomeScreen({
   }, [menus]);
 
   useEffect(() => {
+    if (isOpsHome) setWarrantyChromeCookie(false);
+  }, [isOpsHome]);
+
+  useEffect(() => {
     if (!appProfile) return;
     try {
       sessionStorage.setItem("ceo_app_profile", appProfile);
@@ -347,11 +368,15 @@ export function HomeScreen({
   const quickMenus = isOpsHome ? QUICK_ACTION_ITEMS : [];
   const moreMenus = !isOpsHome
     ? visibleMenus
-    : isStaffHome
-      ? visibleMenus.filter(
-          (item) => !OPS_HOME_ITEMS.some((pinned) => pinned.id === item.id)
-        )
-      : visibleMenus.slice(4);
+    : withOpsProfileItems(
+        isStaffHome
+          ? visibleMenus.filter(
+              (item) => !OPS_HOME_ITEMS.some((pinned) => pinned.id === item.id)
+            )
+          : visibleMenus.filter(
+              (item) => item.id !== "profile" && item.id !== "edit_profile"
+            )
+      );
   const initial = (name[0] || "U").toUpperCase();
 
   useEffect(() => {

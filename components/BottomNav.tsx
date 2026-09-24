@@ -100,7 +100,6 @@ const WARRANTY_RESIDENT_TABS = [
   { id: "home", label: "Home", path: "/account/warranties" },
   { id: "claims", label: "Claims", path: "/account/warranties/claims" },
   { id: "profile", label: "My Profile", path: "/account/profile?from=warranty" },
-  { id: "edit_profile", label: "Edit Profile", path: "/account/edit?from=warranty" },
 ];
 
 const COMMUNITY_TABS = [
@@ -336,6 +335,16 @@ const COMMUNITY_MORE_EXTRAS: MenuItem[] = [
   },
 ];
 
+const OPS_PROFILE_MORE: MenuItem[] = [
+  {
+    id: "profile",
+    label: "View Profile",
+    path: "/account/profile",
+    enabled: true,
+    group: "account",
+  },
+];
+
 function communityMoreItems(items: MenuItem[]): MenuItem[] {
   const mapped = items
     .filter((item) => item.id !== "guests" && item.path !== "/account/guests")
@@ -362,15 +371,13 @@ function communityMoreItems(items: MenuItem[]): MenuItem[] {
   });
   const extraKey = new Set(extras.flatMap((item) => [item.id, item.path]));
   const rest = mapped.filter(
-    (item) => !extraKey.has(item.id) && !extraKey.has(item.path)
+    (item) =>
+      !extraKey.has(item.id) &&
+      !extraKey.has(item.path) &&
+      item.id !== "profile" &&
+      item.id !== "edit_profile"
   );
-  const profile = rest.filter(
-    (item) => item.id === "profile" || item.id === "edit_profile"
-  );
-  const other = rest.filter(
-    (item) => item.id !== "profile" && item.id !== "edit_profile"
-  );
-  return [...profile, ...extras, ...other];
+  return [...OPS_PROFILE_MORE, ...extras, ...rest];
 }
 
 export function BottomNav({
@@ -488,7 +495,6 @@ export function BottomNav({
   }, [appProfile]);
 
   const enabled = menus.filter((m) => m.enabled);
-  const isStaff = role === "staff";
   const primaryIds = isWarrantyProfile(liveProfile || appProfile)
     ? WARRANTY_IDS
     : role === "staff"
@@ -600,17 +606,6 @@ export function BottomNav({
                         onClick={() => setMoreOpen(false)}
                       >
                         Back to Operations
-                        <span aria-hidden>→</span>
-                      </Link>
-                    </li>
-                  ) : isStaff ? (
-                    <li>
-                      <Link
-                        href="/account/edit?from=warranty"
-                        className="flex items-center justify-between rounded-xl bg-[var(--surface-2)] px-4 py-3 text-sm font-semibold"
-                        onClick={() => setMoreOpen(false)}
-                      >
-                        Edit Profile
                         <span aria-hidden>→</span>
                       </Link>
                     </li>

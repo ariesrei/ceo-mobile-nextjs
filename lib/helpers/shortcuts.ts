@@ -4,6 +4,13 @@ const STORAGE_KEY = "ceo_ops_shortcuts_v1";
 
 export const QUICK_ACTION_ITEMS: MenuItem[] = [
   {
+    id: "profile",
+    label: "View Profile",
+    path: "/account/profile",
+    enabled: true,
+    group: "account",
+  },
+  {
     id: "maintenance",
     label: "Make a Request",
     path: "/account/maintenance",
@@ -21,13 +28,6 @@ export const QUICK_ACTION_ITEMS: MenuItem[] = [
     id: "additional_info",
     label: "View Documents",
     path: "/account/documents",
-    enabled: true,
-    group: "staff",
-  },
-  {
-    id: "edit_profile",
-    label: "Update My Info",
-    path: "/account/edit",
     enabled: true,
     group: "staff",
   },

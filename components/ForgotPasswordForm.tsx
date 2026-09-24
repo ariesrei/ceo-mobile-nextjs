@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useBusyState } from "@/hooks/useBusyState";
 import { useConnectSession } from "@/hooks/useConnectSession";
 import type { AppProfile } from "@/lib/app-profile";
+import { forgotFromProperty } from "@/lib/browser-wp";
 import { publicWpErrorMessage } from "@/lib/wp-error";
 import { AuthScreen } from "./auth/AuthScreen";
 import { AuthField } from "./auth/AuthField";
@@ -33,6 +34,17 @@ export function ForgotPasswordForm(props: Props) {
     setSent("");
     busy.start();
     try {
+      const fromDevice = await forgotFromProperty(baseUrl, username);
+      if (fromDevice.ok) {
+        busy.setLoading(false);
+        setSent(fromDevice.message);
+        return;
+      }
+      if (!fromDevice.network && fromDevice.status > 0 && fromDevice.status !== 403) {
+        busy.fail(fromDevice.error || "Could not send reset email.");
+        return;
+      }
+
       const res = await fetch("/api/auth/forgot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -42,6 +54,10 @@ export function ForgotPasswordForm(props: Props) {
       if (!res.ok) {
         busy.fail(
           publicWpErrorMessage(data.message, "Could not send reset email.")
+            .replace(
+              "This property blocked the hosted app server. Sign-in and data now load from your device instead. Try again.",
+              "Could not send the reset email. Try again."
+            )
         );
         return;
       }
