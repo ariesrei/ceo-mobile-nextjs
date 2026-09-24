@@ -61,7 +61,7 @@ export function ProfileBoard() {
 
   const email = item.ceo_email || item.email;
   const initial = (item.first_name || item.full_name || "U").slice(0, 1).toUpperCase();
-  const subtitle = [item.job_title, item.unit].filter(Boolean).join(" · ");
+  const subtitle = (item.company || "").trim();
 
   const contactFields = [
     ["Salutation", item.salutation],

@@ -1360,8 +1360,9 @@ body.ceo-ops-theme {
   display: block;
   margin-top: 0.2rem;
   font-style: normal;
-  color: #8b95a3;
-  font-size: 0.88rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 500;
 }
 
 .ceo-profile__card {
