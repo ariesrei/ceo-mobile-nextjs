@@ -63,14 +63,7 @@ export function ProfileBoard({
 
   const email = item.ceo_email || item.email;
   const initial = (item.first_name || item.full_name || "U").slice(0, 1).toUpperCase();
-  const subtitle = [
-    item.contact_type,
-    item.job_title,
-    item.unit,
-    item.contact_status,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const subtitle = [item.job_title, item.unit].filter(Boolean).join(" · ");
 
   const contactFields = [
     ["Salutation", item.salutation],
@@ -90,19 +83,14 @@ export function ProfileBoard({
     ["Company phone", item.company_phone],
     ["COI expiration", item.coi_expiration],
     ["Payment terms", item.payment_terms],
-    ["Rating", item.rating],
   ] as const;
   const hasCompany = companyFields.some(([, value]) => Boolean(value?.trim()));
 
   const extraFields = [
     ["Unit", item.unit],
     ["Birthday", item.birthday],
-    ["Emergency contact", item.emergency_contact],
-    ["Allergies", item.allergies],
     ["Membership type", item.membership_type],
     ["Membership ID", item.membership_id],
-    ["Contact type", item.contact_type],
-    ["Contact status", item.contact_status],
   ] as const;
   const hasExtra = extraFields.some(([, value]) => Boolean(value?.trim()));
 
