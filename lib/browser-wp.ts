@@ -29,6 +29,9 @@ type PropertyAuthFail = {
 function actionError(raw: unknown, fallback: string) {
   const message = publicWpErrorMessage(raw, fallback);
   if (message.includes("blocked the hosted app server")) return fallback;
+  if (/authentication required/i.test(message)) {
+    return "This property does not have app password reset yet. Use Forgot password on the desktop site, or update the property theme.";
+  }
   return message;
 }
 
