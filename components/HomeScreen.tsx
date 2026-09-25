@@ -580,7 +580,7 @@ export function HomeScreen({
           <div className="ceo-ops-hero__phone">
             <p className="text-[clamp(1rem,4.2vw,1.25rem)] font-normal text-white/90 md:text-[24px]">{greeting}</p>
             <p className="mt-1 text-[clamp(1.65rem,8vw,2.125rem)] font-semibold leading-none tracking-tight text-white md:text-[48px]">
-            {name} <span aria-hidden>👋</span>
+            {name}
           </p>
           </div>
           {isOpsHome ? (
