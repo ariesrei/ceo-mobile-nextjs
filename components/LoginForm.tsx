@@ -1,11 +1,18 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useBusyState } from "@/hooks/useBusyState";
 import { useConnectSession } from "@/hooks/useConnectSession";
 import type { AppProfile } from "@/lib/app-profile";
 import { postLoginPath } from "@/lib/brand";
+import {
+  clearRememberedLogin,
+  readRememberedLogin,
+  readRememberedUsername,
+  rememberLoginEnabled,
+  saveRememberedLogin,
+} from "@/lib/helpers/remember-login";
 import {
   clearBrowserTokens,
   loginFromProperty,
@@ -39,10 +46,24 @@ export function LoginForm({
 }: Props) {
   const { config, remember } = useConnectSession();
   const busy = useBusyState();
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(readRememberedUsername);
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(rememberLoginEnabled);
   const [showPassword, setShowPassword] = useState(false);
   const [changingProperty, setChangingProperty] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    readRememberedLogin().then((saved) => {
+      if (cancelled || !saved.enabled) return;
+      setRememberMe(true);
+      if (saved.username) setUsername(saved.username);
+      if (saved.password) setPassword(saved.password);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const baseUrl = config?.baseUrl || fallbackBaseUrl || "";
   const propertyName = fallbackName || config?.clientName || "";
@@ -94,6 +115,11 @@ export function LoginForm({
           )
         );
         return;
+      }
+      if (rememberMe) {
+        await saveRememberedLogin(username, password);
+      } else {
+        clearRememberedLogin();
       }
       if (verified.ok) {
         saveBrowserTokens(
@@ -173,6 +199,19 @@ export function LoginForm({
           aria-label="Password"
           placeholder="Password"
         />
+        <label className="ceo-login__remember">
+          <input
+            type="checkbox"
+            name="remember"
+            checked={rememberMe}
+            onChange={(e) => {
+              const next = e.target.checked;
+              setRememberMe(next);
+              if (!next) clearRememberedLogin();
+            }}
+          />
+          Remember me
+        </label>
         {busy.error ? <p className="ceo-login__error">{busy.error}</p> : null}
         <Button
           type="submit"

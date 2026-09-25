@@ -5923,6 +5923,21 @@ div.ceo-accordion__row {
   gap: 1rem;
 }
 
+.ceo-login__remember {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+  user-select: none;
+}
+
+.ceo-login__remember input {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--accent);
+}
+
 /* Icon-prefixed input, placeholder inside, no label above (see mockup). */
 .ceo-field {
   position: relative;
