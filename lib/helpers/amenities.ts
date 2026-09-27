@@ -34,6 +34,11 @@ export function amenityPhotoUrl(row: Record<string, unknown>): string {
     asPhotoUrl(row.photo_url) ||
     asPhotoUrl(row.featured_image);
   if (!raw) return "";
+  if (/[?&]ceo_media_download=/i.test(raw) && !/^https?:\/\//i.test(raw) && !raw.startsWith("//")) {
+    const base = (getConnectConfig()?.baseUrl || "").replace(/\/+$/, "");
+    const path = raw.startsWith("/") ? raw : `/${raw}`;
+    return base ? `${base}${path}` : raw;
+  }
   if (raw.startsWith("//")) {
     const scheme =
       typeof window !== "undefined" && window.location.protocol === "https:"

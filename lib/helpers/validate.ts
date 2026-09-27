@@ -42,7 +42,8 @@ export function asPhotoUrl(value: unknown): string {
     /^https?:\/\//i.test(url) ||
     url.startsWith("//") ||
     url.startsWith("/wp-content/") ||
-    url.includes("/wp-content/uploads/")
+    url.includes("/wp-content/uploads/") ||
+    /[?&]ceo_media_download=/i.test(url)
   ) {
     return url;
   }
