@@ -1,3 +1,4 @@
+import { getConnectConfig } from "@/lib/connect";
 import { apiGet } from "./api";
 import { asNumber, asPhotoUrl, asRecord, asString, readListPayload } from "./validate";
 
@@ -21,8 +22,32 @@ export function toAmenityItem(raw: unknown): AmenityItem | null {
     title: asString(row.title),
     hours: asString(row.hours) || "Open daily",
     space,
-    photo: asPhotoUrl(row.photo),
+    photo: amenityPhotoUrl(row),
   };
+}
+
+export function amenityPhotoUrl(row: Record<string, unknown>): string {
+  const raw =
+    asPhotoUrl(row.photo) ||
+    asPhotoUrl(row.image) ||
+    asPhotoUrl(row.thumbnail) ||
+    asPhotoUrl(row.photo_url) ||
+    asPhotoUrl(row.featured_image);
+  if (!raw) return "";
+  if (raw.startsWith("//")) {
+    const scheme =
+      typeof window !== "undefined" && window.location.protocol === "https:"
+        ? "https"
+        : "http";
+    return `${scheme}:${raw}`;
+  }
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (raw.startsWith("/wp-content/") || raw.includes("/wp-content/uploads/")) {
+    const base = (getConnectConfig()?.baseUrl || "").replace(/\/+$/, "");
+    const path = raw.startsWith("/") ? raw : `/${raw}`;
+    return base ? `${base}${path}` : raw;
+  }
+  return raw;
 }
 
 export async function listAmenities() {

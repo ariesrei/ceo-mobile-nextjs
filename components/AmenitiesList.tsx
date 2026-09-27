@@ -7,6 +7,27 @@ import { ListSkeleton } from "./ui/ListState";
 import { PaginatedList } from "./ui/PaginatedList";
 import { useHeldLoading } from "./ui/useLoadMore";
 
+export function AmenityPhoto({ src, title }: { src: string; title: string }) {
+  const [failed, setFailed] = useState(false);
+  const [srcOverride, setSrcOverride] = useState("");
+  const url = srcOverride || src;
+  if (!url || failed) return null;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={url}
+      alt={title}
+      onError={() => {
+        if (url.startsWith("http://")) {
+          setSrcOverride(`https://${url.slice("http://".length)}`);
+          return;
+        }
+        setFailed(true);
+      }}
+    />
+  );
+}
+
 const FILTERS: { id: AmenitySpace | "all"; label: string }[] = [
   { id: "all", label: "All" },
   { id: "indoor", label: "Indoor" },
@@ -90,10 +111,7 @@ export function AmenitiesList() {
           renderItem={(item) => (
             <article className="ceo-amenity__card">
               <div className="ceo-amenity__photo">
-                {item.photo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.photo} alt="" />
-                ) : null}
+                <AmenityPhoto src={item.photo} title={item.title} />
               </div>
               <div className="ceo-amenity__body">
                 <div>

@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AmenityPhoto } from "./AmenitiesList";
 import { listAmenities, type AmenityItem } from "@/lib/helpers/amenities";
 import { formatAppError } from "@/lib/helpers/errors";
 import {
@@ -193,10 +194,7 @@ export function AmenityReserve({ amenityId }: { amenityId: number }) {
     <div className="ceo-amenity-reserve">
       <article className="ceo-amenity__card">
         <div className="ceo-amenity__photo">
-          {item.photo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={item.photo} alt="" />
-          ) : null}
+          <AmenityPhoto src={item.photo} title={item.title} />
         </div>
         <div className="ceo-amenity__body">
           <div>
