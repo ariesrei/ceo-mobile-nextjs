@@ -1,6 +1,10 @@
 import type { ReservationItem } from "@/lib/types";
 import { apiGet, apiPost, queryString } from "./api";
 import { errorFromStatus } from "./errors";
+import {
+  toAmenityExtraField,
+  type AmenityExtraField,
+} from "./amenities";
 import { asArray, asBoolean, asNumber, asRecord, asString, readActionMessage, readListPayload } from "./validate";
 
 export type ReservationSlot = {
@@ -22,6 +26,7 @@ export type ReservationSlots = {
   minAdvance: number;
   displayDays: number;
   primaryVisitor: string;
+  additionalFields: AmenityExtraField[];
 };
 
 function toSlot(raw: unknown): ReservationSlot | null {
@@ -53,6 +58,7 @@ function emptySlots(message = ""): ReservationSlots {
     minAdvance: 0,
     displayDays: 0,
     primaryVisitor: "off",
+    additionalFields: [],
   };
 }
 
@@ -91,6 +97,9 @@ export async function getReservationSlots(input: {
     minAdvance: asNumber(data.min_advance),
     displayDays: asNumber(data.display_days),
     primaryVisitor: asString(data.primary_visitor) || "off",
+    additionalFields: asArray(data.additional_fields)
+      .map(toAmenityExtraField)
+      .filter((field): field is AmenityExtraField => Boolean(field)),
   };
 }
 
@@ -103,7 +112,9 @@ export async function createReservation(input: {
   people: number;
   comments?: string;
   waitlistAcknowledged?: boolean;
+  additionalFields?: Array<{ label: string; answer: string }>;
 }) {
+  const additionalFields = input.additionalFields || [];
   const res = await apiPost("/api/wp/reservations", {
     amenity: input.amenity,
     date: input.date,
@@ -113,6 +124,8 @@ export async function createReservation(input: {
     people: input.people,
     comments: input.comments || "",
     waitlist_acknowledged: input.waitlistAcknowledged ? 1 : 0,
+    additional_fields: additionalFields,
+    booking_additional_payload: JSON.stringify(additionalFields),
   });
   if (!res.ok) return res;
   const data = asRecord(res.data);

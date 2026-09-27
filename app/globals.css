@@ -875,6 +875,61 @@ body.ceo-ops-theme {
   padding: 0;
 }
 
+.ceo-amenity-reserve__rules,
+.ceo-amenity-reserve__extras {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ceo-amenity-reserve__rules {
+  padding: 0.95rem 1rem;
+  border-radius: 1.15rem;
+  background: var(--surface);
+}
+
+.ceo-amenity-reserve__rules h4,
+.ceo-amenity-reserve__extras h4 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.ceo-amenity-reserve__rules p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.ceo-amenity-reserve__extra {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ceo-amenity-reserve__checks {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ceo-amenity-reserve__check {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--ink);
+  font-size: 0.88rem;
+}
+
+.ceo-amenity-reserve__check input {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--accent);
+}
+
 .ceo-news-tabs {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

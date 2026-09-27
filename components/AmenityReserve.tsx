@@ -3,7 +3,12 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AmenityPhoto } from "./AmenitiesList";
-import { listAmenities, type AmenityItem } from "@/lib/helpers/amenities";
+import {
+  findReserveAmenity,
+  listAmenities,
+  type AmenityExtraField,
+  type AmenityItem,
+} from "@/lib/helpers/amenities";
 import { formatAppError } from "@/lib/helpers/errors";
 import {
   createReservation,
@@ -13,6 +18,7 @@ import {
 } from "@/lib/helpers/reservations";
 import { Button } from "./ui/Button";
 import { DateField } from "./ui/DateField";
+import { FieldLabel } from "./ui/FieldLabel";
 import { Input } from "./ui/Input";
 import { EmptyState, ListSkeleton } from "./ui/ListState";
 import { Select } from "./ui/Select";
@@ -48,15 +54,146 @@ function slotOptions(slots: ReservationSlot[]) {
   }));
 }
 
+function extraAnswer(field: AmenityExtraField, extra: Record<string, string | string[]>) {
+  const raw = extra[field.label];
+  if (Array.isArray(raw)) return raw.join(", ");
+  return String(raw || "").trim();
+}
+
+function extraRows(fields: AmenityExtraField[], extra: Record<string, string | string[]>) {
+  return fields.map((field) => ({
+    label: field.label,
+    answer: extraAnswer(field, extra),
+  }));
+}
+
+function missingRequired(fields: AmenityExtraField[], extra: Record<string, string | string[]>) {
+  const field = fields.find((row) => row.required && !extraAnswer(row, extra));
+  return field ? `Please complete: ${field.label}` : "";
+}
+
+function ExtraField({
+  field,
+  value,
+  onChange,
+}: {
+  field: AmenityExtraField;
+  value: string | string[];
+  onChange: (next: string | string[]) => void;
+}) {
+  const name = `addl-${field.label.replace(/\s+/g, "-").toLowerCase()}`;
+  if (field.input === "yes_no") {
+    return (
+      <fieldset className="ceo-amenity-reserve__extra">
+        <FieldLabel label={field.label} required={field.required} />
+        <div className="ceo-amenity-reserve__checks">
+          {["Yes", "No"].map((opt) => (
+            <label key={opt} className="ceo-amenity-reserve__check">
+              <input
+                type="radio"
+                name={name}
+                value={opt}
+                required={field.required}
+                checked={String(value) === opt}
+                onChange={() => onChange(opt)}
+              />
+              {opt}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    );
+  }
+  if (field.input === "select" && field.options.length) {
+    return (
+      <Select
+        label={field.label}
+        name={name}
+        required={field.required}
+        placeholder="—"
+        value={typeof value === "string" ? value : ""}
+        options={field.options.map((opt) => ({ id: opt, label: opt }))}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    );
+  }
+  if (field.input === "checkbox" && field.options.length) {
+    if (field.multiple) {
+      const selected = Array.isArray(value) ? value : value ? [String(value)] : [];
+      return (
+        <fieldset className="ceo-amenity-reserve__extra">
+          <FieldLabel label={field.label} required={field.required} />
+          <div className="ceo-amenity-reserve__checks">
+            {field.options.map((opt) => {
+              const checked = selected.some(
+                (row) => row.trim().toLowerCase() === opt.trim().toLowerCase()
+              );
+              return (
+                <label key={opt} className="ceo-amenity-reserve__check">
+                  <input
+                    type="checkbox"
+                    value={opt}
+                    checked={checked}
+                    onChange={() =>
+                      onChange(
+                        checked
+                          ? selected.filter((row) => row !== opt)
+                          : [...selected, opt]
+                      )
+                    }
+                  />
+                  {opt}
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+      );
+    }
+    return (
+      <fieldset className="ceo-amenity-reserve__extra">
+        <FieldLabel label={field.label} required={field.required} />
+        <div className="ceo-amenity-reserve__checks">
+          {field.options.map((opt) => (
+            <label key={opt} className="ceo-amenity-reserve__check">
+              <input
+                type="radio"
+                name={name}
+                value={opt}
+                required={field.required}
+                checked={String(value) === opt}
+                onChange={() => onChange(opt)}
+              />
+              {opt}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    );
+  }
+  return (
+    <Input
+      label={field.label}
+      name={name}
+      required={field.required}
+      placeholder={field.placeholder}
+      value={typeof value === "string" ? value : ""}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+}
+
 export function AmenityReserve({ amenityId }: { amenityId: number }) {
   const router = useRouter();
   const [item, setItem] = useState<AmenityItem | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState(amenityId);
   const [date, setDate] = useState(() => todayStamp());
   const [people, setPeople] = useState("1");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [comments, setComments] = useState("");
+  const [extra, setExtra] = useState<Record<string, string | string[]>>({});
   const [starts, setStarts] = useState<ReservationSlot[]>([]);
   const [ends, setEnds] = useState<ReservationSlot[]>([]);
   const [meta, setMeta] = useState<ReservationSlots | null>(null);
@@ -77,6 +214,14 @@ export function AmenityReserve({ amenityId }: { amenityId: number }) {
         : undefined,
     [meta?.displayDays]
   );
+  const choices = item?.amenities || [];
+  const selected = choices.find((choice) => choice.id === selectedId);
+  const fields = selected?.additionalFields.length
+    ? selected.additionalFields
+    : meta
+      ? meta.additionalFields
+      : item?.additionalFields || [];
+  const hours = selected?.hours || item?.hours || "";
 
   useEffect(() => {
     if (!amenityId) {
@@ -85,20 +230,27 @@ export function AmenityReserve({ amenityId }: { amenityId: number }) {
     }
     listAmenities()
       .then((data) => {
-        if (data.ok) {
-          setItem(data.items.find((row) => row.id === amenityId) || null);
+        if (!data.ok) return;
+        const next = findReserveAmenity(data.items, amenityId);
+        setItem(next);
+        if (next?.amenities.some((choice) => choice.id === amenityId)) {
+          setSelectedId(amenityId);
+        } else if (next?.amenities[0]) {
+          setSelectedId(next.amenities[0].id);
+        } else {
+          setSelectedId(next?.id || amenityId);
         }
       })
       .finally(() => setLoading(false));
   }, [amenityId]);
 
   useEffect(() => {
-    if (!amenityId || !date) return;
+    if (!selectedId || !date) return;
     let live = true;
     setSlotsLoading(true);
     setError("");
     getReservationSlots({
-      amenity: amenityId,
+      amenity: selectedId,
       date,
       people: peopleCount,
     }).then((data) => {
@@ -128,13 +280,13 @@ export function AmenityReserve({ amenityId }: { amenityId: number }) {
     return () => {
       live = false;
     };
-  }, [amenityId, date, peopleCount]);
+  }, [selectedId, date, peopleCount]);
 
   useEffect(() => {
-    if (!amenityId || !date || !startTime || meta?.changeover) return;
+    if (!selectedId || !date || !startTime || meta?.changeover) return;
     let live = true;
     getReservationSlots({
-      amenity: amenityId,
+      amenity: selectedId,
       date,
       people: peopleCount,
       mode: "end",
@@ -149,15 +301,20 @@ export function AmenityReserve({ amenityId }: { amenityId: number }) {
     return () => {
       live = false;
     };
-  }, [amenityId, date, peopleCount, startTime, meta?.changeover]);
+  }, [selectedId, date, peopleCount, startTime, meta?.changeover]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!amenityId || !date || !startTime || !endTime) return;
+    if (!selectedId || !date || !startTime || !endTime) return;
+    const requiredError = missingRequired(fields, extra);
+    if (requiredError) {
+      setError(requiredError);
+      return;
+    }
     setBusy(true);
     setError("");
     const res = await createReservation({
-      amenity: amenityId,
+      amenity: selectedId,
       date,
       startTime,
       endTime,
@@ -165,6 +322,7 @@ export function AmenityReserve({ amenityId }: { amenityId: number }) {
       people: peopleCount,
       comments,
       waitlistAcknowledged: waitlistAck,
+      additionalFields: extraRows(fields, extra),
     });
     if (!res.ok) {
       if (res.error.status === 409) {
@@ -199,12 +357,39 @@ export function AmenityReserve({ amenityId }: { amenityId: number }) {
         <div className="ceo-amenity__body">
           <div>
             <h3>{item.title}</h3>
-            <p>{item.hours}</p>
+            <p>{hours}</p>
           </div>
         </div>
       </article>
 
+      {item.rules ? (
+        <section className="ceo-amenity-reserve__rules">
+          {/rules/i.test(item.rules.split("\n")[0] || "") ? null : (
+            <h4>{item.title} Rules</h4>
+          )}
+          <p>{item.rules}</p>
+        </section>
+      ) : null}
+
       <form className="ceo-class-form" onSubmit={onSubmit}>
+        {choices.length ? (
+          <Select
+            label="Amenity"
+            name="amenity"
+            required
+            value={selectedId || ""}
+            options={choices.map((choice) => ({
+              id: choice.id,
+              label: choice.title,
+            }))}
+            onChange={(e) => {
+              setSelectedId(Number(e.target.value) || 0);
+              setExtra({});
+              setMeta(null);
+              setWaitlistAck(false);
+            }}
+          />
+        ) : null}
         <DateField
           label="Date"
           value={date}
@@ -261,6 +446,21 @@ export function AmenityReserve({ amenityId }: { amenityId: number }) {
         )}
         {!slotsLoading && !meta?.changeover && !meta?.limitReached && starts.length === 0 ? (
           <p className="ceo-amenity__note">No open times on this date.</p>
+        ) : null}
+        {fields.length ? (
+          <div className="ceo-amenity-reserve__extras">
+            <h4>Additional Information</h4>
+            {fields.map((field) => (
+              <ExtraField
+                key={field.label}
+                field={field}
+                value={extra[field.label] || (field.input === "checkbox" && field.multiple ? [] : "")}
+                onChange={(next) =>
+                  setExtra((prev) => ({ ...prev, [field.label]: next }))
+                }
+              />
+            ))}
+          </div>
         ) : null}
         <label className="block space-y-1.5">
           <span className="text-sm font-medium">Notes</span>
