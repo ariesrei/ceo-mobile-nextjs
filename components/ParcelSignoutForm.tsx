@@ -94,10 +94,11 @@ export function ParcelSignoutForm({
     setError("");
   }, [open, pickupTypes, staffName, unitTitle]);
 
-  const id = parcelId;
-  if (!open || !id) return null;
+  const signoutId = parcelId ?? 0;
+  if (!open || signoutId <= 0) return null;
 
   async function confirm() {
+    if (signoutId <= 0) return;
     if (signedOutBy === "Resident" && !signature) {
       setError("Signature is required when signed out by the resident.");
       return;
@@ -108,7 +109,7 @@ export function ParcelSignoutForm({
     }
     setSaving(true);
     setError("");
-    const data = await signOutParcel(id, {
+    const data = await signOutParcel(signoutId, {
       parcel_pickup_type: pickupType,
       signed_out_by: signedOutBy,
       parcel_signedout_on: combineDateTime(date, time),

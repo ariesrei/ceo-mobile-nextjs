@@ -148,7 +148,7 @@ export function ParcelForm({
         });
       })
       .catch(() => setResidents([]));
-  }, [form.parcel_recipient]);
+  }, [form.parcel_recipient, form.parcel_resident]);
 
   function applyOcrFill(fill: ParcelOcrFill, force = false) {
     if (fill.residentId && fill.residentName) {
