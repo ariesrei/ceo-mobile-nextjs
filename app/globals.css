@@ -1134,11 +1134,14 @@ body.ceo-ops-theme {
 }
 
 .ceo-hist-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   flex: 0 0 auto;
   border: 0;
   border-radius: 999px;
   background: #1a212b;
-  padding: 0.55rem 0.9rem;
+  padding: 0.5rem 0.75rem 0.5rem 0.9rem;
   color: #c5ccd6;
   font-size: 0.82rem;
   font-weight: 700;
@@ -1150,9 +1153,51 @@ body.ceo-ops-theme {
   color: #111;
 }
 
+.ceo-hist-tabs__n {
+  min-width: 1.35rem;
+  border-radius: 999px;
+  padding: 0.12rem 0.38rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.ceo-hist-tabs button.is-active .ceo-hist-tabs__n {
+  background: rgba(0, 0, 0, 0.12);
+}
+
 .ceo-ops-page .ceo-hist-tabs button.is-active {
   background: var(--accent);
   color: var(--accent-ink);
+}
+
+.ceo-ops-page .ceo-hist-tabs button.is-active .ceo-hist-tabs__n {
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.ceo-hist-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+  border-radius: 1.25rem;
+  padding: 2.1rem 1.25rem;
+  background: var(--surface);
+  text-align: center;
+}
+
+.ceo-hist-empty p {
+  margin: 0.35rem 0 0;
+  font-size: 1.02rem;
+  font-weight: 800;
+}
+
+.ceo-hist-empty small {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 
 .ceo-wo {
@@ -1284,13 +1329,55 @@ body.ceo-ops-theme {
 }
 
 .ceo-hist-list {
+  display: grid;
+  gap: 0.85rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.ceo-hist-list li + li {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+.ceo-hist-card {
+  min-height: 5.25rem;
+}
+
+.ceo-hist-card.ceo-wo-card:active {
+  transform: scale(0.99);
+}
+
+.ceo-hist-card__icon {
+  display: grid;
+  width: 2.6rem;
+  height: 2.6rem;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: #c5ccd6;
+}
+
+.ceo-hist-card__icon[data-kind="parcels"] {
+  background: rgba(230, 212, 179, 0.18);
+  color: #e6d4b3;
+}
+
+.ceo-hist-card__icon[data-kind="maintenance"] {
+  background: rgba(46, 196, 182, 0.16);
+  color: #2ec4b6;
+}
+
+.ceo-hist-card__icon[data-kind="warranty"] {
+  background: rgba(126, 168, 230, 0.16);
+  color: #9ec0f0;
+}
+
+.ceo-hist-card__icon[data-kind="guests"] {
+  background: rgba(240, 162, 2, 0.16);
+  color: #f0a202;
+}
+
+.ceo-hist-card__icon[data-kind="activity"] {
+  background: rgba(155, 168, 188, 0.16);
+  color: #c5ccd6;
 }
 
 .ceo-hist-row {

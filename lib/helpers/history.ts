@@ -17,6 +17,28 @@ export type HistoryTabItem = {
   status: string;
 };
 
+export function historyHref(tab: HistoryTabId, id: string): string | null {
+  const n = Number(id);
+  if (!Number.isInteger(n) || n <= 0) return null;
+  if (tab === "reservations") return `/account/reservations/${n}`;
+  if (tab === "parcels") return `/account/parcels/${n}`;
+  if (tab === "guests") return `/account/guests/${n}`;
+  if (tab === "warranty") return `/account/warranties/${n}`;
+  if (tab === "maintenance") return `/account/maintenance/${n}`;
+  return null;
+}
+
+export function historyStatusTone(status: string): "progress" | "completed" | "" {
+  const raw = status.toLowerCase();
+  if (/complete|claimed|closed|check(?:ed)?\s*out|done|approved/.test(raw)) {
+    return "completed";
+  }
+  if (/progress|open|storage|check(?:ed)?\s*in|schedul|pending|new/.test(raw)) {
+    return "progress";
+  }
+  return "";
+}
+
 export type HistoryTab = {
   id: HistoryTabId;
   label: string;
@@ -65,7 +87,7 @@ function toTabItem(raw: unknown, index: number): HistoryTabItem | null {
       (start || end ? [start, end].filter(Boolean).join(" – ") : "") ||
       asString(row.type),
     date: asString(row.date) || checkIn || start || asString(row.delivered),
-    status: asString(row.status),
+    status: asString(row.status).replace(/<[^>]+>/g, "").trim(),
   };
 }
 
@@ -97,8 +119,7 @@ function parseTabs(raw: unknown): HistoryTab[] {
 export async function listHistoryTabs() {
   const res = await apiGet("/api/wp/history");
   if (res.ok) {
-    const data = asRecord(res.data) || {};
-    const tabs = parseTabs(data.tabs);
+    const tabs = parseTabs((asRecord(res.data) || {}).tabs);
     if (tabs.some((tab) => tab.enabled)) {
       return { ok: true as const, tabs };
     }
@@ -108,24 +129,41 @@ export async function listHistoryTabs() {
 
 async function composeHistoryTabs(): Promise<HistoryTab[]> {
   const tabs = emptyTabs();
-  const [bookings, parcels, maintenance, warranties] = await Promise.all([
+  const [bookings, parcels, guests, maintenance, warranties] = await Promise.all([
     apiGet("/api/wp/reservations?type=previous"),
     apiGet("/api/wp/parcels?status=claimed&per_page=50"),
+    apiGet("/api/wp/guests?status=checked_out&per_page=50"),
     apiGet("/api/wp/maintenance?status=all&scope=mine&per_page=50"),
     apiGet("/api/wp/warranties?status=all&per_page=50"),
   ]);
+  tabs.forEach((tab) => {
+    tab.enabled = true;
+  });
 
   const bookingRows = readListPayload(bookings.ok ? bookings.data : {}).items;
   if (bookings.ok) {
-    tabs[0].enabled = true;
     tabs[0].items = bookingRows
       .map(toTabItem)
       .filter((item): item is HistoryTabItem => Boolean(item));
   }
 
+  if (guests.ok) {
+    tabs[2].items = readListPayload(guests.data).items.map((raw, index) => {
+      const row = asRecord(raw);
+      return {
+        id: String(asNumber(row?.id) || index),
+        title: asString(row?.guest_names) || asString(row?.title) || "Guest",
+        subtitle: [asString(row?.guest_check_in), asString(row?.guest_check_out)]
+          .filter(Boolean)
+          .join(" → "),
+        date: asString(row?.guest_check_in),
+        status: asString(row?.status),
+      };
+    });
+  }
+
   const parcelRows = readListPayload(parcels.ok ? parcels.data : {}).items;
   if (parcels.ok) {
-    tabs[1].enabled = true;
     tabs[1].items = parcelRows.map((raw, index) => {
       const row = asRecord(raw);
       return {
@@ -139,7 +177,6 @@ async function composeHistoryTabs(): Promise<HistoryTab[]> {
   }
 
   if (maintenance.ok) {
-    tabs[5].enabled = true;
     tabs[5].items = readListPayload(maintenance.data)
       .items.map((raw, index) => {
         const row = asRecord(raw);
@@ -154,7 +191,6 @@ async function composeHistoryTabs(): Promise<HistoryTab[]> {
   }
 
   if (warranties.ok) {
-    tabs[4].enabled = true;
     tabs[4].items = readListPayload(warranties.data)
       .items.map((raw, index) => {
         const row = asRecord(raw);

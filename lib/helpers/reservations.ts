@@ -160,8 +160,8 @@ export function toReservationItem(raw: unknown): ReservationItem | null {
   };
 }
 
-export async function listUpcomingReservations(perPage = 5) {
-  const qs = queryString({ type: "upcoming", per_page: perPage });
+async function listReservations(type: "upcoming" | "previous", perPage: number) {
+  const qs = queryString({ type, per_page: perPage });
   const res = await apiGet(`/api/wp/reservations?${qs}`);
   if (!res.ok) {
     return { ok: false as const, items: [] as ReservationItem[], total: 0 };
@@ -175,4 +175,21 @@ export async function listUpcomingReservations(perPage = 5) {
     items,
     total: payload.total || items.length,
   };
+}
+
+export async function listUpcomingReservations(perPage = 5) {
+  return listReservations("upcoming", perPage);
+}
+
+export async function findReservation(id: number) {
+  if (id <= 0) return { ok: false as const, item: null };
+  const [upcoming, previous] = await Promise.all([
+    listReservations("upcoming", 50),
+    listReservations("previous", 50),
+  ]);
+  const item =
+    upcoming.items.find((row) => row.id === id) ||
+    previous.items.find((row) => row.id === id) ||
+    null;
+  return { ok: Boolean(item), item };
 }

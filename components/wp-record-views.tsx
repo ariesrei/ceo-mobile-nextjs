@@ -9,6 +9,7 @@ import type { Profile, ReservationItem } from "@/lib/types";
 import type { WarrantyItem } from "@/lib/warranties";
 import { AdditionalInfoLists } from "./AdditionalInfoLists";
 import { EditProfileForm } from "./EditProfileForm";
+import { GuestDetail } from "./GuestDetail";
 import { GuestForm } from "./GuestForm";
 import { HistoryBoard } from "./HistoryBoard";
 import { MaintenanceDetail } from "./MaintenanceDetail";
@@ -185,6 +186,16 @@ export function MaintenanceDetailView({
 
 export function MaintenanceView({ data }: { data: MaintenanceItem }) {
   return <MaintenanceForm record={data} />;
+}
+
+export function GuestDetailView({
+  data,
+  isStaff,
+}: {
+  data: GuestItem;
+  isStaff: boolean;
+}) {
+  return <GuestDetail record={data} isStaff={isStaff} />;
 }
 
 export function GuestEditView({ data }: { data: GuestItem }) {
