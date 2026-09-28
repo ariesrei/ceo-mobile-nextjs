@@ -843,37 +843,6 @@ body.ceo-ops-theme {
   font-size: 0.92rem;
 }
 
-.ceo-amenity__tabs {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.45rem;
-  width: 100%;
-  margin-bottom: 1rem;
-}
-
-.ceo-amenity__tabs button {
-  width: 100%;
-  min-width: 0;
-  border: 0;
-  border-radius: 999px;
-  padding: 0.55rem 0.2rem;
-  background: #1a212b;
-  color: #c5ccd6;
-  font-size: 0.78rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.ceo-amenity__tabs button.is-active {
-  background: #e8edf3;
-  color: #111;
-}
-
-.ceo-ops-page .ceo-amenity__tabs button.is-active {
-  background: var(--accent);
-  color: var(--accent-ink);
-}
-
 .ceo-amenity__list {
   display: grid;
   gap: 1rem;
@@ -1157,28 +1126,33 @@ body.ceo-ops-theme {
 }
 
 .ceo-hist-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.3rem;
+  display: flex;
+  gap: 0.45rem;
   margin: 0.15rem 0 1.2rem;
-  padding: 0.28rem;
-  border-radius: 999px;
-  background: #1a212b;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ceo-hist-tabs button {
+  flex: 0 0 auto;
   border: 0;
   border-radius: 999px;
-  background: transparent;
-  padding: 0.55rem 0.7rem;
-  color: #8b95a3;
-  font-size: 0.88rem;
+  background: #1a212b;
+  padding: 0.55rem 0.9rem;
+  color: #c5ccd6;
+  font-size: 0.82rem;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .ceo-hist-tabs button.is-active {
-  background: #2a3442;
-  color: #fff;
+  background: #e8edf3;
+  color: #111;
+}
+
+.ceo-ops-page .ceo-hist-tabs button.is-active {
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .ceo-wo {
@@ -1283,6 +1257,24 @@ body.ceo-ops-theme {
   margin: 0;
   font-size: 0.92rem;
   font-weight: 600;
+}
+
+.ceo-wo-detail-wrap {
+  display: grid;
+  gap: 1rem;
+}
+
+.ceo-wo-detail__edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-align: center;
 }
 
 .ceo-hist__heading {

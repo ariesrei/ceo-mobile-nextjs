@@ -1,7 +1,5 @@
 import { AppShell } from "@/components/AppShell";
-import { ClientWpRecord } from "@/components/ClientWpRecord";
 import { HistoryBoard } from "@/components/HistoryBoard";
-import { HistoryView, type HistoryResponse } from "@/components/wp-record-views";
 import { showOpsAssetsUi } from "@/lib/app-profile";
 import {
   getServerClientBranding,
@@ -9,9 +7,13 @@ import {
   requireAuth,
   requireMenuPath,
 } from "@/lib/server-nav";
-import { wpFetchServer } from "@/lib/wp";
 
-export default async function HistoryPage() {
+export default async function HistoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const { tab } = await searchParams;
   if (showOpsAssetsUi()) {
     await requireAuth();
     const branding = await getServerClientBranding();
@@ -22,25 +24,17 @@ export default async function HistoryPage() {
         clientName={branding.name}
         clientLogo={branding.logo}
       >
-        <HistoryBoard />
+        <HistoryBoard initialTab={tab} />
       </AppShell>
     );
   }
 
   await requireMenuPath("/account/history");
-  const [result, clientName] = await Promise.all([
-    wpFetchServer<HistoryResponse>("/app/history"),
-    getServerClientName(),
-  ]);
+  const clientName = await getServerClientName();
 
   return (
     <AppShell title="History" backHref="/account" clientName={clientName}>
-      <ClientWpRecord
-        path="/history"
-        initial={result.data}
-        error={result.error || "Unavailable."}
-        as={HistoryView}
-      />
+      <HistoryBoard initialTab={tab} />
     </AppShell>
   );
 }

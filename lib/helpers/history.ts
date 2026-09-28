@@ -1,157 +1,178 @@
 import { apiGet } from "./api";
-import { asArray, asPhotoUrl, asRecord, asString } from "./validate";
+import { asArray, asNumber, asRecord, asString, readListPayload } from "./validate";
 
-export type HistoryKind =
-  | "maintenance"
-  | "reservation"
-  | "parcel"
-  | "payment"
-  | "guest"
-  | "warranty"
+export type HistoryTabId =
+  | "reservations"
+  | "parcels"
+  | "guests"
   | "activity"
-  | string;
+  | "warranty"
+  | "maintenance";
 
-export type HistoryFeedItem = {
+export type HistoryTabItem = {
   id: string;
-  kind: HistoryKind;
   title: string;
   subtitle: string;
   date: string;
-  color: string;
-  icon: string;
-  parent: string;
+  status: string;
 };
 
-function toFeedItem(raw: unknown): HistoryFeedItem | null {
+export type HistoryTab = {
+  id: HistoryTabId;
+  label: string;
+  enabled: boolean;
+  items: HistoryTabItem[];
+};
+
+const ORDER: HistoryTabId[] = [
+  "reservations",
+  "parcels",
+  "guests",
+  "activity",
+  "warranty",
+  "maintenance",
+];
+
+const LABELS: Record<HistoryTabId, string> = {
+  reservations: "Reservation History",
+  parcels: "Parcel History",
+  guests: "Guest History",
+  activity: "Activity History",
+  warranty: "Warranty History",
+  maintenance: "Maintenance History",
+};
+
+function toTabItem(raw: unknown, index: number): HistoryTabItem | null {
   const row = asRecord(raw);
-  const id = asString(row?.id);
-  if (!row || !id) return null;
+  if (!row) return null;
+  const title =
+    asString(row.title) ||
+    asString(row.names) ||
+    asString(row.resource_name) ||
+    asString(row.name);
+  const id = asString(row.id) || (asNumber(row.id) > 0 ? String(asNumber(row.id)) : `${title}-${index}`);
+  if (!title && !id) return null;
+  const checkIn = asString(row.check_in) || asString(row.checkin);
+  const checkOut = asString(row.check_out) || asString(row.checkout);
+  const start = asString(row.start);
+  const end = asString(row.end);
   return {
     id,
-    kind: asString(row.kind).toLowerCase() || "activity",
-    title: asString(row.title),
-    subtitle: asString(row.subtitle),
-    date: asString(row.date),
-    color: asString(row.color),
-    icon: asPhotoUrl(row.icon),
-    parent: asString(row.parent),
+    title: title || "Record",
+    subtitle:
+      asString(row.subtitle) ||
+      (checkIn || checkOut ? [checkIn, checkOut].filter(Boolean).join(" → ") : "") ||
+      (start || end ? [start, end].filter(Boolean).join(" – ") : "") ||
+      asString(row.type),
+    date: asString(row.date) || checkIn || start || asString(row.delivered),
+    status: asString(row.status),
   };
 }
 
-export async function listCommunityHistory() {
+function emptyTabs(): HistoryTab[] {
+  return ORDER.map((id) => ({
+    id,
+    label: LABELS[id],
+    enabled: false,
+    items: [],
+  }));
+}
+
+function parseTabs(raw: unknown): HistoryTab[] {
+  const tabs = asRecord(raw) || {};
+  return ORDER.map((id) => {
+    const row = asRecord(tabs[id]);
+    const items = asArray(row?.items)
+      .map(toTabItem)
+      .filter((item): item is HistoryTabItem => Boolean(item));
+    return {
+      id,
+      label: asString(row?.label) || LABELS[id],
+      enabled: Boolean(row?.enabled),
+      items,
+    };
+  });
+}
+
+export async function listHistoryTabs() {
   const res = await apiGet("/api/wp/history");
-  const empty = {
-    ok: false as const,
-    activity: [] as HistoryFeedItem[],
-    transactional: [] as HistoryFeedItem[],
-  };
-  if (!res.ok) {
-    const composed = await composeLiveFeed();
-    return composed.length ? { ok: true as const, activity: sortFeed(composed), transactional: [] } : empty;
-  }
-  const data = asRecord(res.data) || {};
-  let activity = asArray(data.activity)
-    .map(toFeedItem)
-    .filter((item): item is HistoryFeedItem => Boolean(item));
-  const transactional = asArray(data.transactional)
-    .map(toFeedItem)
-    .filter((item): item is HistoryFeedItem => Boolean(item));
-  const hasPayments = activity.some((item) => item.kind === "payment");
-  if (!hasPayments) {
-    const seen = new Set(activity.map((item) => item.id));
-    for (const item of transactional) {
-      if (!seen.has(item.id)) {
-        activity.push(item);
-        seen.add(item.id);
-      }
+  if (res.ok) {
+    const data = asRecord(res.data) || {};
+    const tabs = parseTabs(data.tabs);
+    if (tabs.some((tab) => tab.enabled)) {
+      return { ok: true as const, tabs };
     }
   }
-  if (!activity.length) {
-    activity = await composeLiveFeed();
-  }
-  return {
-    ok: true as const,
-    activity: sortFeed(activity),
-    transactional,
-  };
+  return { ok: true as const, tabs: await composeHistoryTabs() };
 }
 
-async function composeLiveFeed(): Promise<HistoryFeedItem[]> {
-  const [wo, parcels, bookings] = await Promise.all([
-    apiGet("/api/wp/maintenance?status=all&per_page=20"),
-    apiGet("/api/wp/parcels?status=all&per_page=20"),
-    apiGet("/api/wp/reservations?type=all"),
+async function composeHistoryTabs(): Promise<HistoryTab[]> {
+  const tabs = emptyTabs();
+  const [bookings, parcels, maintenance, warranties] = await Promise.all([
+    apiGet("/api/wp/reservations?type=previous"),
+    apiGet("/api/wp/parcels?status=claimed&per_page=50"),
+    apiGet("/api/wp/maintenance?status=all&scope=mine&per_page=50"),
+    apiGet("/api/wp/warranties?status=all&per_page=50"),
   ]);
-  const items: HistoryFeedItem[] = [];
-  for (const raw of readRows(wo)) {
-    const row = asRecord(raw);
-    const id = asString(row?.id);
-    if (!id) continue;
-    const title = asString(row?.type_label) || asString(row?.title) || "Work Order";
-    items.push({
-      id: `maintenance-${id}`,
-      kind: "maintenance",
-      title,
-      subtitle: asString(row?.maintenance_description) || `#WO-${id}`,
-      date: asString(row?.maintenance_date_request),
-      color: "",
-      icon: "",
-      parent: "",
+
+  const bookingRows = readListPayload(bookings.ok ? bookings.data : {}).items;
+  if (bookings.ok) {
+    tabs[0].enabled = true;
+    tabs[0].items = bookingRows
+      .map(toTabItem)
+      .filter((item): item is HistoryTabItem => Boolean(item));
+  }
+
+  const parcelRows = readListPayload(parcels.ok ? parcels.data : {}).items;
+  if (parcels.ok) {
+    tabs[1].enabled = true;
+    tabs[1].items = parcelRows.map((raw, index) => {
+      const row = asRecord(raw);
+      return {
+        id: String(asNumber(row?.id) || index),
+        title: asString(row?.title) || "Parcel",
+        subtitle: asString(row?.parcel_type_label) || asString(row?.parcel_type_other),
+        date: asString(row?.parcel_delivered_on),
+        status: asString(row?.status_label) || asString(row?.parcel_status),
+      };
     });
   }
-  for (const raw of readRows(parcels)) {
-    const row = asRecord(raw);
-    const id = asString(row?.id);
-    if (!id) continue;
-    const type = asString(row?.parcel_type_label) || asString(row?.parcel_type_other);
-    items.push({
-      id: `parcel-${id}`,
-      kind: "parcel",
-      title: "Package Received",
-      subtitle: type ? `From ${type}` : "",
-      date: asString(row?.parcel_delivered_on),
-      color: "",
-      icon: "",
-      parent: "",
-    });
+
+  if (maintenance.ok) {
+    tabs[5].enabled = true;
+    tabs[5].items = readListPayload(maintenance.data)
+      .items.map((raw, index) => {
+        const row = asRecord(raw);
+        return {
+          id: String(asNumber(row?.id) || index),
+          title: asString(row?.title) || asString(row?.type_label) || "Work Order",
+          subtitle: asString(row?.type_label),
+          date: asString(row?.maintenance_date_request),
+          status: asString(row?.status_label),
+        };
+      });
   }
-  for (const raw of readRows(bookings)) {
-    const row = asRecord(raw);
-    const id = asString(row?.id);
-    if (!id) continue;
-    const name = asString(row?.resource_name);
-    items.push({
-      id: `reservation-${id}`,
-      kind: "reservation",
-      title: "Amenity Reservation",
-      subtitle: name,
-      date: asString(row?.start),
-      color: "",
-      icon: "",
-      parent: "",
-    });
+
+  if (warranties.ok) {
+    tabs[4].enabled = true;
+    tabs[4].items = readListPayload(warranties.data)
+      .items.map((raw, index) => {
+        const row = asRecord(raw);
+        return {
+          id: String(asNumber(row?.id) || index),
+          title: asString(row?.title) || asString(row?.request) || "Warranty",
+          subtitle: asString(row?.unit_title),
+          date: "",
+          status: asString(row?.status_label),
+        };
+      });
   }
-  return items;
-}
 
-function readRows(res: { ok: boolean; data?: unknown }): unknown[] {
-  if (!res.ok) return [];
-  const data = asRecord(res.data) || {};
-  const nest = asRecord(data.data);
-  const items = asArray(data.items);
-  return items.length ? items : asArray(nest?.items);
-}
-
-function feedTime(date: string): number {
-  const parsed = Date.parse(date.includes("T") ? date : date.replace(" ", "T"));
-  return Number.isNaN(parsed) ? 0 : parsed;
-}
-
-function sortFeed(items: HistoryFeedItem[]): HistoryFeedItem[] {
-  return [...items].sort((a, b) => feedTime(b.date) - feedTime(a.date));
+  return tabs;
 }
 
 export function historyWhen(date: string): string {
+  if (!date) return "";
   const parsed = new Date(date.includes("T") ? date : date.replace(" ", "T"));
   if (!Number.isNaN(parsed.getTime())) {
     const day = parsed.toLocaleDateString("en-US", {

@@ -117,6 +117,26 @@ export function resolveDisplayAppProfile(input: {
   );
 }
 
+/** In-app chrome after login: WP /go/ session first, not splash URL mapping. */
+export function resolveAccountAppProfile(input: {
+  wpProfile?: string | null;
+  navProfile?: string | null;
+  appCookie?: string | null;
+  siteCookie?: string | null;
+  propertyUrl?: string | null;
+}): AppProfile {
+  const build = getBuildAppProfile();
+  if (build) return build;
+  return (
+    normalizeAppProfile(input.wpProfile) ||
+    normalizeAppProfile(input.navProfile) ||
+    normalizeAppProfile(input.appCookie) ||
+    normalizeAppProfile(input.siteCookie) ||
+    profileFromPropertyUrl(input.propertyUrl || "") ||
+    "warranty"
+  );
+}
+
 /** Resident community chrome (home / amenities tabs). Warranty APK stays off. */
 export function showOpsCommunityUi(appProfile?: AppProfile | null): boolean {
   if (getBuildAppProfile() === "warranty") return false;
@@ -124,9 +144,15 @@ export function showOpsCommunityUi(appProfile?: AppProfile | null): boolean {
   return appProfile === "operations";
 }
 
-/** Profile/Edit keep ClaimTrack tabs only from Warranty — not a leftover cookie. */
-export function keepWarrantyChrome(from?: string | null): boolean {
-  return getBuildAppProfile() === "warranty" || from === "warranty";
+/** Profile/Edit keep ClaimTrack tabs only while in Warranty — never on Operations. */
+export function keepWarrantyChrome(
+  from?: string | null,
+  session?: AppProfile | null
+): boolean {
+  if (getBuildAppProfile() === "operations") return false;
+  if (getBuildAppProfile() === "warranty") return true;
+  if (showOpsCommunityUi(session)) return false;
+  return from === "warranty" || isWarrantyProfile(session);
 }
 
 export function setWarrantyChromeCookie(on: boolean) {

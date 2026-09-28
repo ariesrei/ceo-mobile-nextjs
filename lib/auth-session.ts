@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  COOKIE_APP_PROFILE,
   COOKIE_SITE_PROFILE,
   resolveSiteAppProfile,
   type AppProfile,
@@ -121,6 +122,11 @@ export function applyAuthCookies(
     });
   }
   response.cookies.set(COOKIE_SITE_PROFILE, input.siteProfile, {
+    ...cookieOpts,
+    httpOnly: false,
+    maxAge: 60 * 60 * 24 * 365,
+  });
+  response.cookies.set(COOKIE_APP_PROFILE, input.siteProfile, {
     ...cookieOpts,
     httpOnly: false,
     maxAge: 60 * 60 * 24 * 365,

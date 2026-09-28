@@ -1,12 +1,13 @@
 import { AppShell } from "@/components/AppShell";
 import { GuestsList } from "@/components/GuestsList";
-import { showOpsAssetsUi } from "@/lib/app-profile";
-import { getServerClientBranding, requireMenuPath } from "@/lib/server-nav";
+import { getServerClientBranding, requireMenuPath, staffMenuDecision } from "@/lib/server-nav";
 import { redirect } from "next/navigation";
 
 export default async function GuestsPage() {
-  if (showOpsAssetsUi()) redirect("/account/entry-pass");
-  await requireMenuPath("/account/guests");
+  const nav = await requireMenuPath("/account/guests");
+  if (staffMenuDecision(nav, "/account/guests") === "resident") {
+    redirect("/account/history?tab=guests");
+  }
   const branding = await getServerClientBranding();
 
   return (

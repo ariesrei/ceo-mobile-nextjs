@@ -361,6 +361,13 @@ const OPS_PROFILE_MORE: MenuItem[] = [
 
 const OPS_ADMIN_MORE_EXTRAS: MenuItem[] = [
   {
+    id: "guests",
+    label: "Guests",
+    path: "/account/guests",
+    enabled: true,
+    group: "staff",
+  },
+  {
     id: "messaging",
     label: "Messages",
     path: "/account/messaging",
@@ -376,9 +383,13 @@ const OPS_ADMIN_MORE_EXTRAS: MenuItem[] = [
   },
 ];
 
-function communityMoreItems(items: MenuItem[]): MenuItem[] {
+function communityMoreItems(items: MenuItem[], role?: NavRole): MenuItem[] {
   const mapped = items
-    .filter((item) => item.id !== "guests" && item.path !== "/account/guests")
+    .filter((item) =>
+      role === "staff"
+        ? true
+        : item.id !== "guests" && item.path !== "/account/guests"
+    )
     .map((item) =>
       item.id === "additional_info"
         ? { ...item, label: "My Assets", path: "/account/assets" }
@@ -411,8 +422,8 @@ function communityMoreItems(items: MenuItem[]): MenuItem[] {
   return [...OPS_PROFILE_MORE, ...extras, ...rest];
 }
 
-function opsAdminMoreItems(items: MenuItem[]): MenuItem[] {
-  const base = communityMoreItems(items);
+function opsAdminMoreItems(items: MenuItem[], role?: NavRole): MenuItem[] {
+  const base = communityMoreItems(items, role);
   const used = new Set(base.flatMap((item) => [item.id, item.path]));
   const extras = OPS_ADMIN_MORE_EXTRAS.filter(
     (extra) => !used.has(extra.id) && !used.has(extra.path)
@@ -565,7 +576,8 @@ export function BottomNav({
         ? enabled.filter((m) => !m.path.startsWith("/account/warranties"))
         : community
           ? (opsAdmin ? opsAdminMoreItems : communityMoreItems)(
-              enabled.filter((m) => !tabPaths.has(m.path))
+              enabled.filter((m) => !tabPaths.has(m.path)),
+              role
             )
           : enabled.filter((m) => !tabPaths.has(m.path));
 

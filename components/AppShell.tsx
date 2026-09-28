@@ -9,7 +9,7 @@ import {
   saveConnectConfig,
   getConnectConfig,
 } from "@/lib/connect";
-import { setWarrantyChromeCookie } from "@/lib/app-profile";
+import { setWarrantyChromeCookie, type AppProfile } from "@/lib/app-profile";
 import { trackShortcutPath } from "@/lib/helpers/shortcuts";
 import { useClientBrand } from "./ClientBrandProvider";
 import { BottomNav } from "./BottomNav";
@@ -31,6 +31,7 @@ export function AppShell({
   showNav = true,
   narrow = false,
   layout = "default",
+  appProfile = null,
 }: {
   title: string;
   subtitle?: string;
@@ -41,6 +42,7 @@ export function AppShell({
   showNav?: boolean;
   narrow?: boolean;
   layout?: "default" | "community";
+  appProfile?: AppProfile | null;
 }) {
   const brand = useClientBrand();
   const pathname = usePathname();
@@ -167,7 +169,7 @@ export function AppShell({
       <main className="px-[var(--app-pad)] pt-4">
         {children}
       </main>
-      {showNav ? <BottomNav /> : null}
+      {showNav ? <BottomNav appProfile={appProfile} /> : null}
     </div>
   );
 }

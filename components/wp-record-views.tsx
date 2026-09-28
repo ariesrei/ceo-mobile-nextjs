@@ -10,7 +10,8 @@ import type { WarrantyItem } from "@/lib/warranties";
 import { AdditionalInfoLists } from "./AdditionalInfoLists";
 import { EditProfileForm } from "./EditProfileForm";
 import { GuestForm } from "./GuestForm";
-import { HistoryLists } from "./HistoryLists";
+import { HistoryBoard } from "./HistoryBoard";
+import { MaintenanceDetail } from "./MaintenanceDetail";
 import { MaintenanceForm } from "./MaintenanceForm";
 import { ParcelForm } from "./ParcelForm";
 import { PetForm } from "./PetForm";
@@ -81,7 +82,7 @@ export function ProfileView({ data }: { data: Profile }) {
             </div>
           )}
           <Link
-            href="/account/profile?from=warranty"
+            href="/account/profile"
             className="absolute -bottom-1 -right-1 rounded-full bg-[var(--accent)] px-2.5 py-1 text-[10px] font-extrabold text-[#081014]"
           >
             Edit
@@ -152,13 +153,8 @@ export type HistoryResponse = {
   };
 };
 
-export function HistoryView({ data }: { data: HistoryResponse }) {
-  return (
-    <HistoryLists
-      guests={data.tabs?.guests}
-      reservations={data.tabs?.reservations}
-    />
-  );
+export function HistoryView() {
+  return <HistoryBoard />;
 }
 
 export function ReservationsView({
@@ -175,6 +171,16 @@ export function AdditionalInfoView({
   data: { sections: AdditionalSections };
 }) {
   return <AdditionalInfoLists sections={data.sections} />;
+}
+
+export function MaintenanceDetailView({
+  data,
+  isStaff,
+}: {
+  data: MaintenanceItem;
+  isStaff: boolean;
+}) {
+  return <MaintenanceDetail record={data} isStaff={isStaff} />;
 }
 
 export function MaintenanceView({ data }: { data: MaintenanceItem }) {

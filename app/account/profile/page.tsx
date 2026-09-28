@@ -1,9 +1,9 @@
 import { AppShell } from "@/components/AppShell";
 import { ProfileBoard } from "@/components/ProfileBoard";
 import { WarrantyShell } from "@/components/WarrantyShell";
-import { keepWarrantyChrome, showOpsCommunityUi } from "@/lib/app-profile";
+import { keepWarrantyChrome } from "@/lib/app-profile";
 import {
-  getServerAppProfile,
+  getAccountAppProfile,
   getServerClientBranding,
   requireAuth,
 } from "@/lib/server-nav";
@@ -11,29 +11,28 @@ import {
 type Props = { searchParams?: Promise<{ from?: string }> };
 
 export default async function ProfilePage({ searchParams }: Props) {
-  const profile = await getServerAppProfile();
-  const from = (await searchParams)?.from;
-  const warrantyChrome = keepWarrantyChrome(from);
-
   await requireAuth();
+  const session = await getAccountAppProfile();
+  const from = (await searchParams)?.from;
 
-  if (showOpsCommunityUi(profile) && !warrantyChrome) {
-    const branding = await getServerClientBranding();
+  if (keepWarrantyChrome(from, session)) {
     return (
-      <AppShell
-        title="My Profile"
-        layout="community"
-        clientName={branding.name}
-        clientLogo={branding.logo}
-      >
+      <WarrantyShell title="My Profile" backHref="/account/warranties">
         <ProfileBoard />
-      </AppShell>
+      </WarrantyShell>
     );
   }
 
+  const branding = await getServerClientBranding();
   return (
-    <WarrantyShell title="My Profile" backHref="/account/warranties">
+    <AppShell
+      title="My Profile"
+      layout="community"
+      clientName={branding.name}
+      clientLogo={branding.logo}
+      appProfile={session}
+    >
       <ProfileBoard />
-    </WarrantyShell>
+    </AppShell>
   );
 }

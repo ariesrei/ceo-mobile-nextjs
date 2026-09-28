@@ -89,7 +89,7 @@ export function WarrantyShell({
       </header>
 
       <main className="ceo-warranty__body">{children}</main>
-      {showNav ? <BottomNav variant="warranty" /> : null}
+      {showNav ? <BottomNav variant="warranty" appProfile="warranty" /> : null}
     </div>
   );
 }

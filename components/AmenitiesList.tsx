@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { FastLink } from "./FastLink";
-import { listAmenities, type AmenityItem, type AmenitySpace } from "@/lib/helpers/amenities";
+import { listAmenities, type AmenityItem } from "@/lib/helpers/amenities";
 import { ListSkeleton } from "./ui/ListState";
 import { PaginatedList } from "./ui/PaginatedList";
 import { useHeldLoading } from "./ui/useLoadMore";
@@ -28,19 +28,11 @@ export function AmenityPhoto({ src, title }: { src: string; title: string }) {
   );
 }
 
-const FILTERS: { id: AmenitySpace | "all"; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "indoor", label: "Indoor" },
-  { id: "outdoor", label: "Outdoor" },
-  { id: "spaces", label: "Spaces" },
-];
-
 export function AmenitiesList() {
   const [items, setItems] = useState<AmenityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const pending = useHeldLoading(loading);
   const [query, setQuery] = useState("");
-  const [space, setSpace] = useState<AmenitySpace | "all">("all");
 
   useEffect(() => {
     listAmenities()
@@ -52,12 +44,8 @@ export function AmenitiesList() {
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return items.filter((item) => {
-      const matchSpace = space === "all" || item.space === space;
-      const matchQ = !q || item.title.toLowerCase().includes(q);
-      return matchSpace && matchQ;
-    });
-  }, [items, query, space]);
+    return items.filter((item) => !q || item.title.toLowerCase().includes(q));
+  }, [items, query]);
 
   return (
     <div className="ceo-amenity">
@@ -75,36 +63,17 @@ export function AmenitiesList() {
         />
       </label>
 
-      <div className="ceo-amenity__tabs" role="tablist" aria-label="Space type">
-        {FILTERS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={space === tab.id}
-            className={space === tab.id ? "is-active" : ""}
-            onClick={() => setSpace(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
       {pending ? (
         <ListSkeleton rows={3} height={196} />
       ) : (
         <PaginatedList
           items={visible}
           listClassName="ceo-amenity__list"
-          emptyIcon={query.trim() || space !== "all" ? "search" : "calendar"}
-          emptyMessage={
-            query.trim() || space !== "all"
-              ? "No matching amenities"
-              : "No amenities yet"
-          }
+          emptyIcon={query.trim() ? "search" : "calendar"}
+          emptyMessage={query.trim() ? "No matching amenities" : "No amenities yet"}
           emptySubtitle={
-            query.trim() || space !== "all"
-              ? "Try another search or space type."
+            query.trim()
+              ? "Try another search."
               : "Amenities you can reserve will show up here."
           }
           getKey={(item) => item.id}

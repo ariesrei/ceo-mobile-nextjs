@@ -150,7 +150,7 @@ export function MaintenanceList() {
             return (
               <li key={item.id}>
                 <FastLink
-                  href={`/account/maintenance/${item.id}/edit`}
+                  href={`/account/maintenance/${item.id}`}
                   className="ceo-wo-card"
                 >
                   <span className="ceo-wo-card__body">

@@ -17,7 +17,9 @@ import {
   COOKIE_APP_PROFILE,
   COOKIE_SITE_PROFILE,
   getBuildAppProfile,
+  resolveAccountAppProfile,
   resolveDisplayAppProfile,
+  type AppProfile,
 } from "./app-profile";
 import {
   applyNavVisibility,
@@ -34,6 +36,22 @@ export async function getServerAppProfile() {
     propertyUrl: jar.get(COOKIE_BASE_URL)?.value,
     siteCookie: jar.get(COOKIE_SITE_PROFILE)?.value,
     appCookie: jar.get(COOKIE_APP_PROFILE)?.value,
+  });
+}
+
+/** Same product as Home: WP session first, not splash URL / leftover cookie. */
+export async function getAccountAppProfile(): Promise<AppProfile> {
+  const jar = await cookies();
+  const [me, nav] = await Promise.all([
+    wpFetchServer<AppUser>("/app/me"),
+    wpFetchServer<NavigationResponse>("/app/navigation"),
+  ]);
+  return resolveAccountAppProfile({
+    wpProfile: me?.data?.app_profile,
+    navProfile: nav?.data?.app_profile,
+    appCookie: jar.get(COOKIE_APP_PROFILE)?.value,
+    siteCookie: jar.get(COOKIE_SITE_PROFILE)?.value,
+    propertyUrl: jar.get(COOKIE_BASE_URL)?.value,
   });
 }
 

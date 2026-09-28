@@ -1,10 +1,20 @@
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { GuestForm } from "@/components/GuestForm";
-import { getServerClientBranding, requireMenuPath } from "@/lib/server-nav";
+import { StaffPathGate } from "@/components/StaffPathGate";
+import {
+  getServerClientBranding,
+  requireMenuPath,
+  staffMenuDecision,
+} from "@/lib/server-nav";
+import { redirect } from "next/navigation";
 
 export default async function NewGuestPage() {
-  await requireMenuPath("/account/guests");
+  const nav = await requireMenuPath("/account/guests");
+  const decision = staffMenuDecision(nav, "/account/guests");
+  if (decision === "resident") {
+    redirect("/account/history?tab=guests");
+  }
   const branding = await getServerClientBranding();
 
   return (
@@ -15,9 +25,15 @@ export default async function NewGuestPage() {
       clientName={branding.name}
       clientLogo={branding.logo}
     >
-      <Card>
-        <GuestForm />
-      </Card>
+      <StaffPathGate
+        path="/account/guests"
+        confirmed={decision === "staff" || decision === "unknown"}
+        fallbackHref="/account/history?tab=guests"
+      >
+        <Card>
+          <GuestForm />
+        </Card>
+      </StaffPathGate>
     </AppShell>
   );
 }

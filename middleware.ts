@@ -20,7 +20,7 @@ export function middleware(request: NextRequest) {
     request.cookies.get(COOKIE_APP_PROFILE)?.value
   );
   const fromEnv = normalizeAppProfile(process.env.NEXT_PUBLIC_APP_PROFILE);
-  const profile = incoming || fromUrl || existing || fromEnv || "warranty";
+  const profile = incoming || existing || fromUrl || fromEnv || "warranty";
 
   const response = NextResponse.next();
   if (profile) {
