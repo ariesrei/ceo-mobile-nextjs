@@ -1,23 +1,27 @@
 import { AppShell } from "@/components/AppShell";
-import { ParcelsList } from "@/components/ParcelsList";
+import { ParcelDetail } from "@/components/ParcelDetail";
 import { showOpsAssetsUi } from "@/lib/app-profile";
 import { getServerClientBranding, requireMenuPath } from "@/lib/server-nav";
 
-export default async function ParcelsPage() {
+type Props = { params: Promise<{ id: string }> };
+
+export default async function ParcelDetailPage({ params }: Props) {
   await requireMenuPath("/account/parcels");
-  const branding = await getServerClientBranding();
+  const [{ id }, branding] = await Promise.all([
+    params,
+    getServerClientBranding(),
+  ]);
   const community = showOpsAssetsUi();
 
   return (
     <AppShell
-      title="Packages"
-      subtitle={community ? undefined : "In storage and claimed"}
-      backHref={community ? undefined : "/account"}
+      title="Package"
       layout={community ? "community" : "default"}
+      backHref="/account/parcels"
       clientName={branding.name}
       clientLogo={branding.logo}
     >
-      <ParcelsList />
+      <ParcelDetail parcelId={Number(id) || 0} />
     </AppShell>
   );
 }

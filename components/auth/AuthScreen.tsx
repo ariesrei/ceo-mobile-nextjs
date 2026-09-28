@@ -99,11 +99,10 @@ export function AuthScreen({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={propertyLogo}
-            alt=""
+            alt={propertyName || "Property"}
             className="ceo-login__property-logo"
           />
-        ) : null}
-        {propertyName ? (
+        ) : propertyName ? (
           <h1 className="ceo-login__property-name">{propertyName}</h1>
         ) : null}
         {tagline ? (

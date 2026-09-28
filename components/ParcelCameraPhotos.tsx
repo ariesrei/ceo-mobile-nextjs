@@ -1,59 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { fileToJpegDataUri } from "@/lib/image-jpeg";
 import type { ParcelPhoto } from "@/lib/parcels";
-
-const MAX_EDGE = 1600;
-const JPEG_QUALITY = 0.82;
-
-function loadImageFromFile(file: File): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(img);
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Could not read photo"));
-    };
-    img.src = url;
-  });
-}
-
-async function fileToJpegDataUri(file: File): Promise<string> {
-  let width = 0;
-  let height = 0;
-  let draw: CanvasImageSource;
-
-  if (typeof createImageBitmap === "function") {
-    const bitmap = await createImageBitmap(file);
-    width = bitmap.width;
-    height = bitmap.height;
-    draw = bitmap;
-  } else {
-    const img = await loadImageFromFile(file);
-    width = img.naturalWidth || img.width;
-    height = img.naturalHeight || img.height;
-    draw = img;
-  }
-
-  const scale = Math.min(1, MAX_EDGE / Math.max(width, height));
-  const w = Math.max(1, Math.round(width * scale));
-  const h = Math.max(1, Math.round(height * scale));
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    if ("close" in draw && typeof draw.close === "function") draw.close();
-    throw new Error("Canvas unavailable");
-  }
-  ctx.drawImage(draw, 0, 0, w, h);
-  if ("close" in draw && typeof draw.close === "function") draw.close();
-  return canvas.toDataURL("image/jpeg", JPEG_QUALITY);
-}
 
 type Props = {
   photos: ParcelPhoto[];

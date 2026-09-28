@@ -8,7 +8,9 @@ import type {
   ParcelOptions,
   ParcelPhoto,
 } from "@/lib/parcels";
+import type { ParcelOcrFill } from "@/lib/parcel-ocr";
 import { ParcelCameraPhotos } from "./ParcelCameraPhotos";
+import { ParcelOcrCapture } from "./ParcelOcrCapture";
 import { Button } from "./ui/Button";
 import { DateField } from "./ui/DateField";
 import { Input } from "./ui/Input";
@@ -61,13 +63,18 @@ function splitDeliveredOn(value?: string): { date: string; time: string } {
 
 export function ParcelForm({
   parcel,
-  afterSaveHref = "/account/parcels",
+  afterSaveHref,
+  autoStartOcr = false,
 }: {
   parcel?: ParcelItem | null;
   afterSaveHref?: string;
+  autoStartOcr?: boolean;
 }) {
   const router = useRouter();
   const isEdit = Boolean(parcel?.id);
+  const saveHref =
+    afterSaveHref ||
+    (parcel?.id ? `/account/parcels/${parcel.id}` : "/account/parcels");
   const split = splitDeliveredOn(parcel?.parcel_delivered_on);
   const [units, setUnits] = useState<ParcelChoice[]>([]);
   const [types, setTypes] = useState<ParcelChoice[]>([]);
@@ -90,8 +97,11 @@ export function ParcelForm({
     delivered_date: split.date,
     delivered_time: split.time,
     notify_email: false,
+    notify_sms: false,
   });
   const [photos, setPhotos] = useState<ParcelPhoto[]>(parcel?.photos || []);
+  const [ocrEnabled, setOcrEnabled] = useState(false);
+  const [smsEnabled, setSmsEnabled] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -103,12 +113,16 @@ export function ParcelForm({
         setUnits(data.units || []);
         setTypes(data.parcel_types || []);
         setStaff(data.staff || []);
-        if (!form.parcel_received_by && data.current_user) {
-          setForm((f) => ({
-            ...f,
-            parcel_received_by: String(data.current_user),
-          }));
-        }
+        setOcrEnabled(Boolean(data.ocr_enabled));
+        setSmsEnabled(Boolean(data.sms_enabled));
+        setForm((f) => ({
+          ...f,
+          parcel_received_by:
+            f.parcel_received_by || (data.current_user ? String(data.current_user) : ""),
+          notify_email: isEdit ? f.notify_email : Boolean(data.email_default),
+          notify_sms:
+            isEdit || !data.sms_enabled ? false : Boolean(data.sms_default),
+        }));
       })
       .catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,9 +137,52 @@ export function ParcelForm({
       `/api/wp/parcels/options?unit_id=${encodeURIComponent(form.parcel_recipient)}`
     )
       .then((r) => r.json())
-      .then((data: ParcelOptions) => setResidents(data.residents || []))
+      .then((data: ParcelOptions) => {
+        const list = data.residents || [];
+        setResidents((prev) => {
+          const selected = prev.find((r) => String(r.id) === form.parcel_resident);
+          if (selected && !list.some((r) => r.id === selected.id)) {
+            return [...list, selected];
+          }
+          return list;
+        });
+      })
       .catch(() => setResidents([]));
   }, [form.parcel_recipient]);
+
+  function applyOcrFill(fill: ParcelOcrFill, force = false) {
+    if (fill.residentId && fill.residentName) {
+      setResidents((prev) => {
+        if (prev.some((r) => r.id === fill.residentId)) return prev;
+        return [...prev, { id: fill.residentId as number, label: fill.residentName as string }];
+      });
+    }
+    setForm((current) => {
+      const next = { ...current };
+      if (fill.unitId && (force || !current.parcel_recipient)) {
+        next.parcel_recipient = String(fill.unitId);
+        if (fill.residentId) {
+          next.parcel_resident = String(fill.residentId);
+        } else if (String(fill.unitId) !== current.parcel_recipient) {
+          next.parcel_resident = "";
+        }
+      } else if (fill.residentId && (force || !current.parcel_resident)) {
+        next.parcel_resident = String(fill.residentId);
+      }
+      if (fill.typeId && (force || !current.parcel_type)) {
+        next.parcel_type = String(fill.typeId);
+      }
+      if (fill.barcode) {
+        next.comments_parcel_barcode = fill.barcode;
+      }
+      if (fill.deliveredOn) {
+        const splitOn = splitDeliveredOn(fill.deliveredOn);
+        next.delivered_date = splitOn.date;
+        next.delivered_time = splitOn.time;
+      }
+      return next;
+    });
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -150,17 +207,21 @@ export function ParcelForm({
             form.delivered_time
           ),
           notify_email: form.notify_email,
+          notify_sms: smsEnabled && form.notify_sms,
           parcel_photo: photos.map((p) => p.id),
         }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.message || "Could not save parcel.");
+        setError(data.message || "Could not save package.");
         return;
       }
       setMessage(data.message || "Saved.");
+      const createdId = Number(data.id || 0);
+      const nextHref =
+        !isEdit && createdId > 0 ? `/account/parcels/${createdId}` : saveHref;
       setTimeout(() => {
-        router.push(afterSaveHref);
+        router.push(nextHref);
         router.refresh();
       }, 700);
     } catch {
@@ -172,6 +233,18 @@ export function ParcelForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
+      <ParcelOcrCapture
+        enabled={ocrEnabled}
+        disabled={loading}
+        parcelId={parcel?.id}
+        autoStart={autoStartOcr}
+        onPhoto={(photo) =>
+          setPhotos((current) =>
+            current.some((p) => p.id === photo.id) ? current : [...current, photo]
+          )
+        }
+        onFill={applyOcrFill}
+      />
       <div className="ceo-form-row">
         <Select
           label="Unit"
@@ -272,6 +345,18 @@ export function ParcelForm({
         />
         Email resident on save
       </label>
+      {smsEnabled ? (
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={form.notify_sms}
+            onChange={(e) =>
+              setForm({ ...form, notify_sms: e.target.checked })
+            }
+          />
+          SMS resident on save
+        </label>
+      ) : null}
       {error ? (
         <p className="rounded-xl bg-[#3a1c1c] px-3 py-2 text-sm text-[var(--danger)]">
           {error}
@@ -283,7 +368,7 @@ export function ParcelForm({
         </p>
       ) : null}
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Saving…" : isEdit ? "Update parcel" : "Create parcel"}
+        {loading ? "Saving…" : isEdit ? "Update package" : "Create package"}
       </Button>
     </form>
   );

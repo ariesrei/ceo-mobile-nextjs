@@ -44,6 +44,8 @@ const ICONS: Record<string, string> = {
     "M12 8.4a3.6 3.6 0 1 0 3.6 3.6A3.6 3.6 0 0 0 12 8.4Zm8.4 2.8-1.8-.3a6.9 6.9 0 0 0-.6-1.5l1.2-1.4-1.7-1.7-1.4 1.1a6.9 6.9 0 0 0-1.5-.6l-.3-1.8h-2.6l-.3 1.8a6.9 6.9 0 0 0-1.5.6L8.5 6.3 6.8 8l1.1 1.4a6.9 6.9 0 0 0-.6 1.5l-1.8.3v2.6l1.8.3a6.9 6.9 0 0 0 .6 1.5L6.8 17l1.7 1.7 1.4-1.1a6.9 6.9 0 0 0 1.5.6l.3 1.8h2.6l.3-1.8a6.9 6.9 0 0 0 1.5-.6l1.4 1.1 1.7-1.7-1.2-1.4a6.9 6.9 0 0 0 .6-1.5l1.8-.3Z",
   messaging:
     "M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8A2.5 2.5 0 0 1 17.5 16H8l-3.2 3.2A.8.8 0 0 1 3.5 18.6V5.5Z",
+  entry_pass:
+    "M3 7.5A1.5 1.5 0 0 1 4.5 6h15A1.5 1.5 0 0 1 21 7.5v9A1.5 1.5 0 0 1 19.5 18h-15A1.5 1.5 0 0 1 3 16.5v-9ZM6 10h5M6 13.5h7",
 };
 
 const HOME_LABELS: Record<string, string> = {
@@ -52,7 +54,7 @@ const HOME_LABELS: Record<string, string> = {
   additional_info: "Additional Info",
   warranties: "Warranty",
   guests: "Guests",
-  parcels: "Parcels",
+  parcels: "Packages",
   maintenance: "Work Orders",
   contacts: "Contacts",
   activities: "Activities",
@@ -63,6 +65,8 @@ const HOME_LABELS: Record<string, string> = {
   preferences: "My Preferences",
   history: "History",
   reservations: "Reservations",
+  messaging: "Messages",
+  entry_pass: "Entry Pass",
   home: "Home",
 };
 

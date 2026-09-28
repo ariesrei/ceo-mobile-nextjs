@@ -123,12 +123,12 @@ Property-wide tools. The staff home lists enabled staff modules. It does not lis
 
 - Contacts (`/account/contacts`) — `contacts_access`
 - Guests (`/account/guests`) — `guest_access`; create and edit for any unit
-- Parcels (`/account/parcels`) — `parcel_access`; property list, create, edit, assign a resident, email the resident
+- Packages (`/account/parcels`) — `parcel_access`; In Storage / Claimed tabs, package detail, create, edit, assign a resident, email the resident. When the SMS add-on is on, New/Edit package shows SMS resident on save (same default as Email Settings → Parcels). Sign out uses the same Signout Form as the web app (signed out on, signed out by, resident signature, others name/unit, pickup type). When Admin Options → Parcel Options → Enable OCR is on, New package shows an OCR button that reads the label and fills the form.
 - Warranty (`/account/warranties`) — `warranties_access`; staff ClaimTrack tools (assign, status, vendors)
 - Maintenance (`/account/maintenance`) — `maintenance_access`; property list, create, edit, assign staff
 - Activities (`/account/activities`) — `activities_access`
 
-**Bottom nav:** Home (`/account`), Parcels, Warranty, Maintenance, then More. Source: `STAFF_IDS` in `components/BottomNav.tsx`.
+**Bottom nav:** Home (`/account`), Packages, Reservations, then More. More includes Messages and Entry Pass. Source: `OPS_ADMIN_TABS` in `components/BottomNav.tsx`.
 
 Parcel create (`/account/parcels/new`) and parcel edit already require `isStaffMenuPath(nav, "/account/parcels")`.
 

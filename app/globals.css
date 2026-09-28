@@ -733,6 +733,83 @@ body.ceo-ops-theme {
   color: #fff;
 }
 
+.ceo-package-detail__rows {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ceo-package-detail__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ceo-package-detail__row span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.ceo-package-detail__row strong {
+  max-width: 62%;
+  text-align: right;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.ceo-package-detail__signature {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ceo-package-detail__signature span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.ceo-package-detail__signature img {
+  width: 100%;
+  max-width: 18rem;
+  height: auto;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+
+.ceo-signout-sheet {
+  max-height: min(92dvh, 46rem);
+}
+
+.ceo-signout-sheet__body {
+  display: grid;
+  gap: 0.9rem;
+  min-height: 0;
+  padding-bottom: 0.75rem;
+}
+
+.ceo-signout-sheet__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding-top: 0.65rem;
+}
+
+.ceo-signature__pad {
+  overflow: hidden;
+  border-radius: 0.9rem;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+
+.ceo-signature__canvas {
+  display: block;
+  width: 100%;
+  height: 9.5rem;
+  touch-action: none;
+  cursor: crosshair;
+}
+
 .ceo-ops-sheet {
   display: flex;
   flex-direction: column;
@@ -2381,8 +2458,9 @@ body.ceo-ops-theme {
   }
 
   .ceo-ops-rail__brand img {
-    width: 2.1rem;
-    height: 2.1rem;
+    width: 250px;
+    max-width: 100%;
+    height: auto;
     object-fit: contain;
   }
 
@@ -4611,6 +4689,8 @@ body.ceo-warranty-theme {
   border: 1px solid var(--border);
   background: var(--surface);
   padding: 0.8rem;
+  color: inherit;
+  text-decoration: none;
 }
 
 .ceo-claim-card__chips {
@@ -5863,10 +5943,9 @@ div.ceo-accordion__row {
 
 .ceo-login__property-logo {
   display: block;
-  width: auto;
-  max-width: min(80%, 16rem);
+  width: 250px;
+  max-width: 100%;
   height: auto;
-  max-height: 10rem;
   object-fit: contain;
   border-radius: 0;
   background: none;

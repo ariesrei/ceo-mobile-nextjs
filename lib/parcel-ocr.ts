@@ -1,0 +1,192 @@
+export type ParcelOcrPerson = {
+  user_id: number;
+  name: string;
+  unit_id?: number;
+  unit_title?: string;
+  units?: { id: number; title: string }[];
+};
+
+export type ParcelOcrType = {
+  id: number;
+  title: string;
+};
+
+export type ParcelOcrResult = {
+  barcode: string;
+  delivered_on: string;
+  parcel_type: ParcelOcrType | null;
+  parcel_types: ParcelOcrType[];
+  name_status: "matched" | "resident_only" | "choose" | "none" | string;
+  match: ParcelOcrPerson | null;
+  candidates: ParcelOcrPerson[];
+};
+
+export type ParcelOcrFill = {
+  unitId?: number;
+  unitTitle?: string;
+  residentId?: number;
+  residentName?: string;
+  typeId?: number;
+  typeTitle?: string;
+  barcode?: string;
+  deliveredOn?: string;
+};
+
+type TesseractWorker = {
+  recognize: (image: string) => Promise<{ data?: { text?: string } }>;
+  setParameters?: (params: Record<string, string>) => Promise<void>;
+};
+
+const BARCODE_FORMATS = [
+  "code_128",
+  "code_39",
+  "codabar",
+  "ean_13",
+  "ean_8",
+  "upc_a",
+  "upc_e",
+  "itf",
+  "qr_code",
+  "data_matrix",
+  "pdf417",
+  "aztec",
+];
+
+type TesseractLib = {
+  createWorker: (
+    lang: string,
+    oem: number,
+    opts: {
+      workerPath: string;
+      corePath: string;
+      langPath: string;
+      workerBlobURL: boolean;
+    }
+  ) => Promise<TesseractWorker>;
+};
+
+declare global {
+  interface Window {
+    Tesseract?: TesseractLib;
+  }
+}
+
+let workerPromise: Promise<TesseractWorker> | null = null;
+
+function loadTesseractScript(): Promise<TesseractLib> {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("OCR runs in the browser only."));
+  }
+  if (window.Tesseract?.createWorker) {
+    return Promise.resolve(window.Tesseract);
+  }
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-ceo-tesseract="1"]');
+    if (existing) {
+      existing.addEventListener("load", () => {
+        if (window.Tesseract?.createWorker) resolve(window.Tesseract);
+        else reject(new Error("tesseract"));
+      });
+      existing.addEventListener("error", () => reject(new Error("tesseract")));
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "/tesseract/tesseract.min.js";
+    script.async = true;
+    script.setAttribute("data-ceo-tesseract", "1");
+    script.onload = () => {
+      if (window.Tesseract?.createWorker) resolve(window.Tesseract);
+      else reject(new Error("tesseract"));
+    };
+    script.onerror = () => reject(new Error("tesseract"));
+    document.head.appendChild(script);
+  });
+}
+
+function getWorker(): Promise<TesseractWorker> {
+  if (!workerPromise) {
+    workerPromise = loadTesseractScript()
+      .then((Tesseract) =>
+        Tesseract.createWorker("eng", 1, {
+          workerPath: "/tesseract/worker.min.js",
+          corePath: "/tesseract/tesseract-core-lstm.wasm.js",
+          langPath: "/tesseract",
+          workerBlobURL: false,
+        })
+      )
+      .catch((err) => {
+        workerPromise = null;
+        throw err;
+      });
+  }
+  return workerPromise;
+}
+
+async function recognizeWithParams(
+  image: string,
+  params?: Record<string, string>
+): Promise<string> {
+  const worker = await getWorker();
+  if (params && typeof worker.setParameters === "function") {
+    await worker.setParameters(params);
+  }
+  const result = await worker.recognize(image);
+  return String(result?.data?.text || "").trim();
+}
+
+export async function recognizeParcelLabel(image: string): Promise<string> {
+  return recognizeWithParams(image, {
+    tessedit_pageseg_mode: "6",
+    preserve_interword_spaces: "1",
+    tessedit_char_whitelist: "",
+  });
+}
+
+export async function recognizeBarcodeText(image: string): Promise<string> {
+  return recognizeWithParams(image, {
+    tessedit_pageseg_mode: "11",
+    preserve_interword_spaces: "1",
+    tessedit_char_whitelist: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ- ",
+  });
+}
+
+export async function detectBarcodeFromImage(image: string): Promise<string> {
+  const Detector = (
+    window as Window & {
+      BarcodeDetector?: new (opts?: { formats?: string[] }) => {
+        detect: (source: ImageBitmap) => Promise<Array<{ rawValue?: string }>>;
+      };
+    }
+  ).BarcodeDetector;
+  if (!Detector) return "";
+  try {
+    const res = await fetch(image);
+    const blob = await res.blob();
+    const bitmap = await createImageBitmap(blob);
+    const detector = new Detector({ formats: BARCODE_FORMATS });
+    const codes = await detector.detect(bitmap);
+    if ("close" in bitmap && typeof bitmap.close === "function") {
+      bitmap.close();
+    }
+    const raw = String(codes[0]?.rawValue || "").trim();
+    return raw.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+  } catch {
+    return "";
+  }
+}
+
+export async function lookupParcelOcr(
+  text: string,
+  barcode = ""
+): Promise<ParcelOcrResult> {
+  const res = await fetch("/api/wp/parcels/ocr", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, barcode }),
+  });
+  const data = (await res.json()) as ParcelOcrResult & { message?: string };
+  if (!res.ok) {
+    throw new Error(data.message || "Could not match the label.");
+  }
+  return data;
+}

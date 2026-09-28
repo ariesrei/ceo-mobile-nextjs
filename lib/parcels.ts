@@ -20,6 +20,11 @@ export type ParcelItem = {
   parcel_number: number;
   comments_parcel_barcode: string;
   parcel_delivered_on: string;
+  parcel_signedout_on?: string;
+  signed_out_by?: string;
+  parcel_signedout_by_name?: string;
+  parcel_signedout_by_unit?: string;
+  parcel_signature?: string;
   photos?: ParcelPhoto[];
   status: "in_storage" | "claimed" | string;
   parcel_pickup_type: string;
@@ -41,9 +46,15 @@ export type ParcelOptions = {
   staff: ParcelChoice[];
   residents: ParcelChoice[];
   pickup_types?: string[];
+  signed_out_by?: string[];
   can_edit: boolean;
   is_staff?: boolean;
   current_user: number;
+  current_user_name?: string;
+  ocr_enabled?: boolean;
+  sms_enabled?: boolean;
+  sms_default?: boolean;
+  email_default?: boolean;
 };
 
 export type ParcelSaveBody = {
@@ -56,5 +67,6 @@ export type ParcelSaveBody = {
   comments_parcel_barcode?: string;
   parcel_delivered_on?: string;
   notify_email?: boolean;
+  notify_sms?: boolean;
   parcel_photo?: number[];
 };

@@ -150,8 +150,12 @@ export function AppShell({
               <img
                 src={clientLogo}
                 alt={clientName}
-                className="h-7 w-auto max-w-[72px] object-contain"
+                className="h-auto w-[250px] max-w-full object-contain"
               />
+            ) : clientName && clientName !== "Client" ? (
+              <span className="max-w-[7.5rem] truncate text-right text-[11px] font-semibold tracking-[0.08em] text-white">
+                {clientName}
+              </span>
             ) : (
               <span className="ceo-warranty-iconbtn ceo-warranty-iconbtn--empty" />
             )}

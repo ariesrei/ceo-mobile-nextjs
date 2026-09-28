@@ -186,6 +186,7 @@ Host WAF (nginx, Cloudflare, AWS, or similar) must **allow** every route below. 
 | GET/POST | `/app/parcels` | Bearer access | Don't Block |
 | GET | `/app/parcels/options` | Bearer access | Don't Block |
 | POST | `/app/parcels/media` | Bearer access | Don't Block |
+| POST | `/app/parcels/ocr` | Bearer access | Don't Block |
 | POST | `/app/parcels/{id}/signout` | Bearer access | Don't Block |
 | GET/PATCH | `/app/parcels/{id}` | Bearer access | Don't Block |
 | GET/POST | `/app/warranties` | Bearer access | Don't Block |

@@ -89,6 +89,11 @@ export function toParcelItem(raw: unknown): ParcelItem | null {
     parcel_number: asNumber(row.parcel_number) || 1,
     comments_parcel_barcode: asString(row.comments_parcel_barcode),
     parcel_delivered_on: asString(row.parcel_delivered_on),
+    parcel_signedout_on: asString(row.parcel_signedout_on),
+    signed_out_by: asString(row.signed_out_by),
+    parcel_signedout_by_name: asString(row.parcel_signedout_by_name),
+    parcel_signedout_by_unit: asString(row.parcel_signedout_by_unit),
+    parcel_signature: asString(row.parcel_signature),
     photos,
     status: asString(row.status) || "in_storage",
     parcel_pickup_type: asString(row.parcel_pickup_type),
@@ -154,20 +159,32 @@ export async function loadParcelOptions(): Promise<ParcelOptions | null> {
   return data as unknown as ParcelOptions;
 }
 
+export type ParcelSignoutInput = {
+  parcel_pickup_type: string;
+  signed_out_by?: "Resident" | "Others" | "Staff" | string;
+  parcel_signedout_on?: string;
+  parcel_signedout_by_name?: string;
+  parcel_signedout_by_unit?: string;
+  parcel_signature?: string;
+};
+
 export async function signOutParcel(
   id: number,
-  pickupType: string
+  input: string | ParcelSignoutInput
 ): Promise<{ ok: true } | { ok: false; error: AppError; message: string }> {
   if (id <= 0) {
     const error = validationError("Parcel is required.");
     return { ok: false, error, message: formatAppError(error) };
   }
-  const type = pickupType.trim();
+  const body: ParcelSignoutInput =
+    typeof input === "string" ? { parcel_pickup_type: input } : input;
+  const type = (body.parcel_pickup_type || "").trim();
   if (!type) {
     const error = validationError("Pickup type is required.");
     return { ok: false, error, message: formatAppError(error) };
   }
   const res = await apiPost(`/api/wp/parcels/${id}/signout`, {
+    ...body,
     parcel_pickup_type: type,
   });
   return res.ok ? { ok: true } : { ok: false, error: res.error, message: res.message };

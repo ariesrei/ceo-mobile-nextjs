@@ -66,9 +66,23 @@ const COMMUNITY_RAIL: MenuItem[] = [
   { id: "contacts", label: "Directory", path: "/account/contacts", enabled: true, group: "account" },
 ];
 
+const OPS_ADMIN_RAIL: MenuItem[] = [
+  { id: "home", label: "Home", path: "/account", enabled: true, group: "staff" },
+  { id: "parcels", label: "Packages", path: "/account/parcels", enabled: true, group: "staff" },
+  { id: "reservations", label: "Reservations", path: "/account/reservations", enabled: true, group: "staff" },
+  { id: "messaging", label: "Messages", path: "/account/messaging", enabled: true, group: "staff" },
+  { id: "entry_pass", label: "Entry Pass", path: "/account/entry-pass", enabled: true, group: "staff" },
+  { id: "profile", label: "View Profile", path: "/account/profile", enabled: true, group: "account" },
+  { id: "maintenance", label: "Work Orders", path: "/account/maintenance", enabled: true, group: "staff" },
+  { id: "events", label: "Events", path: "/account/events", enabled: true, group: "account" },
+  { id: "documents", label: "Documents", path: "/account/documents", enabled: true, group: "account" },
+  { id: "announcements", label: "Community", path: "/account/announcements", enabled: true, group: "account" },
+  { id: "contacts", label: "Directory", path: "/account/contacts", enabled: true, group: "staff" },
+];
+
 const OPS_HOME_ITEMS: MenuItem[] = [
   { id: "guests", label: "Guests", path: "/account/guests", enabled: true, group: "staff" },
-  { id: "parcels", label: "Parcels", path: "/account/parcels", enabled: true, group: "staff" },
+  { id: "parcels", label: "Packages", path: "/account/parcels", enabled: true, group: "staff" },
   {
     id: "maintenance",
     label: "Work Orders",
@@ -400,12 +414,13 @@ export function HomeScreen({
           <div className="ceo-ops-rail__brand">
             {clientLogo ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={clientLogo} alt="" />
-            ) : null}
-            <div>
-              <p>{brand.primary}</p>
-              {brand.secondary ? <p>{brand.secondary}</p> : null}
-            </div>
+              <img src={clientLogo} alt={clientName || brand.primary} />
+            ) : (
+              <div>
+                <p>{brand.primary}</p>
+                {brand.secondary ? <p>{brand.secondary}</p> : null}
+              </div>
+            )}
           </div>
           <div className="ceo-ops-rail__hello">
             <span className="ceo-ops-avatar" aria-hidden>
@@ -416,7 +431,10 @@ export function HomeScreen({
               <strong>{name}</strong>
             </div>
           </div>
-          <AccountMenu menus={COMMUNITY_RAIL} variant="rail" />
+          <AccountMenu
+            menus={isStaffHome ? OPS_ADMIN_RAIL : COMMUNITY_RAIL}
+            variant="rail"
+          />
           <div className="ceo-ops-rail__refer">
             <span className="ceo-ops-rail__refer-icon" aria-hidden>
               <svg viewBox="0 0 24 24">
@@ -519,32 +537,21 @@ export function HomeScreen({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={clientLogo}
-                alt=""
-                className="h-10 w-10 shrink-0 rounded-lg object-contain"
+                alt={clientName || brand.primary}
+                className="h-auto w-[250px] max-w-full shrink-0 object-contain"
               />
             ) : (
-              <span className="ceo-home-mark" aria-hidden>
-                <svg viewBox="0 0 32 32" className="h-9 w-9">
-                  <path
-                    d="M6 26V12l5-3 5 3v14M16 26V9l5-3 5 3v17"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-            )}
-            <div className="min-w-0 text-left leading-tight">
-              <p className="truncate text-[15px] font-semibold tracking-[0.14em] text-white">
-                {brand.primary}
-              </p>
-              {brand.secondary ? (
-                <p className="truncate text-[11px] font-medium tracking-[0.16em] text-white/80">
-                  {brand.secondary}
+              <div className="min-w-0 text-left leading-tight">
+                <p className="truncate text-[15px] font-semibold tracking-[0.14em] text-white">
+                  {brand.primary}
                 </p>
-              ) : null}
-            </div>
+                {brand.secondary ? (
+                  <p className="truncate text-[11px] font-medium tracking-[0.16em] text-white/80">
+                    {brand.secondary}
+                  </p>
+                ) : null}
+              </div>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
           <button

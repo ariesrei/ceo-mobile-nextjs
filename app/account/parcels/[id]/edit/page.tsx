@@ -9,6 +9,7 @@ import {
   staffMenuDecision,
 } from "@/lib/server-nav";
 import { wpFetchServer } from "@/lib/wp";
+import { showOpsAssetsUi } from "@/lib/app-profile";
 import { redirect } from "next/navigation";
 
 type Props = { params: Promise<{ id: string }> };
@@ -24,12 +25,14 @@ export default async function EditParcelPage({ params }: Props) {
     wpFetchServer<ParcelItem>(`/app/parcels/${id}`),
     getServerClientBranding(),
   ]);
+  const community = showOpsAssetsUi();
 
   return (
     <AppShell
-      title="Edit parcel"
+      title="Edit package"
       subtitle="Update delivery details"
-      backHref="/account/parcels"
+      backHref={`/account/parcels/${id}`}
+      layout={community ? "community" : "default"}
       clientName={branding.name}
       clientLogo={branding.logo}
     >

@@ -109,6 +109,12 @@ const COMMUNITY_TABS = [
   { id: "entry_pass", label: "Entry Pass", path: "/account/entry-pass" },
 ];
 
+const OPS_ADMIN_TABS = [
+  { id: "home", label: "Home", path: "/account" },
+  { id: "parcels", label: "Packages", path: "/account/parcels" },
+  { id: "reservations", label: "Reservations", path: "/account/reservations" },
+];
+
 function CommunityIcon({ id }: { id: string }) {
   const props = {
     viewBox: "0 0 24 24",
@@ -121,6 +127,14 @@ function CommunityIcon({ id }: { id: string }) {
     "aria-hidden": true as const,
   };
 
+  if (id === "parcels") {
+    return (
+      <svg {...props}>
+        <path d="M4.4 8.6 12 4.4l7.6 4.2v9.2L12 21.6 4.4 17.8V8.6Z" />
+        <path d="M12 13 19.6 8.6M12 13v8.6" />
+      </svg>
+    );
+  }
   if (id === "messaging") {
     return (
       <svg {...props}>
@@ -187,7 +201,7 @@ function Icon({ id, outline = false }: { id: string; outline?: boolean }) {
   );
 }
 
-const STAFF_IDS = ["guests", "parcels", "maintenance"];
+const STAFF_IDS = ["parcels", "reservations"];
 const RESIDENT_IDS = ["profile", "parcels"];
 const WARRANTY_IDS = ["warranties"];
 
@@ -345,6 +359,23 @@ const OPS_PROFILE_MORE: MenuItem[] = [
   },
 ];
 
+const OPS_ADMIN_MORE_EXTRAS: MenuItem[] = [
+  {
+    id: "messaging",
+    label: "Messages",
+    path: "/account/messaging",
+    enabled: true,
+    group: "staff",
+  },
+  {
+    id: "entry_pass",
+    label: "Entry Pass",
+    path: "/account/entry-pass",
+    enabled: true,
+    group: "staff",
+  },
+];
+
 function communityMoreItems(items: MenuItem[]): MenuItem[] {
   const mapped = items
     .filter((item) => item.id !== "guests" && item.path !== "/account/guests")
@@ -378,6 +409,17 @@ function communityMoreItems(items: MenuItem[]): MenuItem[] {
       item.id !== "edit_profile"
   );
   return [...OPS_PROFILE_MORE, ...extras, ...rest];
+}
+
+function opsAdminMoreItems(items: MenuItem[]): MenuItem[] {
+  const base = communityMoreItems(items);
+  const used = new Set(base.flatMap((item) => [item.id, item.path]));
+  const extras = OPS_ADMIN_MORE_EXTRAS.filter(
+    (extra) => !used.has(extra.id) && !used.has(extra.path)
+  );
+  const profile = base.filter((item) => item.id === "profile");
+  const rest = base.filter((item) => item.id !== "profile");
+  return [...profile, ...extras, ...rest];
 }
 
 export function BottomNav({
@@ -495,6 +537,9 @@ export function BottomNav({
   }, [appProfile]);
 
   const enabled = menus.filter((m) => m.enabled);
+  const opsAdmin =
+    community &&
+    (role === "staff" || enabled.some((m) => m.group === "staff"));
   const primaryIds = isWarrantyProfile(liveProfile || appProfile)
     ? WARRANTY_IDS
     : role === "staff"
@@ -505,9 +550,10 @@ export function BottomNav({
   const primary = primaryIds
     .map((id) => enabled.find((m) => m.id === id))
     .filter((m): m is MenuItem => Boolean(m));
+  const communityTabs = opsAdmin ? OPS_ADMIN_TABS : COMMUNITY_TABS;
   const tabPaths = new Set(
     community
-      ? ["/account", ...COMMUNITY_TABS.map((tab) => tab.path)]
+      ? ["/account", ...communityTabs.map((tab) => tab.path)]
       : ["/account", ...primary.map((m) => m.path)]
   );
 
@@ -518,7 +564,7 @@ export function BottomNav({
       : warranty
         ? enabled.filter((m) => !m.path.startsWith("/account/warranties"))
         : community
-          ? communityMoreItems(
+          ? (opsAdmin ? opsAdminMoreItems : communityMoreItems)(
               enabled.filter((m) => !tabPaths.has(m.path))
             )
           : enabled.filter((m) => !tabPaths.has(m.path));
@@ -530,7 +576,7 @@ export function BottomNav({
         ? WARRANTY_RESIDENT_TABS
         : []
     : community
-      ? COMMUNITY_TABS
+      ? communityTabs
       : [
           { id: "home", label: "Home", path: "/account" },
           ...primary.map((m) => ({
