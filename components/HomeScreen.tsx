@@ -538,7 +538,7 @@ export function HomeScreen({
               <img
                 src={clientLogo}
                 alt={clientName || brand.primary}
-                className="h-auto w-[250px] max-w-full shrink-0 object-contain"
+                className="ceo-home-brand"
               />
             ) : (
               <div className="min-w-0 text-left leading-tight">

@@ -224,6 +224,19 @@ a.ceo-btn-accent {
   gap: 0.75rem;
 }
 
+/* Intranet wordmarks stay native size. Cap both axes so a square lockup
+   cannot become 250×250 on a phone header. */
+.ceo-home-brand {
+  display: block;
+  flex-shrink: 0;
+  width: auto;
+  height: auto;
+  max-width: min(10.5rem, 58vw);
+  max-height: 2.75rem;
+  object-fit: contain;
+  object-position: left center;
+}
+
 .ceo-home-hero {
   min-height: 46dvh;
   display: flex;
@@ -2154,19 +2167,32 @@ body.ceo-ops-theme {
 }
 
 .ceo-ops-news b {
-  display: block;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   font-size: 0.9rem;
   line-height: 1.35;
 }
 
 .ceo-ops-news em,
 .ceo-ops-news small {
-  display: block;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
   margin-top: 0.38rem;
   font-style: normal;
   font-size: 0.74rem;
   color: var(--muted);
   line-height: 1.4;
+}
+
+.ceo-ops-news em {
+  -webkit-line-clamp: 3;
+}
+
+.ceo-ops-news small {
+  -webkit-line-clamp: 1;
 }
 
 .ceo-ops-stat {
@@ -2537,10 +2563,12 @@ body.ceo-ops-theme {
   }
 
   .ceo-ops-rail__brand img {
-    width: 250px;
+    width: auto;
     max-width: 100%;
+    max-height: 2.75rem;
     height: auto;
     object-fit: contain;
+    object-position: left center;
   }
 
   .ceo-ops-rail__brand p {
@@ -6022,8 +6050,9 @@ div.ceo-accordion__row {
 
 .ceo-login__property-logo {
   display: block;
-  width: 250px;
-  max-width: 100%;
+  width: auto;
+  max-width: min(12rem, 72vw);
+  max-height: 3.25rem;
   height: auto;
   object-fit: contain;
   border-radius: 0;
