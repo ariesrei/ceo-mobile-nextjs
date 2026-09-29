@@ -142,7 +142,7 @@ export function menuHasStaffPath(
   path: string
 ): boolean {
   return Boolean(
-    menus?.some((m) => m.enabled && m.path === path && m.group === "staff")
+    menus?.some((m) => m.enabled && menuHref(m) === path && m.group === "staff")
   );
 }
 

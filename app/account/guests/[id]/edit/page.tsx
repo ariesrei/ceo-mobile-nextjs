@@ -2,6 +2,7 @@ import { AppShell } from "@/components/AppShell";
 import { ClientWpRecord } from "@/components/ClientWpRecord";
 import { StaffPathGate } from "@/components/StaffPathGate";
 import { GuestEditView } from "@/components/wp-record-views";
+import { showOpsAssetsUi } from "@/lib/app-profile";
 import type { GuestItem } from "@/lib/guests";
 import {
   getServerClientBranding,
@@ -24,12 +25,14 @@ export default async function EditGuestPage({ params }: Props) {
     wpFetchServer<GuestItem>(`/app/guests/${id}`),
     getServerClientBranding(),
   ]);
+  const community = showOpsAssetsUi();
 
   return (
     <AppShell
       title="Edit guest"
-      subtitle="Update visit details"
+      subtitle={community ? undefined : "Update visit details"}
       backHref="/account/guests"
+      layout={community ? "community" : "default"}
       clientName={branding.name}
       clientLogo={branding.logo}
     >

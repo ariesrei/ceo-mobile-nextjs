@@ -20,11 +20,12 @@ export default async function GuestDetailPage({ params }: Props) {
     getServerClientBranding(),
   ]);
   const community = showOpsAssetsUi();
+  const isStaff = isStaffMenuPath(nav, "/account/guests");
 
   return (
     <AppShell
       title="Guest"
-      backHref="/account/history?tab=guests"
+      backHref={isStaff ? "/account/guests" : "/account/history?tab=guests"}
       layout={community ? "community" : "default"}
       clientName={branding.name}
       clientLogo={branding.logo}
@@ -34,7 +35,7 @@ export default async function GuestDetailPage({ params }: Props) {
         initial={result.data}
         error={result.error || "Guest not found."}
         as={GuestDetailView}
-        extra={{ isStaff: isStaffMenuPath(nav, "/account/guests") }}
+        extra={{ isStaff }}
       />
     </AppShell>
   );

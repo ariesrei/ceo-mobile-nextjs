@@ -1,20 +1,19 @@
 import { AppShell } from "@/components/AppShell";
 import { GuestsList } from "@/components/GuestsList";
-import { getServerClientBranding, requireMenuPath, staffMenuDecision } from "@/lib/server-nav";
-import { redirect } from "next/navigation";
+import { showOpsAssetsUi } from "@/lib/app-profile";
+import { getServerClientBranding, requireMenuPath } from "@/lib/server-nav";
 
 export default async function GuestsPage() {
-  const nav = await requireMenuPath("/account/guests");
-  if (staffMenuDecision(nav, "/account/guests") === "resident") {
-    redirect("/account/history?tab=guests");
-  }
+  await requireMenuPath("/account/guests");
   const branding = await getServerClientBranding();
+  const community = showOpsAssetsUi();
 
   return (
     <AppShell
       title="Guests"
-      subtitle="Check in and check out"
+      subtitle={community ? undefined : "Check in and check out"}
       backHref="/account"
+      layout={community ? "community" : "default"}
       clientName={branding.name}
       clientLogo={branding.logo}
     >

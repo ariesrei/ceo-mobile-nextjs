@@ -2,6 +2,7 @@ import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { GuestForm } from "@/components/GuestForm";
 import { StaffPathGate } from "@/components/StaffPathGate";
+import { showOpsAssetsUi } from "@/lib/app-profile";
 import {
   getServerClientBranding,
   requireMenuPath,
@@ -16,12 +17,14 @@ export default async function NewGuestPage() {
     redirect("/account/history?tab=guests");
   }
   const branding = await getServerClientBranding();
+  const community = showOpsAssetsUi();
 
   return (
     <AppShell
       title="New guest"
-      subtitle="Check in a visitor for a unit"
+      subtitle={community ? undefined : "Check in a visitor for a unit"}
       backHref="/account/guests"
+      layout={community ? "community" : "default"}
       clientName={branding.name}
       clientLogo={branding.logo}
     >

@@ -148,12 +148,10 @@ export function AppShell({
 
           <div className="ceo-warranty-topbar__action">
             {clientLogo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={clientLogo}
-                alt={clientName}
-                className="h-auto w-[250px] max-w-full object-contain"
-              />
+              <span className="ceo-brand-avatar ceo-brand-avatar--topbar">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={clientLogo} alt={clientName} />
+              </span>
             ) : clientName && clientName !== "Client" ? (
               <span className="max-w-[7.5rem] truncate text-right text-[11px] font-semibold tracking-[0.08em] text-white">
                 {clientName}
