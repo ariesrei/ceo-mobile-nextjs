@@ -313,19 +313,17 @@ export function ParcelForm({
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="ceo-pkg-attach">
         <ParcelOcrCapture
-          enabled={ocrEnabled}
+          enabled={!optionsReady || ocrEnabled}
           disabled={loading}
           parcelId={parcel?.id}
           autoStart={autoStartOcr}
           onPhoto={(photo, replaceId) =>
             setPhotos((current) => {
-              const next = replaceId
-                ? current.filter((item) => item.id !== replaceId)
-                : current;
-              if (next.some((item) => item.id === photo.id)) {
-                return next;
-              }
-              return [...next, photo];
+              const extras = current.filter(
+                (item, index) =>
+                  index > 0 && item.id !== replaceId && item.id !== photo.id
+              );
+              return [photo, ...extras];
             })
           }
           onFill={applyOcrFill}

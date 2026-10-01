@@ -93,10 +93,16 @@ export function DeviceCameraSheet({
     onClose();
   }
 
-  if (!mounted || !open) return null;
+  if (!mounted) return null;
 
   return createPortal(
-    <div className="ceo-cam-sheet" role="dialog" aria-modal="true" aria-label={title}>
+    <div
+      className={open ? "ceo-cam-sheet" : "ceo-cam-sheet ceo-cam-sheet--off"}
+      hidden={!open}
+      role="dialog"
+      aria-modal={open}
+      aria-label={title}
+    >
       <video
         ref={videoRef}
         className="ceo-cam-sheet__video"

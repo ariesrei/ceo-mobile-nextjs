@@ -74,7 +74,9 @@ export function ParcelOcrCapture({
   }
 
   async function uploadPhoto(image: string, replaceId?: number): Promise<void> {
-    const uploaded = await uploadParcelJpeg(image, parcelId || 0);
+    const uploaded = await uploadParcelJpeg(image, parcelId || 0, {
+      replaceLabel: true,
+    });
     onPhoto({ id: uploaded.id, url: uploaded.url || image }, replaceId);
   }
 

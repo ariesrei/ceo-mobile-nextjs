@@ -796,6 +796,7 @@ body.ceo-ops-theme {
 .ceo-pkg-scan {
   display: grid;
   gap: 0.55rem;
+  min-height: 7.25rem;
 }
 
 .ceo-pkg-scan__head p {
@@ -3265,6 +3266,10 @@ body.ceo-ops-theme {
   display: flex;
   flex-direction: column;
   background: #05070b;
+}
+
+.ceo-cam-sheet--off {
+  display: none;
 }
 
 .ceo-cam-sheet__video {

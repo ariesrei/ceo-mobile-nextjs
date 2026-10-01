@@ -2,7 +2,8 @@ import type { ParcelPhoto } from "@/lib/parcels";
 
 export async function uploadParcelJpeg(
   image: string,
-  parcelId = 0
+  parcelId = 0,
+  opts?: { replaceLabel?: boolean }
 ): Promise<ParcelPhoto> {
   const res = await fetch("/api/wp/parcels/media", {
     method: "POST",
@@ -10,6 +11,7 @@ export async function uploadParcelJpeg(
     body: JSON.stringify({
       image,
       parcel_id: parcelId || 0,
+      replace_label: Boolean(opts?.replaceLabel),
     }),
   });
   const data = (await res.json()) as ParcelPhoto & { message?: string };
