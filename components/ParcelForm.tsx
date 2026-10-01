@@ -160,6 +160,21 @@ export function ParcelForm({
         return [...prev, { id: fill.residentId as number, label: fill.residentName as string }];
       });
     }
+    if (fill.unitId) {
+      const label =
+        fill.unitTitle && fill.unitTitle !== String(fill.unitId)
+          ? fill.unitTitle
+          : "";
+      if (label) {
+        setUnits((prev) => {
+          const id = fill.unitId as number;
+          if (prev.some((item) => item.id === id && item.label === label)) {
+            return prev;
+          }
+          return [{ id, label }, ...prev.filter((item) => item.id !== id)];
+        });
+      }
+    }
     setForm((current) => {
       const next = { ...current };
       if (fill.unitId && (force || !current.parcel_recipient)) {

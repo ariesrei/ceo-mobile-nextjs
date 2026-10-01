@@ -3,7 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import type { ParcelPhoto } from "@/lib/parcels";
 import { fileToParcelCapture } from "@/lib/image-jpeg";
-import { formatLookupText, parseParcelLabel, pickTracking } from "@/lib/parcel-label";
+import {
+  formatLookupText,
+  humanUnitLabel,
+  parseParcelLabel,
+  pickTracking,
+  type ParsedParcelLabel,
+} from "@/lib/parcel-label";
 import {
   detectBarcodeFromImage,
   lookupParcelOcr,
@@ -79,13 +85,16 @@ export function ParcelOcrCapture({
     onPhoto({ id: data.id, url: data.url || "" });
   }
 
-  function applyLookup(data: ParcelOcrResult) {
+  function applyLookup(data: ParcelOcrResult, parsed?: ParsedParcelLabel) {
     const parts: string[] = [];
+    const unitLabel = data.match
+      ? humanUnitLabel(data.match.unit_id, data.match.unit_title, parsed?.unit)
+      : parsed?.unit || "";
 
     if (data.name_status === "matched" && data.match) {
-      onFill(personFill(data.match), true);
+      onFill(personFill(data.match, data.match.unit_id, unitLabel), true);
       parts.push(
-        [data.match.name, data.match.unit_title ? `Unit ${data.match.unit_title}` : ""]
+        [data.match.name, unitLabel ? `Unit ${unitLabel}` : ""]
           .filter(Boolean)
           .join(", ")
       );
@@ -98,9 +107,10 @@ export function ParcelOcrCapture({
       parts.push("No matching resident was found");
     }
 
-    if (data.barcode) {
-      onFill({ barcode: data.barcode }, true);
-      parts.push(`barcode ${data.barcode}`);
+    const barcode = pickTracking(data.barcode, parsed?.tracking || "");
+    if (barcode) {
+      onFill({ barcode }, true);
+      parts.push(`barcode ${barcode}`);
     } else {
       parts.push("no barcode was read");
     }
@@ -141,7 +151,7 @@ export function ParcelOcrCapture({
         capture.ocr
       );
       const parsed = parseParcelLabel(labelText);
-      const barcode = pickTracking(scanned, parsed.tracking);
+      const barcode = pickTracking(scanned, parsed.tracking, labelText);
       if (barcode) onFill({ barcode }, true);
       if (parsed.carrier) {
         onFill({ typeTitle: parsed.carrier }, true);
@@ -149,14 +159,20 @@ export function ParcelOcrCapture({
       if (parsed.unit) {
         onFill({ unitTitle: parsed.unit }, true);
       }
-      const text = formatLookupText(labelText, parsed);
+      const text = formatLookupText(labelText, {
+        ...parsed,
+        tracking: barcode || parsed.tracking,
+      });
       if (!text && !barcode) {
         setStatus("No text was read. Fill the frame with the label and hold still.");
         await uploadTask;
         return;
       }
       setStatus("Matching resident and unit…");
-      applyLookup(await lookupParcelOcr(text || barcode, barcode));
+      applyLookup(
+        await lookupParcelOcr(text || barcode, barcode.length >= 12 ? barcode : ""),
+        parsed
+      );
       await uploadTask;
     } catch (e) {
       setStatus(e instanceof Error ? e.message : "Could not read the label.");
@@ -242,9 +258,10 @@ export function ParcelOcrCapture({
                 type="button"
                 className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)]"
                 onClick={() => {
-                  onFill(personFill(person, unit.id, unit.title), true);
+                  const label = humanUnitLabel(unit.id, unit.title);
+                  onFill(personFill(person, unit.id, label), true);
                   setStatus(
-                    `Using ${person.name}${unit.title ? ` — Unit ${unit.title}` : ""}. Check the form, then save.`
+                    `Using ${person.name}${label ? ` — Unit ${label}` : ""}. Check the form, then save.`
                   );
                 }}
               >

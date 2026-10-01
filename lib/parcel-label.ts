@@ -18,16 +18,45 @@ export function parseParcelLabel(text: string): ParsedParcelLabel {
 }
 
 export function pickTracking(...tokens: string[]): string {
-  const clean = tokens
-    .map((token) => sanitizeTracking(token))
-    .filter(Boolean)
-    .sort((a, b) => b.length - a.length);
-  if (clean.length < 2) return clean[0] || "";
-  const [longest, next] = clean;
-  if (longest.startsWith(next) || next.startsWith(longest)) {
-    return longest;
+  const clean: string[] = [];
+  for (const token of tokens) {
+    const one = sanitizeTracking(token);
+    if (one) clean.push(one);
+    const compact = String(token || "")
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "");
+    for (const run of compact.match(/\d{12,34}/g) || []) {
+      clean.push(run);
+    }
   }
-  return longest;
+  const unique = Array.from(new Set(clean));
+  const long = unique.filter((token) => token.length >= 12).sort((a, b) => b.length - a.length);
+  if (long[0]) {
+    return long[0];
+  }
+  return unique.sort((a, b) => b.length - a.length)[0] || "";
+}
+
+/** Prefer the printed unit number (10) over a WP post ID (71008). */
+export function humanUnitLabel(
+  unitId?: number,
+  unitTitle?: string,
+  parsedUnit?: string
+): string {
+  const parsed = String(parsedUnit || "")
+    .replace(/^unit\s+/i, "")
+    .trim();
+  const title = String(unitTitle || "")
+    .replace(/^unit\s+/i, "")
+    .trim();
+  const id = unitId ? String(unitId) : "";
+  if (parsed && (!title || title === id || (/^\d{5,}$/.test(title) && parsed.length <= 6))) {
+    return parsed;
+  }
+  if (title && title !== id) {
+    return title;
+  }
+  return parsed || title;
 }
 
 /** Labeled lines first so PHP can match ship-to / unit / tracking. */
@@ -79,7 +108,7 @@ function extractName(text: string): string {
 
 function extractUnit(text: string): string {
   const match = text.match(
-    /\b(?:unit|apt|suite|ste|#)\s*[#:]?\s*([A-Za-z0-9\-]{1,12})\b/i
+    /\b(?:unit|apt|apartment|suite|ste)\s*[#:]?\s*([A-Za-z0-9\-]{1,6})\b/i
   );
   return match?.[1] ? match[1].toUpperCase() : "";
 }
