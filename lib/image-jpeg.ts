@@ -110,10 +110,11 @@ export async function fileToOcrImages(file: File): Promise<{
   return { color: capture.ocr, barcode: capture.ocr };
 }
 
-/** One decode. Color upload + contrast OCR so text stays readable. */
+/** Color upload + a plain OCR frame (desktop-style) and a contrast fallback. */
 export async function fileToParcelCapture(file: File): Promise<{
   upload: string;
   ocr: string;
+  ocrColor: string;
 }> {
   const { width, height, draw } = await sourceFromFile(file);
   try {
@@ -121,11 +122,15 @@ export async function fileToParcelCapture(file: File): Promise<{
       "image/jpeg",
       JPEG_QUALITY
     );
+    const ocrColor = drawToCanvas(draw, width, height, OCR_MAX_EDGE).toDataURL(
+      "image/jpeg",
+      OCR_JPEG_QUALITY
+    );
     const ocr = drawToCanvas(draw, width, height, OCR_MAX_EDGE, true).toDataURL(
       "image/jpeg",
       OCR_JPEG_QUALITY
     );
-    return { upload, ocr };
+    return { upload, ocr, ocrColor };
   } finally {
     closeSource(draw);
   }

@@ -169,15 +169,31 @@ export function ParcelForm({
         } else if (String(fill.unitId) !== current.parcel_recipient) {
           next.parcel_resident = "";
         }
+      } else if (fill.unitTitle && (force || !current.parcel_recipient)) {
+        const want = fill.unitTitle.replace(/^unit\s+/i, "").trim().toLowerCase();
+        const match = units.find((item) => {
+          const label = item.label.replace(/^unit\s+/i, "").trim().toLowerCase();
+          return label === want || label === `unit ${want}`;
+        });
+        if (match) {
+          next.parcel_recipient = String(match.id);
+          if (fill.residentId) {
+            next.parcel_resident = String(fill.residentId);
+          } else if (String(match.id) !== current.parcel_recipient) {
+            next.parcel_resident = "";
+          }
+        }
       } else if (fill.residentId && (force || !current.parcel_resident)) {
         next.parcel_resident = String(fill.residentId);
       }
       if (fill.typeId && (force || !current.parcel_type)) {
         next.parcel_type = String(fill.typeId);
-      } else if (fill.typeTitle && !current.parcel_type) {
-        const match = types.find(
-          (item) => item.label.toLowerCase() === fill.typeTitle?.toLowerCase()
-        );
+      } else if (fill.typeTitle && (force || !current.parcel_type)) {
+        const want = fill.typeTitle.toLowerCase();
+        const match = types.find((item) => {
+          const label = item.label.toLowerCase();
+          return label === want || label.includes(want) || want.includes(label);
+        });
         if (match) next.parcel_type = String(match.id);
       }
       if (fill.barcode) {

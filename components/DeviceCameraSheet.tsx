@@ -120,17 +120,13 @@ export function DeviceCameraSheet({
           onClick={capture}
           aria-label="Take a picture"
         />
-        {error ? (
-          <button
-            type="button"
-            className="ceo-cam-sheet__text"
-            onClick={() => fileRef.current?.click()}
-          >
-            Files
-          </button>
-        ) : (
-          <span className="ceo-cam-sheet__text" aria-hidden />
-        )}
+        <button
+          type="button"
+          className="ceo-cam-sheet__text"
+          onClick={() => fileRef.current?.click()}
+        >
+          Photo
+        </button>
       </div>
       <input
         ref={fileRef}

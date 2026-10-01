@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { ParcelPhoto } from "@/lib/parcels";
 import { fileToParcelCapture } from "@/lib/image-jpeg";
-import { formatLookupText, parseParcelLabel } from "@/lib/parcel-label";
+import { formatLookupText, parseParcelLabel, pickTracking } from "@/lib/parcel-label";
 import {
   detectBarcodeFromImage,
   lookupParcelOcr,
-  recognizeParcelLabel,
+  recognizeParcelLabelSources,
   scanDeliveredOn,
   warmupParcelOcr,
   type ParcelOcrFill,
@@ -43,6 +43,7 @@ export function ParcelOcrCapture({
   autoStart,
 }: Props) {
   const started = useRef(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
@@ -134,13 +135,19 @@ export function ParcelOcrCapture({
     try {
       const capture = await fileToParcelCapture(file);
       const uploadTask = uploadPhoto(capture.upload).catch(() => undefined);
-      const scanned = await detectBarcodeFromImage(capture.ocr);
-      const labelText = await recognizeParcelLabel(capture.ocr);
+      const scanned = await detectBarcodeFromImage(capture.ocrColor);
+      const labelText = await recognizeParcelLabelSources(
+        capture.ocrColor,
+        capture.ocr
+      );
       const parsed = parseParcelLabel(labelText);
-      const barcode = scanned || parsed.tracking;
+      const barcode = pickTracking(scanned, parsed.tracking);
       if (barcode) onFill({ barcode }, true);
       if (parsed.carrier) {
         onFill({ typeTitle: parsed.carrier }, true);
+      }
+      if (parsed.unit) {
+        onFill({ unitTitle: parsed.unit }, true);
       }
       const text = formatLookupText(labelText, parsed);
       if (!text && !barcode) {
@@ -159,23 +166,55 @@ export function ParcelOcrCapture({
   }
 
   return (
-    <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-3">
+    <div
+      className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-3"
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files?.[0];
+        if (file) void onCaptured(file);
+      }}
+    >
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-[var(--ink)]">Scan</p>
           <p className="text-xs text-[var(--muted)]">
-            Fill the frame with the label and hold still.
+            Camera, or drop / choose a label photo.
           </p>
         </div>
-        <button
-          type="button"
-          disabled={disabled || busy}
-          onClick={() => setOpen(true)}
-          className="shrink-0 rounded-xl bg-[var(--accent)] px-3.5 py-2 text-sm font-semibold text-white disabled:opacity-60"
-        >
-          {busy ? "Reading…" : "Scan"}
-        </button>
+        <div className="flex shrink-0 gap-2">
+          <button
+            type="button"
+            disabled={disabled || busy}
+            onClick={() => fileRef.current?.click()}
+            className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2 text-sm font-semibold text-[var(--ink)] disabled:opacity-60"
+          >
+            Photo
+          </button>
+          <button
+            type="button"
+            disabled={disabled || busy}
+            onClick={() => setOpen(true)}
+            className="rounded-xl bg-[var(--accent)] px-3.5 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {busy ? "Reading…" : "Scan"}
+          </button>
+        </div>
       </div>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (file) void onCaptured(file);
+        }}
+      />
 
       <DeviceCameraSheet
         open={open}

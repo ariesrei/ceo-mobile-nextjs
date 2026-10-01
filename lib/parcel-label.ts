@@ -8,13 +8,26 @@ export type ParsedParcelLabel = {
 const CARRIERS = ["DHL", "UPS", "USPS", "FEDEX", "AMAZON"] as const;
 
 export function parseParcelLabel(text: string): ParsedParcelLabel {
-  const compact = text.replace(/\r/g, "");
+  const compact = normalizeLabelText(text);
   return {
     name: extractName(compact),
     unit: extractUnit(compact),
     tracking: extractTracking(compact),
     carrier: extractCarrier(compact),
   };
+}
+
+export function pickTracking(...tokens: string[]): string {
+  const clean = tokens
+    .map((token) => sanitizeTracking(token))
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length);
+  if (clean.length < 2) return clean[0] || "";
+  const [longest, next] = clean;
+  if (longest.startsWith(next) || next.startsWith(longest)) {
+    return longest;
+  }
+  return longest;
 }
 
 /** Labeled lines first so PHP can match ship-to / unit / tracking. */
@@ -29,18 +42,36 @@ export function formatLookupText(raw: string, parsed: ParsedParcelLabel): string
   return lines.join("\n");
 }
 
+function normalizeLabelText(text: string): string {
+  return String(text || "")
+    .replace(/\r/g, "")
+    .replace(/SHIP\s*TO/gi, "SHIP TO")
+    .replace(/UNIT\s*#/gi, "Unit #");
+}
+
+function unglueName(raw: string): string {
+  return raw
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/([A-Za-z])(JR|SR|II|III|IV)\b/gi, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function extractName(text: string): string {
   const shipTo = text.match(
-    /\b(?:ship\s*to|deliver(?:ed)?\s*to|recipient|attn|attention)\b[:\s]+([A-Za-z][A-Za-z.'\-]+(?:\s+[A-Za-z][A-Za-z.'\-]+){1,3})/i
+    /\b(?:ship\s*to|deliver(?:ed)?\s*to|recipient|attn|attention)\b[:\s,]*([A-Za-z][A-Za-z.'\-\s]{2,80}?)(?=\s*(?:,|recipient|unit|#|\d|$))/i
   );
   if (shipTo?.[1]) {
-    return cleanName(shipTo[1]);
+    const name = cleanName(unglueName(shipTo[1]));
+    if (looksLikeName(name) || /^[A-Za-z].+\s+[A-Za-z]/.test(name)) {
+      return name;
+    }
   }
 
   for (const line of text.split(/\n+/)) {
-    const trimmed = line.replace(/[,:]+$/g, "").trim();
+    const trimmed = cleanName(unglueName(line.replace(/[,:]+$/g, "").trim()));
     if (looksLikeName(trimmed)) {
-      return cleanName(trimmed);
+      return trimmed;
     }
   }
   return "";

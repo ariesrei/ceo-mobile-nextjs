@@ -1,3 +1,5 @@
+import { parseParcelLabel } from "@/lib/parcel-label";
+
 export type ParcelOcrPerson = {
   user_id: number;
   name: string;
@@ -161,11 +163,27 @@ async function recognizeWithParams(
 }
 
 export async function recognizeParcelLabel(image: string): Promise<string> {
+  // PSM 3 matches desktop parcel-ocr.js (two-column DHL labels).
   return recognizeWithParams(image, {
-    tessedit_pageseg_mode: "4",
+    tessedit_pageseg_mode: "3",
     preserve_interword_spaces: "1",
-    tessedit_char_whitelist: "",
   });
+}
+
+/** Color first (desktop), then contrast if the ship-to name is still missing. */
+export async function recognizeParcelLabelSources(
+  color: string,
+  enhanced?: string
+): Promise<string> {
+  const first = await recognizeParcelLabel(color);
+  if (!enhanced || parseParcelLabel(first).name) {
+    return first;
+  }
+  const second = await recognizeWithParams(enhanced, {
+    tessedit_pageseg_mode: "6",
+    preserve_interword_spaces: "1",
+  }).catch(() => "");
+  return [first, second].filter(Boolean).join("\n");
 }
 
 export async function recognizeBarcodeText(image: string): Promise<string> {
