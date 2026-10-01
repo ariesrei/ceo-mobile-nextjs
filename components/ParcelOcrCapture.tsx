@@ -107,7 +107,7 @@ export function ParcelOcrCapture({
       parts.push("No matching resident was found");
     }
 
-    const barcode = pickTracking(data.barcode, parsed?.tracking || "");
+    const barcode = pickTracking(parsed?.tracking || "", data.barcode);
     if (barcode) {
       onFill({ barcode }, true);
       parts.push(`barcode ${barcode}`);
@@ -151,7 +151,7 @@ export function ParcelOcrCapture({
         capture.ocr
       );
       const parsed = parseParcelLabel(labelText);
-      const barcode = pickTracking(scanned, parsed.tracking, labelText);
+      const barcode = pickTracking(parsed.tracking, scanned);
       if (barcode) onFill({ barcode }, true);
       if (parsed.carrier) {
         onFill({ typeTitle: parsed.carrier }, true);

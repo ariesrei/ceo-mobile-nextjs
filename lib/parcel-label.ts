@@ -18,23 +18,21 @@ export function parseParcelLabel(text: string): ParsedParcelLabel {
 }
 
 export function pickTracking(...tokens: string[]): string {
-  const clean: string[] = [];
+  const discrete: string[] = [];
   for (const token of tokens) {
-    const one = sanitizeTracking(token);
-    if (one) clean.push(one);
-    const compact = String(token || "")
-      .toUpperCase()
-      .replace(/[^A-Z0-9]/g, "");
-    for (const run of compact.match(/\d{12,34}/g) || []) {
-      clean.push(run);
+    const raw = String(token || "").trim();
+    if (!raw) continue;
+    if (raw.includes("\n") || raw.length > 40) {
+      const fromText = extractTracking(raw);
+      if (fromText) discrete.push(fromText);
+      continue;
+    }
+    const one = raw.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+    if (isPlausibleTracking(one)) {
+      discrete.push(one);
     }
   }
-  const unique = Array.from(new Set(clean));
-  const long = unique.filter((token) => token.length >= 12).sort((a, b) => b.length - a.length);
-  if (long[0]) {
-    return long[0];
-  }
-  return unique.sort((a, b) => b.length - a.length)[0] || "";
+  return scoreTracking(discrete);
 }
 
 /** Prefer the printed unit number (10) over a WP post ID (71008). */
@@ -59,15 +57,21 @@ export function humanUnitLabel(
   return parsed || title;
 }
 
-/** Labeled lines first so PHP can match ship-to / unit / tracking. */
+/** Labeled lines only — do not append raw OCR digits (PHP mashes those). */
 export function formatLookupText(raw: string, parsed: ParsedParcelLabel): string {
   const lines = [
     parsed.name ? `SHIP TO: ${parsed.name}` : "",
     parsed.unit ? `Unit #${parsed.unit}` : "",
     parsed.tracking ? `TRACKING NUMBER ${parsed.tracking}` : "",
     parsed.carrier,
-    raw.trim(),
   ].filter(Boolean);
+  const safeRaw = String(raw || "")
+    .replace(/\d{8,}/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .trim();
+  if (safeRaw) {
+    lines.push(safeRaw);
+  }
   return lines.join("\n");
 }
 
@@ -75,7 +79,8 @@ function normalizeLabelText(text: string): string {
   return String(text || "")
     .replace(/\r/g, "")
     .replace(/SHIP\s*TO/gi, "SHIP TO")
-    .replace(/UNIT\s*#/gi, "Unit #");
+    .replace(/UNIT\s*#/gi, "Unit #")
+    .replace(/TRACK\s*ING/gi, "TRACKING");
 }
 
 function unglueName(raw: string): string {
@@ -110,38 +115,93 @@ function extractUnit(text: string): string {
   const match = text.match(
     /\b(?:unit|apt|apartment|suite|ste)\s*[#:]?\s*([A-Za-z0-9\-]{1,6})\b/i
   );
-  return match?.[1] ? match[1].toUpperCase() : "";
+  const token = match?.[1] ? match[1].toUpperCase() : "";
+  if (!token || /^\d{5,}$/.test(token)) {
+    return "";
+  }
+  return token;
 }
 
 export function extractTracking(text: string): string {
-  const labeled = text.match(
-    /\b(?:tracking(?:\s*number)?|barcode)\b[:\s#]*([A-Z0-9][A-Z0-9\s-]{7,40})/i
-  );
-  if (labeled?.[1]) {
-    const token = sanitizeTracking(labeled[1]);
-    if (token) return token;
+  const lines = String(text || "").split(/\n+/);
+
+  for (const line of lines) {
+    if (!/\b(?:tracking|track(?:ing)?\s*(?:number|no|#)?|barcode)\b/i.test(line)) {
+      continue;
+    }
+    const groups = line.match(/\d{12,22}/g) || [];
+    const labeled = scoreTracking(groups);
+    if (labeled) {
+      return labeled;
+    }
+    const token = line.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+    const branded = brandedTracking(token);
+    if (branded) {
+      return branded;
+    }
   }
 
-  const compact = text.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  const branded =
+  const branded = brandedTracking(text.toUpperCase().replace(/[^A-Z0-9]/g, ""));
+  if (branded) {
+    return branded;
+  }
+
+  const standalone: string[] = [];
+  for (const line of lines) {
+    const digits = line.replace(/\D/g, "");
+    const letters = line.replace(/[^A-Za-z]/g, "");
+    if (isPlausibleTracking(digits) && letters.length <= 4) {
+      standalone.push(digits);
+    }
+    for (const group of line.match(/\d{12,22}/g) || []) {
+      standalone.push(group);
+    }
+  }
+  return scoreTracking(standalone);
+}
+
+function brandedTracking(compact: string): string {
+  return (
     compact.match(/1Z[0-9A-Z]{16}/)?.[0] ||
     compact.match(/TBA[0-9A-Z]{10,22}/)?.[0] ||
-    compact.match(/JD[0-9A-Z]{16,24}/)?.[0];
-  if (branded) return branded;
+    compact.match(/JD[0-9A-Z]{16,24}/)?.[0] ||
+    ""
+  );
+}
 
-  const runs = compact.match(/\d{12,28}/g) || [];
-  runs.sort((a, b) => b.length - a.length);
-  return runs[0] || "";
+function isPlausibleTracking(token: string): boolean {
+  const value = String(token || "").replace(/[^A-Za-z0-9]/g, "");
+  return value.length >= 12 && value.length <= 22;
+}
+
+function scoreTracking(candidates: string[]): string {
+  const unique = Array.from(
+    new Set(candidates.map((item) => item.replace(/[^A-Za-z0-9]/g, "").toUpperCase()).filter(isPlausibleTracking))
+  );
+  if (!unique.length) {
+    return "";
+  }
+  unique.sort((a, b) => trackingScore(b) - trackingScore(a));
+  return unique[0];
+}
+
+function trackingScore(token: string): number {
+  let score = token.length;
+  if (token.length >= 18 && token.length <= 20) {
+    score += 20;
+  }
+  if (/^(1Z|TBA|JD)/.test(token)) {
+    score += 30;
+  }
+  if (/^856/.test(token)) {
+    score += 10;
+  }
+  return score;
 }
 
 function extractCarrier(text: string): string {
   const upper = text.toUpperCase();
   return CARRIERS.find((name) => new RegExp(`\\b${name}\\b`).test(upper)) || "";
-}
-
-function sanitizeTracking(raw: string): string {
-  const token = raw.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-  return token.length >= 8 && token.length <= 40 ? token : "";
 }
 
 function cleanName(raw: string): string {
