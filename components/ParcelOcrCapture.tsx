@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ParcelPhoto } from "@/lib/parcels";
 import { fileToParcelCapture } from "@/lib/image-jpeg";
+import { uploadParcelJpeg } from "@/lib/parcel-media";
 import {
   extractTracking,
   formatLookupText,
@@ -29,7 +30,7 @@ type Props = {
   enabled: boolean;
   disabled?: boolean;
   parcelId?: number;
-  onPhoto: (photo: ParcelPhoto) => void;
+  onPhoto: (photo: ParcelPhoto, replaceId?: number) => void;
   onFill: (fill: ParcelOcrFill, force?: boolean) => void;
   autoStart?: boolean;
 };
@@ -72,20 +73,9 @@ export function ParcelOcrCapture({
     return null;
   }
 
-  async function uploadPhoto(image: string): Promise<void> {
-    const res = await fetch("/api/wp/parcels/media", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        image,
-        parcel_id: parcelId || 0,
-      }),
-    });
-    const data = (await res.json()) as ParcelPhoto & { message?: string };
-    if (!res.ok || !data.id) {
-      throw new Error(data.message || "Could not attach the photo.");
-    }
-    onPhoto({ id: data.id, url: data.url || "" });
+  async function uploadPhoto(image: string, replaceId?: number): Promise<void> {
+    const uploaded = await uploadParcelJpeg(image, parcelId || 0);
+    onPhoto({ id: uploaded.id, url: uploaded.url || image }, replaceId);
   }
 
   function applyLookup(data: ParcelOcrResult, parsed?: ParsedParcelLabel) {
@@ -147,7 +137,12 @@ export function ParcelOcrCapture({
     onFill({ deliveredOn: scanDeliveredOn() }, true);
     try {
       const capture = await fileToParcelCapture(file);
-      const uploadTask = uploadPhoto(capture.upload).catch(() => undefined);
+      const previewId = -Date.now();
+      onPhoto({ id: previewId, url: capture.upload });
+      let photoError = "";
+      const uploadTask = uploadPhoto(capture.upload, previewId).catch((err) => {
+        photoError = err instanceof Error ? err.message : "Could not attach the photo.";
+      });
       const detectTask = Promise.all([
         detectBarcodeFromImage(capture.ocrColor),
         detectBarcodeFromImage(capture.ocrBand),
@@ -190,6 +185,13 @@ export function ParcelOcrCapture({
         parsedWithTrack
       );
       await uploadTask;
+      if (photoError) {
+        setStatus((current) =>
+          current
+            ? `${current} Photo did not attach — use Take photo.`
+            : photoError
+        );
+      }
     } catch (e) {
       setStatus(e instanceof Error ? e.message : "Could not read the label.");
     } finally {
@@ -199,7 +201,7 @@ export function ParcelOcrCapture({
 
   return (
     <div
-      className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-3"
+      className="ceo-pkg-scan"
       onDragOver={(e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = "copy";
@@ -210,32 +212,26 @@ export function ParcelOcrCapture({
         if (file) void onCaptured(file);
       }}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <p className="text-sm font-semibold text-[var(--ink)]">Scan</p>
-          <p className="text-xs text-[var(--muted)]">
-            Camera, or drop / choose a label photo.
-          </p>
-        </div>
-        <div className="flex shrink-0 gap-2">
-          <button
-            type="button"
-            disabled={disabled || busy}
-            onClick={() => fileRef.current?.click()}
-            className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2 text-sm font-semibold text-[var(--ink)] disabled:opacity-60"
-          >
-            Photo
-          </button>
-          <button
-            type="button"
-            disabled={disabled || busy}
-            onClick={() => setOpen(true)}
-            className="rounded-xl bg-[var(--accent)] px-3.5 py-2 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            {busy ? "Reading…" : "Scan"}
-          </button>
-        </div>
+      <div className="ceo-pkg-scan__head">
+        <p>Label</p>
+        <span>Scan fills the form and attaches the photo.</span>
       </div>
+      <button
+        type="button"
+        disabled={disabled || busy}
+        onClick={() => setOpen(true)}
+        className="ceo-pkg-scan__go"
+      >
+        {busy ? "Reading…" : "Scan label"}
+      </button>
+      <button
+        type="button"
+        disabled={disabled || busy}
+        onClick={() => fileRef.current?.click()}
+        className="ceo-pkg-scan__alt"
+      >
+        Use a saved photo
+      </button>
       <input
         ref={fileRef}
         type="file"
@@ -250,8 +246,8 @@ export function ParcelOcrCapture({
 
       <DeviceCameraSheet
         open={open}
-        title="Scan package"
-        hint="Line up the label, then take the picture."
+        title="Scan label"
+        hint="Fill the frame with the label. This photo is saved with the package."
         onClose={() => setOpen(false)}
         onCapture={onCaptured}
       />

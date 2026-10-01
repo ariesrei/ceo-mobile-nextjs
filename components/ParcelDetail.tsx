@@ -5,7 +5,9 @@ import { useEffect, useState } from "react";
 import { useStaffMenuPath } from "@/hooks/useStaffMenuPath";
 import type { ParcelItem } from "@/lib/parcels";
 import { toParcelItem } from "@/lib/helpers/parcels";
+import { hydrateParcelPhotos, parseParcelPhotos } from "@/lib/parcel-media";
 import { publicWpErrorMessage } from "@/lib/wp-error";
+import { ParcelPhotoGallery } from "./ParcelPhotoGallery";
 import { ParcelSignoutForm } from "./ParcelSignoutForm";
 import { Card } from "./ui/Card";
 import { EmptyState, ListSkeleton } from "./ui/ListState";
@@ -54,14 +56,16 @@ export function ParcelDetail({ parcelId }: { parcelId: number }) {
         }
         return toParcelItem(json);
       })
-      .then((next) => {
+      .then(async (next) => {
         if (cancelled) return;
         if (!next) {
           setError("Package not found.");
           setItem(null);
           return;
         }
-        setItem(next);
+        const photos = await hydrateParcelPhotos(parseParcelPhotos(next.photos));
+        if (cancelled) return;
+        setItem({ ...next, photos });
         setError("");
       })
       .catch((e) => {
@@ -104,22 +108,11 @@ export function ParcelDetail({ parcelId }: { parcelId: number }) {
 
   return (
     <div className="ceo-package-detail space-y-4">
-      {item.photos?.length ? (
-        <ul className="grid grid-cols-3 gap-2">
-          {item.photos.map((photo) => (
-            <li
-              key={photo.id}
-              className="aspect-square overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-2)]"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photo.url} alt="" className="h-full w-full object-cover" />
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      <Card>
-        <div className="mb-3 flex items-start justify-between gap-3">
+      <Card className="ceo-package-detail__card">
+        {item.photos?.some((photo) => photo.url) ? (
+          <ParcelPhotoGallery photos={item.photos} />
+        ) : null}
+        <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-lg font-semibold">{item.resident_name || "Resident"}</p>
             <p className="text-sm text-[var(--muted)]">{item.unit_title || "Unit"}</p>
@@ -186,9 +179,11 @@ export function ParcelDetail({ parcelId }: { parcelId: number }) {
           });
           fetch(`/api/wp/parcels/${item.id}`)
             .then((res) => res.json())
-            .then((json) => {
+            .then(async (json) => {
               const next = toParcelItem(json);
-              if (next) setItem(next);
+              if (!next) return;
+              const photos = await hydrateParcelPhotos(parseParcelPhotos(next.photos));
+              setItem({ ...next, photos });
             })
             .catch(() => undefined);
         }}

@@ -10,6 +10,11 @@ import type {
 } from "@/lib/parcels";
 import { scanDeliveredOn, type ParcelOcrFill } from "@/lib/parcel-ocr";
 import { findDuplicateBarcode } from "@/lib/helpers/parcels";
+import {
+  hydrateParcelPhotos,
+  parseParcelPhotos,
+  persistParcelPhotos,
+} from "@/lib/parcel-media";
 import { ParcelCameraPhotos } from "./ParcelCameraPhotos";
 import { ParcelOcrCapture } from "./ParcelOcrCapture";
 import { Button } from "./ui/Button";
@@ -102,12 +107,30 @@ export function ParcelForm({
     notify_email: false,
     notify_sms: false,
   });
-  const [photos, setPhotos] = useState<ParcelPhoto[]>(parcel?.photos || []);
+  const [photos, setPhotos] = useState<ParcelPhoto[]>(
+    parseParcelPhotos(parcel?.photos)
+  );
   const [ocrEnabled, setOcrEnabled] = useState(false);
+  const [optionsReady, setOptionsReady] = useState(false);
   const [smsEnabled, setSmsEnabled] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const loaded = parseParcelPhotos(parcel?.photos);
+    setPhotos(loaded);
+    if (!loaded.some((photo) => photo.id > 0 && !photo.url)) {
+      return;
+    }
+    let cancelled = false;
+    hydrateParcelPhotos(loaded).then((next) => {
+      if (!cancelled) setPhotos(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [parcel?.id]);
 
   useEffect(() => {
     fetch("/api/wp/parcels/options")
@@ -118,6 +141,7 @@ export function ParcelForm({
         setStaff(data.staff || []);
         setOcrEnabled(Boolean(data.ocr_enabled));
         setSmsEnabled(Boolean(data.sms_enabled));
+        setOptionsReady(true);
         setForm((f) => ({
           ...f,
           parcel_received_by:
@@ -127,7 +151,9 @@ export function ParcelForm({
             isEdit || !data.sms_enabled ? false : Boolean(data.sms_default),
         }));
       })
-      .catch(() => undefined);
+      .catch(() => {
+        setOptionsReady(true);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -240,6 +266,8 @@ export function ParcelForm({
         );
         return;
       }
+      const readyPhotos = await persistParcelPhotos(photos, parcel?.id || 0);
+      setPhotos(readyPhotos);
       const url = isEdit ? `/api/wp/parcels/${parcel!.id}` : "/api/wp/parcels";
       const res = await fetch(url, {
         method: isEdit ? "PATCH" : "POST",
@@ -258,7 +286,7 @@ export function ParcelForm({
           ),
           notify_email: form.notify_email,
           notify_sms: smsEnabled && form.notify_sms,
-          parcel_photo: photos.map((p) => p.id),
+          parcel_photo: readyPhotos.map((p) => p.id).filter((id) => id > 0),
         }),
       });
       const data = await res.json();
@@ -283,18 +311,33 @@ export function ParcelForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <ParcelOcrCapture
-        enabled={ocrEnabled}
-        disabled={loading}
-        parcelId={parcel?.id}
-        autoStart={autoStartOcr}
-        onPhoto={(photo) =>
-          setPhotos((current) =>
-            current.some((p) => p.id === photo.id) ? current : [...current, photo]
-          )
-        }
-        onFill={applyOcrFill}
-      />
+      <div className="ceo-pkg-attach">
+        <ParcelOcrCapture
+          enabled={ocrEnabled}
+          disabled={loading}
+          parcelId={parcel?.id}
+          autoStart={autoStartOcr}
+          onPhoto={(photo, replaceId) =>
+            setPhotos((current) => {
+              const next = replaceId
+                ? current.filter((item) => item.id !== replaceId)
+                : current;
+              if (next.some((item) => item.id === photo.id)) {
+                return next;
+              }
+              return [...next, photo];
+            })
+          }
+          onFill={applyOcrFill}
+        />
+        <ParcelCameraPhotos
+          photos={photos}
+          onChange={setPhotos}
+          parcelId={parcel?.id}
+          disabled={loading}
+          hideWhenEmpty={ocrEnabled || !optionsReady}
+        />
+      </div>
       <div className="ceo-form-row">
         <Select
           label="Unit"
@@ -379,12 +422,6 @@ export function ParcelForm({
           }
         />
       </label>
-      <ParcelCameraPhotos
-        photos={photos}
-        onChange={setPhotos}
-        parcelId={parcel?.id}
-        disabled={loading}
-      />
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
