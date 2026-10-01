@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { format, isValid, parse } from "date-fns";
 import type {
   ParcelChoice,
   ParcelItem,
@@ -42,29 +43,78 @@ function combineDateTime(dateMdY: string, timeHm: string): string {
   return `${d} ${h12}:${mmPad} ${ampm}`;
 }
 
+function padMdY(month: string, day: string, year: string): string {
+  return `${month.padStart(2, "0")}/${day.padStart(2, "0")}/${year}`;
+}
+
+function timeFromParts(hour: string, minute: string, ampm?: string): string {
+  let hh = Number(hour);
+  const mm = minute.padStart(2, "0");
+  if (ampm) {
+    const ap = ampm.toLowerCase();
+    if (ap === "pm" && hh < 12) hh += 12;
+    if (ap === "am" && hh === 12) hh = 0;
+  }
+  if (Number.isNaN(hh)) hh = 12;
+  return `${String(hh).padStart(2, "0")}:${mm}`;
+}
+
 function splitDeliveredOn(value?: string): { date: string; time: string } {
-  if (!value?.trim()) {
+  const raw = String(value || "").trim();
+  if (!raw) {
     const now = new Date();
-    const date = `${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}/${now.getFullYear()}`;
-    const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    return { date, time };
+    return {
+      date: format(now, "MM/dd/yyyy"),
+      time: format(now, "HH:mm"),
+    };
   }
-  // Expect m/d/Y g:i a
-  const m = value.match(
-    /^(\d{1,2}\/\d{1,2}\/\d{4})\s+(\d{1,2}):(\d{2})\s*(am|pm)$/i
+
+  const slash = raw.match(
+    /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::\d{2})?(?:\s*(am|pm))?)?$/i
   );
-  if (!m) {
-    return { date: value, time: "12:00" };
+  if (slash) {
+    return {
+      date: padMdY(slash[1], slash[2], slash[3]),
+      time: slash[4] ? timeFromParts(slash[4], slash[5], slash[6]) : "12:00",
+    };
   }
-  let hh = Number(m[2]);
-  const mm = m[3];
-  const ap = m[4].toLowerCase();
-  if (ap === "pm" && hh < 12) hh += 12;
-  if (ap === "am" && hh === 12) hh = 0;
-  return {
-    date: m[1],
-    time: `${String(hh).padStart(2, "0")}:${mm}`,
-  };
+
+  const pretty = raw.match(
+    /^([A-Za-z]+ \d{1,2}, \d{4}),?\s+(?:at\s+)?(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)$/i
+  );
+  if (pretty) {
+    const day = parse(pretty[1], "MMMM d, yyyy", new Date());
+    if (isValid(day)) {
+      return {
+        date: format(day, "MM/dd/yyyy"),
+        time: timeFromParts(pretty[2], pretty[3], pretty[4]),
+      };
+    }
+  }
+
+  for (const fmt of [
+    "MMMM d, yyyy, h:mm a",
+    "MMMM d, yyyy h:mm a",
+    "MMM d, yyyy, h:mm a",
+    "MMM d, yyyy h:mm a",
+    "yyyy-MM-dd HH:mm:ss",
+    "yyyy-MM-dd'T'HH:mm:ss",
+  ]) {
+    const day = parse(raw, fmt, new Date());
+    if (isValid(day)) {
+      return { date: format(day, "MM/dd/yyyy"), time: format(day, "HH:mm") };
+    }
+  }
+
+  const native = new Date(raw);
+  if (!Number.isNaN(native.getTime())) {
+    return {
+      date: format(native, "MM/dd/yyyy"),
+      time: format(native, "HH:mm"),
+    };
+  }
+
+  return { date: "", time: "12:00" };
 }
 
 export function ParcelForm({
