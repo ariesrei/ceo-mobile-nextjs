@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { fileToJpegDataUri } from "@/lib/image-jpeg";
 import type { ParcelPhoto } from "@/lib/parcels";
+import { DeviceCameraSheet } from "./DeviceCameraSheet";
 
 type Props = {
   photos: ParcelPhoto[];
@@ -17,7 +18,7 @@ export function ParcelCameraPhotos({
   parcelId,
   disabled,
 }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
@@ -38,23 +39,21 @@ export function ParcelCameraPhotos({
     return { id: data.id, url: data.url || "" };
   }
 
-  async function onFilesSelected(list: FileList | null) {
-    if (!list?.length || disabled) return;
+  async function onCaptured(file: File) {
+    if (disabled || uploading) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Choose a photo of the package.");
+      return;
+    }
     setUploading(true);
     setError("");
     try {
-      const next = [...photos];
-      for (const file of Array.from(list)) {
-        if (!file.type.startsWith("image/")) continue;
-        const uploaded = await uploadOne(file);
-        next.push(uploaded);
-        onChange([...next]);
-      }
+      const uploaded = await uploadOne(file);
+      onChange([...photos, uploaded]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not add photo.");
     } finally {
       setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
     }
   }
 
@@ -104,24 +103,22 @@ export function ParcelCameraPhotos({
         </p>
       )}
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="sr-only"
-        disabled={disabled || uploading}
-        onChange={(e) => onFilesSelected(e.target.files)}
-      />
-
       <button
         type="button"
         disabled={disabled || uploading}
-        onClick={() => inputRef.current?.click()}
+        onClick={() => setOpen(true)}
         className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 text-sm font-semibold text-[var(--ink)] disabled:opacity-60"
       >
         {uploading ? "Adding photo…" : "Take photo"}
       </button>
+
+      <DeviceCameraSheet
+        open={open}
+        title="Take photo"
+        hint="Use the camera, then take the picture."
+        onClose={() => setOpen(false)}
+        onCapture={onCaptured}
+      />
 
       {error ? (
         <p className="rounded-xl bg-[#3a1c1c] px-3 py-2 text-sm text-[var(--danger)]">

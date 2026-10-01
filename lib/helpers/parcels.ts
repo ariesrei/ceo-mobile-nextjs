@@ -146,6 +146,32 @@ export async function listParcels(input: {
   };
 }
 
+function normalizeBarcode(value: string): string {
+  return value.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+}
+
+export async function findDuplicateBarcode(
+  barcode: string,
+  exceptId = 0
+): Promise<ParcelItem | null> {
+  const needle = normalizeBarcode(barcode);
+  if (needle.length < 4) return null;
+  const lists = await Promise.all([
+    listParcels({ status: "storage", search: barcode.trim(), perPage: 30 }),
+    listParcels({ status: "claimed", search: barcode.trim(), perPage: 30 }),
+  ]);
+  for (const list of lists) {
+    if (!list.ok) continue;
+    const match = list.items.find(
+      (item) =>
+        item.id !== exceptId &&
+        normalizeBarcode(item.comments_parcel_barcode) === needle
+    );
+    if (match) return match;
+  }
+  return null;
+}
+
 export async function countParcelsInStorage() {
   const list = await listParcels({ status: "storage", perPage: 1 });
   return list.ok ? list.total : 0;

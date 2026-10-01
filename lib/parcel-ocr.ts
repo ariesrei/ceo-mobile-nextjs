@@ -73,6 +73,22 @@ declare global {
 
 let workerPromise: Promise<TesseractWorker> | null = null;
 
+export function scanDeliveredOn(now = new Date()): string {
+  const date = `${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}/${now.getFullYear()}`;
+  const hh = now.getHours();
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  const ampm = hh >= 12 ? "pm" : "am";
+  let h12 = hh % 12;
+  if (h12 === 0) h12 = 12;
+  return `${date} ${h12}:${mm} ${ampm}`;
+}
+
+function yieldUi() {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, 0);
+  });
+}
+
 function loadTesseractScript(): Promise<TesseractLib> {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("OCR runs in the browser only."));
@@ -126,12 +142,18 @@ async function recognizeWithParams(
   image: string,
   params?: Record<string, string>
 ): Promise<string> {
-  const worker = await getWorker();
-  if (params && typeof worker.setParameters === "function") {
-    await worker.setParameters(params);
+  try {
+    const worker = await getWorker();
+    if (params && typeof worker.setParameters === "function") {
+      await worker.setParameters(params);
+    }
+    await yieldUi();
+    const result = await worker.recognize(image);
+    return String(result?.data?.text || "").trim();
+  } catch (err) {
+    workerPromise = null;
+    throw err;
   }
-  const result = await worker.recognize(image);
-  return String(result?.data?.text || "").trim();
 }
 
 export async function recognizeParcelLabel(image: string): Promise<string> {

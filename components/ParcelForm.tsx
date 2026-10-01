@@ -9,6 +9,7 @@ import type {
   ParcelPhoto,
 } from "@/lib/parcels";
 import type { ParcelOcrFill } from "@/lib/parcel-ocr";
+import { findDuplicateBarcode } from "@/lib/helpers/parcels";
 import { ParcelCameraPhotos } from "./ParcelCameraPhotos";
 import { ParcelOcrCapture } from "./ParcelOcrCapture";
 import { Button } from "./ui/Button";
@@ -190,6 +191,18 @@ export function ParcelForm({
     setError("");
     setMessage("");
     try {
+      const duplicate = await findDuplicateBarcode(
+        form.comments_parcel_barcode,
+        parcel?.id || 0
+      );
+      if (duplicate) {
+        setError(
+          `A package with this barcode already exists${
+            duplicate.unit_title ? ` (Unit ${duplicate.unit_title})` : ""
+          }.`
+        );
+        return;
+      }
       const url = isEdit ? `/api/wp/parcels/${parcel!.id}` : "/api/wp/parcels";
       const res = await fetch(url, {
         method: isEdit ? "PATCH" : "POST",

@@ -531,7 +531,7 @@ export function HomeScreen({
           />
         ) : null}
         <div className="ceo-home-hero__shade" aria-hidden />
-        <header className="relative z-10 flex items-start justify-between px-5 pt-5 md:px-8 md:pt-7">
+        <header className="relative z-10 flex items-start justify-between px-5 md:px-8">
           <div className="flex min-w-0 items-center gap-3 ceo-ops-topbrand">
             {clientLogo ? (
               // eslint-disable-next-line @next/next/no-img-element

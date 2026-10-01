@@ -2,16 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ParcelPhoto } from "@/lib/parcels";
-import { fileToJpegDataUri, fileToOcrImages } from "@/lib/image-jpeg";
+import { fileToParcelCapture } from "@/lib/image-jpeg";
 import {
   detectBarcodeFromImage,
   lookupParcelOcr,
   recognizeBarcodeText,
   recognizeParcelLabel,
+  scanDeliveredOn,
   type ParcelOcrFill,
   type ParcelOcrPerson,
   type ParcelOcrResult,
 } from "@/lib/parcel-ocr";
+import { DeviceCameraSheet } from "./DeviceCameraSheet";
 
 type Props = {
   enabled: boolean;
@@ -39,8 +41,8 @@ export function ParcelOcrCapture({
   onFill,
   autoStart,
 }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const started = useRef(false);
+  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [result, setResult] = useState<ParcelOcrResult | null>(null);
@@ -48,7 +50,7 @@ export function ParcelOcrCapture({
   useEffect(() => {
     if (!enabled || !autoStart || disabled || started.current) return;
     started.current = true;
-    inputRef.current?.click();
+    setOpen(true);
   }, [autoStart, disabled, enabled]);
 
   if (!enabled) {
@@ -109,18 +111,12 @@ export function ParcelOcrCapture({
       parts.push("no parcel type matched");
     }
 
-    if (data.delivered_on) {
-      onFill({ deliveredOn: data.delivered_on });
-      parts.push(`delivered ${data.delivered_on}`);
-    }
-
     setStatus(`${parts.join(". ")}. Check the form, then save.`);
     setResult(data);
   }
 
-  async function onFilesSelected(list: FileList | null) {
-    const file = list?.[0];
-    if (!file || disabled || busy) return;
+  async function onCaptured(file: File) {
+    if (disabled || busy) return;
     if (!file.type.startsWith("image/")) {
       setStatus("Choose a photo of the label.");
       return;
@@ -128,30 +124,28 @@ export function ParcelOcrCapture({
 
     setBusy(true);
     setResult(null);
-    setStatus("Reading the label…");
+    setStatus("Saving the photo…");
+    onFill({ deliveredOn: scanDeliveredOn() }, true);
     try {
-      const [uploadImage, ocrImages] = await Promise.all([
-        fileToJpegDataUri(file),
-        fileToOcrImages(file),
-      ]);
-      await uploadPhoto(uploadImage);
-      setStatus("Reading the label and barcode…");
-      const scannedPromise = detectBarcodeFromImage(ocrImages.barcode);
-      const labelText = await recognizeParcelLabel(ocrImages.color);
-      const barcodeText = await recognizeBarcodeText(ocrImages.barcode);
-      const scanned = await scannedPromise;
+      const capture = await fileToParcelCapture(file);
+      await uploadPhoto(capture.upload);
+      setStatus("Reading the label…");
+      const scanned = await detectBarcodeFromImage(capture.ocr);
+      const labelText = await recognizeParcelLabel(capture.ocr);
+      const barcodeText = scanned
+        ? ""
+        : await recognizeBarcodeText(capture.ocr);
       const text = [labelText, barcodeText].filter(Boolean).join("\n");
-      if (!text) {
+      if (!text && !scanned) {
         setStatus("No text was read from the photo. Hold the label closer and try again.");
         return;
       }
-      setStatus(`Read: ${text.replace(/\s+/g, " ").slice(0, 140)}. Matching the form…`);
+      setStatus("Matching the form…");
       applyLookup(await lookupParcelOcr(text, scanned));
     } catch (e) {
       setStatus(e instanceof Error ? e.message : "Could not read the label.");
     } finally {
       setBusy(false);
-      if (inputRef.current) inputRef.current.value = "";
     }
   }
 
@@ -159,29 +153,27 @@ export function ParcelOcrCapture({
     <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-3">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold text-[var(--ink)]">OCR</p>
+          <p className="text-sm font-semibold text-[var(--ink)]">Scan</p>
           <p className="text-xs text-[var(--muted)]">
-            Photograph the label to fill resident, unit, barcode, type, and date.
+            Photograph the label to fill resident, unit, barcode, and type.
           </p>
         </div>
         <button
           type="button"
           disabled={disabled || busy}
-          onClick={() => inputRef.current?.click()}
+          onClick={() => setOpen(true)}
           className="shrink-0 rounded-xl bg-[var(--accent)] px-3.5 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {busy ? "Reading…" : "OCR"}
+          {busy ? "Reading…" : "Scan"}
         </button>
       </div>
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="sr-only"
-        disabled={disabled || busy}
-        onChange={(e) => onFilesSelected(e.target.files)}
+      <DeviceCameraSheet
+        open={open}
+        title="Scan package"
+        hint="Line up the label, then take the picture."
+        onClose={() => setOpen(false)}
+        onCapture={onCaptured}
       />
 
       {status ? (
