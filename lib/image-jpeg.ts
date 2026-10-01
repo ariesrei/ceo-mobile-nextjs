@@ -1,5 +1,6 @@
 const UPLOAD_MAX_EDGE = 1280;
 const OCR_MAX_EDGE = 1400;
+const BAND_WIDTH = 2400;
 const JPEG_QUALITY = 0.78;
 const OCR_JPEG_QUALITY = 0.86;
 
@@ -90,6 +91,30 @@ function drawToCanvas(
   return canvas;
 }
 
+/** Bottom of the label in color. Never shrink — small tracking digits need pixels. */
+function drawBarcodeBand(
+  draw: CanvasImageSource,
+  width: number,
+  height: number
+): HTMLCanvasElement {
+  const top = Math.round(height * 0.35);
+  const bandH = Math.max(1, height - top);
+  const scale = Math.max(1, BAND_WIDTH / width);
+  const w = Math.max(1, Math.round(width * scale));
+  const h = Math.max(1, Math.round(bandH * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error("Canvas unavailable");
+  }
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(draw, 0, top, width, bandH, 0, 0, w, h);
+  return canvas;
+}
+
 export async function fileToJpegDataUri(file: File): Promise<string> {
   const { width, height, draw } = await sourceFromFile(file);
   try {
@@ -115,6 +140,7 @@ export async function fileToParcelCapture(file: File): Promise<{
   upload: string;
   ocr: string;
   ocrColor: string;
+  ocrBand: string;
 }> {
   const { width, height, draw } = await sourceFromFile(file);
   try {
@@ -130,7 +156,11 @@ export async function fileToParcelCapture(file: File): Promise<{
       "image/jpeg",
       OCR_JPEG_QUALITY
     );
-    return { upload, ocr, ocrColor };
+    const ocrBand = drawBarcodeBand(draw, width, height).toDataURL(
+      "image/jpeg",
+      0.92
+    );
+    return { upload, ocr, ocrColor, ocrBand };
   } finally {
     closeSource(draw);
   }

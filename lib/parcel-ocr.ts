@@ -1,4 +1,4 @@
-import { parseParcelLabel } from "@/lib/parcel-label";
+import { parseParcelLabel, pickTracking } from "@/lib/parcel-label";
 
 export type ParcelOcrPerson = {
   user_id: number;
@@ -188,9 +188,17 @@ export async function recognizeParcelLabelSources(
 
 export async function recognizeBarcodeText(image: string): Promise<string> {
   return recognizeWithParams(image, {
-    tessedit_pageseg_mode: "11",
+    tessedit_pageseg_mode: "6",
     preserve_interword_spaces: "1",
     tessedit_char_whitelist: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ- ",
+  });
+}
+
+export async function recognizeTrackingLine(image: string): Promise<string> {
+  return recognizeWithParams(image, {
+    tessedit_pageseg_mode: "7",
+    preserve_interword_spaces: "1",
+    tessedit_char_whitelist: "0123456789TRACKINGUMBER- ",
   });
 }
 
@@ -212,8 +220,12 @@ export async function detectBarcodeFromImage(image: string): Promise<string> {
     if ("close" in bitmap && typeof bitmap.close === "function") {
       bitmap.close();
     }
-    const raw = String(codes[0]?.rawValue || "").trim();
-    return raw.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+    const values = (codes || []).map((code) =>
+      String(code.rawValue || "")
+        .replace(/[^A-Za-z0-9]/g, "")
+        .toUpperCase()
+    );
+    return pickTracking(...values);
   } catch {
     return "";
   }

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ParcelPhoto } from "@/lib/parcels";
 import { fileToParcelCapture } from "@/lib/image-jpeg";
 import {
+  extractTracking,
   formatLookupText,
   humanUnitLabel,
   parseParcelLabel,
@@ -13,7 +14,9 @@ import {
 import {
   detectBarcodeFromImage,
   lookupParcelOcr,
+  recognizeBarcodeText,
   recognizeParcelLabelSources,
+  recognizeTrackingLine,
   scanDeliveredOn,
   warmupParcelOcr,
   type ParcelOcrFill,
@@ -145,13 +148,29 @@ export function ParcelOcrCapture({
     try {
       const capture = await fileToParcelCapture(file);
       const uploadTask = uploadPhoto(capture.upload).catch(() => undefined);
-      const scanned = await detectBarcodeFromImage(capture.ocrColor);
+      const detectTask = Promise.all([
+        detectBarcodeFromImage(capture.ocrColor),
+        detectBarcodeFromImage(capture.ocrBand),
+      ]);
       const labelText = await recognizeParcelLabelSources(
         capture.ocrColor,
         capture.ocr
       );
+      const bandText = await recognizeBarcodeText(capture.ocrBand).catch(() => "");
+      const [scannedColor, scannedBand] = await detectTask;
       const parsed = parseParcelLabel(labelText);
-      const barcode = pickTracking(parsed.tracking, scanned);
+      let barcode = pickTracking(
+        extractTracking(bandText),
+        parsed.tracking,
+        scannedColor,
+        scannedBand,
+        extractTracking(labelText)
+      );
+      if (!barcode) {
+        const lineText = await recognizeTrackingLine(capture.ocrBand).catch(() => "");
+        barcode = pickTracking(extractTracking(lineText), extractTracking(`${bandText}\n${lineText}`));
+      }
+      const parsedWithTrack = { ...parsed, tracking: barcode || parsed.tracking };
       if (barcode) onFill({ barcode }, true);
       if (parsed.carrier) {
         onFill({ typeTitle: parsed.carrier }, true);
@@ -159,10 +178,7 @@ export function ParcelOcrCapture({
       if (parsed.unit) {
         onFill({ unitTitle: parsed.unit }, true);
       }
-      const text = formatLookupText(labelText, {
-        ...parsed,
-        tracking: barcode || parsed.tracking,
-      });
+      const text = formatLookupText(labelText, parsedWithTrack);
       if (!text && !barcode) {
         setStatus("No text was read. Fill the frame with the label and hold still.");
         await uploadTask;
@@ -171,7 +187,7 @@ export function ParcelOcrCapture({
       setStatus("Matching resident and unit…");
       applyLookup(
         await lookupParcelOcr(text || barcode, barcode.length >= 12 ? barcode : ""),
-        parsed
+        parsedWithTrack
       );
       await uploadTask;
     } catch (e) {

@@ -48,7 +48,7 @@ export function frameToJpegFile(
     return Promise.reject(new Error("Camera is not ready yet."));
   }
 
-  const max = 1600;
+  const max = 1920;
   const scale = Math.min(1, max / Math.max(width, height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(width * scale));
