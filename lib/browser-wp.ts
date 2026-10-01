@@ -177,8 +177,9 @@ function apiWpTarget(input: RequestInfo | URL): { path: string; search: string }
 let nativeFetch: typeof fetch | null = null;
 let hydratePromise: Promise<void> | null = null;
 
-async function hydrateBrowserSession(): Promise<void> {
-  if (getBrowserAccessToken() || !nativeFetch) return;
+export async function hydrateBrowserSession(): Promise<void> {
+  if (!nativeFetch) return;
+  if (getBrowserAccessToken() && getBrowserRefreshToken()) return;
   if (hydratePromise) return hydratePromise;
   hydratePromise = (async () => {
     try {
@@ -205,7 +206,7 @@ async function hydrateBrowserSession(): Promise<void> {
   return hydratePromise;
 }
 
-async function refreshBrowserSession(baseUrl: string): Promise<string> {
+export async function refreshBrowserSession(baseUrl: string): Promise<string> {
   const refresh = getBrowserRefreshToken();
   if (!refresh || !nativeFetch) return "";
   const res = await nativeFetch(wpRestUrl(baseUrl, "/app/auth/refresh"), {
@@ -303,6 +304,9 @@ export function installWpDirectFetch() {
       const res = await fetchWordPress(baseUrl, wpPath, access, input, init);
       if (res.status !== 401) return res;
 
+      if (!getBrowserRefreshToken()) {
+        await hydrateBrowserSession();
+      }
       const nextAccess = await refreshBrowserSession(baseUrl);
       if (!nextAccess) return res;
       return fetchWordPress(baseUrl, wpPath, nextAccess, input, init);

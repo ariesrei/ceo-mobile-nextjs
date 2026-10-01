@@ -1,14 +1,36 @@
 "use client";
 
 import { useEffect } from "react";
+import { getConnectConfig } from "@/lib/connect";
+import {
+  hydrateBrowserSession,
+  installWpDirectFetch,
+  refreshBrowserSession,
+} from "@/lib/browser-wp";
 
 const INTERVAL_MS = 5 * 60 * 1000;
 
+async function refreshFromDevice() {
+  installWpDirectFetch();
+  await hydrateBrowserSession();
+  const baseUrl = getConnectConfig()?.baseUrl;
+  if (!baseUrl) return;
+  await refreshBrowserSession(baseUrl);
+}
+
 async function refreshSession() {
   try {
-    await fetch("/api/auth/refresh", { method: "POST", cache: "no-store" });
+    const res = await fetch("/api/auth/refresh", {
+      method: "POST",
+      cache: "no-store",
+    });
+    if (res.ok) return;
+    // Testdev WAF blocks Vercel; renew from the browser instead.
+    if (res.status === 401 || res.status === 403 || res.status >= 500) {
+      await refreshFromDevice();
+    }
   } catch {
-    /* idle refresh; create/list calls still retry via /api/wp */
+    await refreshFromDevice().catch(() => undefined);
   }
 }
 
