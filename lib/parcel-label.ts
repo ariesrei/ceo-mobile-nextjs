@@ -48,13 +48,13 @@ export function humanUnitLabel(
     .replace(/^unit\s+/i, "")
     .trim();
   const id = unitId ? String(unitId) : "";
-  if (parsed && (!title || title === id || (/^\d{5,}$/.test(title) && parsed.length <= 6))) {
+  if (parsed && (!title || title === id || /^\d{5,}$/.test(title))) {
     return parsed;
   }
-  if (title && title !== id) {
+  if (title && title !== id && !/^\d{5,}$/.test(title)) {
     return title;
   }
-  return parsed || title;
+  return parsed;
 }
 
 /** Labeled lines only — do not append raw OCR digits (PHP mashes those). */
@@ -112,11 +112,11 @@ function extractName(text: string): string {
 }
 
 function extractUnit(text: string): string {
-  const match = text.match(
-    /\b(?:unit|apt|apartment|suite|ste)\s*[#:]?\s*([A-Za-z0-9\-]{1,6})\b/i
-  );
+  const match =
+    text.match(/\bunit\b[^#\n]{0,16}#\s*([A-Za-z0-9\-]{1,6})\b/i) ||
+    text.match(/\b(?:unit|apt|apartment|suite|ste)\s*[#:]?\s*([A-Za-z0-9\-]{1,6})\b/i);
   const token = match?.[1] ? match[1].toUpperCase() : "";
-  if (!token || /^\d{5,}$/.test(token)) {
+  if (!token || /^\d{5,}$/.test(token) || token === "NUMBER") {
     return "";
   }
   return token;
@@ -129,13 +129,11 @@ export function extractTracking(text: string): string {
     if (!/\b(?:tracking|track(?:ing)?\s*(?:number|no|#)?|barcode)\b/i.test(line)) {
       continue;
     }
-    const groups = line.match(/\d{12,22}/g) || [];
-    const labeled = scoreTracking(groups);
-    if (labeled) {
-      return labeled;
+    const digits = line.replace(/\D/g, "");
+    if (isPlausibleTracking(digits)) {
+      return digits;
     }
-    const token = line.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-    const branded = brandedTracking(token);
+    const branded = brandedTracking(line.replace(/[^A-Za-z0-9]/g, "").toUpperCase());
     if (branded) {
       return branded;
     }
@@ -150,7 +148,7 @@ export function extractTracking(text: string): string {
   for (const line of lines) {
     const digits = line.replace(/\D/g, "");
     const letters = line.replace(/[^A-Za-z]/g, "");
-    if (isPlausibleTracking(digits) && letters.length <= 4) {
+    if (isPlausibleTracking(digits) && letters.length <= 8) {
       standalone.push(digits);
     }
     for (const group of line.match(/\d{12,22}/g) || []) {

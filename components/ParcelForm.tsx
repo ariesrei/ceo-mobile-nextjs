@@ -161,17 +161,16 @@ export function ParcelForm({
       });
     }
     if (fill.unitId) {
-      const label =
-        fill.unitTitle && fill.unitTitle !== String(fill.unitId)
-          ? fill.unitTitle
-          : "";
-      if (label) {
+      const label = fill.unitTitle || "";
+      const hideId = !label || label === String(fill.unitId) || /^\d{5,}$/.test(label);
+      const shown = hideId ? "" : label;
+      if (shown) {
         setUnits((prev) => {
           const id = fill.unitId as number;
-          if (prev.some((item) => item.id === id && item.label === label)) {
+          if (prev.some((item) => item.id === id && item.label === shown)) {
             return prev;
           }
-          return [{ id, label }, ...prev.filter((item) => item.id !== id)];
+          return [{ id, label: shown }, ...prev.filter((item) => item.id !== id)];
         });
       }
     }
