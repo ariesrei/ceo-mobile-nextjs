@@ -73,6 +73,10 @@ declare global {
 
 let workerPromise: Promise<TesseractWorker> | null = null;
 
+export function warmupParcelOcr() {
+  void getWorker();
+}
+
 export function scanDeliveredOn(now = new Date()): string {
   const date = `${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}/${now.getFullYear()}`;
   const hh = now.getHours();
@@ -158,7 +162,7 @@ async function recognizeWithParams(
 
 export async function recognizeParcelLabel(image: string): Promise<string> {
   return recognizeWithParams(image, {
-    tessedit_pageseg_mode: "6",
+    tessedit_pageseg_mode: "4",
     preserve_interword_spaces: "1",
     tessedit_char_whitelist: "",
   });

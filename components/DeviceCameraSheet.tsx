@@ -19,7 +19,7 @@ type Props = {
 export function DeviceCameraSheet({
   open,
   title = "Scan package",
-  hint = "Line up the label, then take the picture.",
+  hint = "Fill the frame with the label. Hold still, then take the picture.",
   onClose,
   onCapture,
 }: Props) {

@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import type { ParcelPhoto } from "@/lib/parcels";
 import { fileToParcelCapture } from "@/lib/image-jpeg";
+import { formatLookupText, parseParcelLabel } from "@/lib/parcel-label";
 import {
   detectBarcodeFromImage,
   lookupParcelOcr,
-  recognizeBarcodeText,
   recognizeParcelLabel,
   scanDeliveredOn,
+  warmupParcelOcr,
   type ParcelOcrFill,
   type ParcelOcrPerson,
   type ParcelOcrResult,
@@ -46,6 +47,10 @@ export function ParcelOcrCapture({
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [result, setResult] = useState<ParcelOcrResult | null>(null);
+
+  useEffect(() => {
+    if (enabled) warmupParcelOcr();
+  }, [enabled]);
 
   useEffect(() => {
     if (!enabled || !autoStart || disabled || started.current) return;
@@ -124,24 +129,28 @@ export function ParcelOcrCapture({
 
     setBusy(true);
     setResult(null);
-    setStatus("Saving the photo…");
+    setStatus("Reading the label…");
     onFill({ deliveredOn: scanDeliveredOn() }, true);
     try {
       const capture = await fileToParcelCapture(file);
-      await uploadPhoto(capture.upload);
-      setStatus("Reading the label…");
+      const uploadTask = uploadPhoto(capture.upload).catch(() => undefined);
       const scanned = await detectBarcodeFromImage(capture.ocr);
       const labelText = await recognizeParcelLabel(capture.ocr);
-      const barcodeText = scanned
-        ? ""
-        : await recognizeBarcodeText(capture.ocr);
-      const text = [labelText, barcodeText].filter(Boolean).join("\n");
-      if (!text && !scanned) {
-        setStatus("No text was read from the photo. Hold the label closer and try again.");
+      const parsed = parseParcelLabel(labelText);
+      const barcode = scanned || parsed.tracking;
+      if (barcode) onFill({ barcode }, true);
+      if (parsed.carrier) {
+        onFill({ typeTitle: parsed.carrier }, true);
+      }
+      const text = formatLookupText(labelText, parsed);
+      if (!text && !barcode) {
+        setStatus("No text was read. Fill the frame with the label and hold still.");
+        await uploadTask;
         return;
       }
-      setStatus("Matching the form…");
-      applyLookup(await lookupParcelOcr(text, scanned));
+      setStatus("Matching resident and unit…");
+      applyLookup(await lookupParcelOcr(text || barcode, barcode));
+      await uploadTask;
     } catch (e) {
       setStatus(e instanceof Error ? e.message : "Could not read the label.");
     } finally {
@@ -155,7 +164,7 @@ export function ParcelOcrCapture({
         <div>
           <p className="text-sm font-semibold text-[var(--ink)]">Scan</p>
           <p className="text-xs text-[var(--muted)]">
-            Photograph the label to fill resident, unit, barcode, and type.
+            Fill the frame with the label and hold still.
           </p>
         </div>
         <button

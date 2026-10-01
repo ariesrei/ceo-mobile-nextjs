@@ -8,7 +8,7 @@ import type {
   ParcelOptions,
   ParcelPhoto,
 } from "@/lib/parcels";
-import type { ParcelOcrFill } from "@/lib/parcel-ocr";
+import { scanDeliveredOn, type ParcelOcrFill } from "@/lib/parcel-ocr";
 import { findDuplicateBarcode } from "@/lib/helpers/parcels";
 import { ParcelCameraPhotos } from "./ParcelCameraPhotos";
 import { ParcelOcrCapture } from "./ParcelOcrCapture";
@@ -76,7 +76,9 @@ export function ParcelForm({
   const saveHref =
     afterSaveHref ||
     (parcel?.id ? `/account/parcels/${parcel.id}` : "/account/parcels");
-  const split = splitDeliveredOn(parcel?.parcel_delivered_on);
+  const split = splitDeliveredOn(
+    parcel?.parcel_delivered_on || (!parcel?.id ? scanDeliveredOn() : "")
+  );
   const [units, setUnits] = useState<ParcelChoice[]>([]);
   const [types, setTypes] = useState<ParcelChoice[]>([]);
   const [staff, setStaff] = useState<ParcelChoice[]>([]);
@@ -172,6 +174,11 @@ export function ParcelForm({
       }
       if (fill.typeId && (force || !current.parcel_type)) {
         next.parcel_type = String(fill.typeId);
+      } else if (fill.typeTitle && !current.parcel_type) {
+        const match = types.find(
+          (item) => item.label.toLowerCase() === fill.typeTitle?.toLowerCase()
+        );
+        if (match) next.parcel_type = String(match.id);
       }
       if (fill.barcode) {
         next.comments_parcel_barcode = fill.barcode;
@@ -317,13 +324,13 @@ export function ParcelForm({
       </div>
       <div className="ceo-form-row">
         <DateField
-          label="Delivered on (date)"
+          label="Delivered on (scan time)"
           value={form.delivered_date}
           onChange={(delivered_date) => setForm({ ...form, delivered_date })}
           required
         />
         <Input
-          label="Delivered time"
+          label="Scan time"
           type="time"
           value={form.delivered_time}
           onChange={(e) => setForm({ ...form, delivered_time: e.target.value })}

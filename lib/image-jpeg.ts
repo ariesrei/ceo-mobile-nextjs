@@ -1,5 +1,7 @@
 const UPLOAD_MAX_EDGE = 1280;
-const JPEG_QUALITY = 0.8;
+const OCR_MAX_EDGE = 1400;
+const JPEG_QUALITY = 0.78;
+const OCR_JPEG_QUALITY = 0.86;
 
 function loadImageFromFile(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -108,18 +110,22 @@ export async function fileToOcrImages(file: File): Promise<{
   return { color: capture.ocr, barcode: capture.ocr };
 }
 
-/** One decode, one JPEG. Used for upload + OCR so WebView does not OOM. */
+/** One decode. Color upload + contrast OCR so text stays readable. */
 export async function fileToParcelCapture(file: File): Promise<{
   upload: string;
   ocr: string;
 }> {
   const { width, height, draw } = await sourceFromFile(file);
   try {
-    const jpeg = drawToCanvas(draw, width, height, UPLOAD_MAX_EDGE).toDataURL(
+    const upload = drawToCanvas(draw, width, height, UPLOAD_MAX_EDGE).toDataURL(
       "image/jpeg",
       JPEG_QUALITY
     );
-    return { upload: jpeg, ocr: jpeg };
+    const ocr = drawToCanvas(draw, width, height, OCR_MAX_EDGE, true).toDataURL(
+      "image/jpeg",
+      OCR_JPEG_QUALITY
+    );
+    return { upload, ocr };
   } finally {
     closeSource(draw);
   }
