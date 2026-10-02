@@ -11,6 +11,7 @@ import {
 } from "@/lib/helpers/guests";
 import { ClaimThumb } from "./ClaimThumb";
 import { Card } from "./ui/Card";
+import { ListSkeleton } from "./ui/ListState";
 import {
   ClaimSearch,
   activeFilterCount,
@@ -194,10 +195,7 @@ export function GuestsList() {
       />
 
       {showFilters ? null : loading ? (
-        <div className="space-y-3">
-          <div className="ceo-skel h-[92px] rounded-2xl" />
-          <div className="ceo-skel h-[92px] rounded-2xl" />
-        </div>
+        <ListSkeleton rows={2} />
       ) : error ? (
         <Card>
           <p className="text-sm text-[var(--danger)]">{error}</p>

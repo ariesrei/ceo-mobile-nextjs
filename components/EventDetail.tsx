@@ -50,7 +50,7 @@ export function EventDetail({ eventId }: { eventId: number }) {
       .finally(() => setLoading(false));
   }, [eventId]);
 
-  if (loading) return <ListSkeleton rows={2} height={88} />;
+  if (loading) return <ListSkeleton rows={2} variant="detail" />;
   if (!item) {
     return (
       <EmptyState icon="calendar" subtitle="It may have been removed or the link is old.">

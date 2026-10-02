@@ -17,7 +17,7 @@ export function ReservationDetail({ id }: { id: number }) {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <ListSkeleton rows={3} height={72} />;
+  if (loading) return <ListSkeleton rows={3} variant="detail" />;
   if (!item) {
     return (
       <EmptyState subtitle="This booking may no longer be on file.">

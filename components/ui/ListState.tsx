@@ -78,18 +78,192 @@ export function ListGo({ icon }: { icon: EmptyIcon }) {
   );
 }
 
+export function SkelLine({
+  width = "70%",
+  className = "",
+}: {
+  width?: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`ceo-skel ceo-skel-line${className ? ` ${className}` : ""}`}
+      style={{ width }}
+    />
+  );
+}
+
+export function SkelAvatar({
+  size = "2.5rem",
+  className = "",
+}: {
+  size?: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`ceo-skel ceo-skel-avatar${className ? ` ${className}` : ""}`}
+      style={{ width: size, height: size }}
+    />
+  );
+}
+
+export function SkelThumb({
+  size = "3.2rem",
+  className = "",
+}: {
+  size?: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`ceo-skel ceo-skel-thumb${className ? ` ${className}` : ""}`}
+      style={{ width: size, height: size }}
+    />
+  );
+}
+
+export function SkelButton({
+  width = "6.5rem",
+  className = "",
+}: {
+  width?: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`ceo-skel ceo-skel-btn${className ? ` ${className}` : ""}`}
+      style={{ width }}
+    />
+  );
+}
+
+export function SkelChip({
+  width = "3.4rem",
+  className = "",
+}: {
+  width?: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`ceo-skel ceo-skel-chip${className ? ` ${className}` : ""}`}
+      style={{ width }}
+    />
+  );
+}
+
+function SkeletonRow() {
+  return (
+    <div className="ceo-skel-card">
+      <SkelThumb />
+      <div className="ceo-skel-col">
+        <SkelLine width="68%" />
+        <SkelLine width="42%" />
+      </div>
+      <div className="ceo-skel-aside">
+        <SkelChip />
+        <SkelAvatar size="1.35rem" />
+      </div>
+    </div>
+  );
+}
+
+function SkeletonPref() {
+  return (
+    <div className="ceo-skel-pref">
+      <SkelLine width="46%" />
+      <span className="ceo-skel ceo-skel-toggle" />
+    </div>
+  );
+}
+
+function SkeletonDetail() {
+  return (
+    <div className="ceo-skel-detail">
+      <SkelLine width="52%" />
+      <SkelLine width="78%" />
+      <SkelLine width="64%" />
+      <SkelLine width="36%" />
+      <SkelButton width="100%" />
+    </div>
+  );
+}
+
+export function ProfileSkeleton() {
+  return (
+    <div className="ceo-skel-profile" role="status" aria-label="Loading">
+      <SkelAvatar size="6.4rem" />
+      <SkelLine width="9.5rem" />
+      <SkelLine width="6.2rem" />
+      <div className="ceo-skel-profile__bar">
+        <SkelLine width="4rem" />
+        <SkelButton width="5.4rem" />
+      </div>
+      <div className="ceo-skel-detail">
+        <SkelLine width="34%" />
+        <SkelLine width="72%" />
+        <SkelLine width="30%" />
+        <SkelLine width="58%" />
+        <SkelLine width="28%" />
+        <SkelLine width="64%" />
+      </div>
+    </div>
+  );
+}
+
+export function WarrantyHomeSkeleton() {
+  return (
+    <div
+      className="ceo-warranty-home-skel"
+      role="status"
+      aria-label="Loading warranty home"
+    >
+      <section className="ceo-warranty-overview">
+        <SkelLine width="8.5rem" />
+        <div className="ceo-warranty-stats">
+          {["a", "b", "c"].map((id) => (
+            <div key={id} className="ceo-warranty-stat">
+              <SkelLine width="2.1rem" className="ceo-skel-line--lg" />
+              <SkelLine width="3.2rem" />
+            </div>
+          ))}
+        </div>
+      </section>
+      <SkelButton width="100%" className="ceo-skel-btn--lg" />
+      <nav className="ceo-warranty-menu ceo-warranty-menu--home">
+        {["a", "b", "c", "d"].map((id) => (
+          <div key={id} className="ceo-warranty-menu__row ceo-warranty-menu__row--static">
+            <SkelAvatar size="1.35rem" />
+            <SkelLine width="58%" />
+          </div>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
 export function ListSkeleton({
   rows = 3,
   height = 72,
+  variant = "row",
 }: {
   rows?: number;
   height?: number;
+  variant?: "row" | "block" | "detail" | "pref";
 }) {
   return (
     <div className="ceo-list-skel" role="status" aria-label="Loading">
-      {Array.from({ length: rows }, (_, index) => (
-        <div key={index} className="ceo-skel rounded-2xl" style={{ height }} />
-      ))}
+      {Array.from({ length: rows }, (_, index) => {
+        if (variant === "block") {
+          return (
+            <div key={index} className="ceo-skel rounded-2xl" style={{ height }} />
+          );
+        }
+        if (variant === "detail") return <SkeletonDetail key={index} />;
+        if (variant === "pref") return <SkeletonPref key={index} />;
+        return <SkeletonRow key={index} />;
+      })}
     </div>
   );
 }

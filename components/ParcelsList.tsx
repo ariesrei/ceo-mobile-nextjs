@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import type { ParcelChoice, ParcelItem } from "@/lib/parcels";
 import { useStaffMenuPath } from "@/hooks/useStaffMenuPath";
+import { readStoredNavRole } from "@/lib/browser-session";
 import { listParcels, loadParcelOptions } from "@/lib/helpers/parcels";
 import { ClaimThumb } from "./ClaimThumb";
 import { ParcelSignoutForm } from "./ParcelSignoutForm";
@@ -31,6 +32,10 @@ export function ParcelsList() {
   const [items, setItems] = useState<ParcelItem[]>([]);
   const { staff: isStaff } = useStaffMenuPath("/account/parcels");
   const [canEdit, setCanEdit] = useState(false);
+
+  useLayoutEffect(() => {
+    if (readStoredNavRole() === "staff") setCanEdit(true);
+  }, []);
   const [pickupTypes, setPickupTypes] = useState<string[]>(["Quick Signout"]);
   const [parcelTypes, setParcelTypes] = useState<ParcelChoice[]>([]);
   const [staff, setStaff] = useState<ParcelChoice[]>([]);
@@ -45,7 +50,7 @@ export function ParcelsList() {
   const [showFilters, setShowFilters] = useState(false);
   const [draft, setDraft] = useState(EMPTY_FILTERS);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
-  const [ocrEnabled, setOcrEnabled] = useState(false);
+  const [ocrEnabled, setOcrEnabled] = useState(true);
 
   const activeStatus = status;
 
@@ -311,15 +316,15 @@ export function ParcelsList() {
         }}
       />
 
-      {showFilters || !(canEdit || isStaff) ? null : (
+      {canEdit || isStaff ? (
         <Link
           href={ocrEnabled ? "/account/parcels/new?ocr=1" : "/account/parcels/new"}
-          className="ceo-fab"
+          className={`ceo-fab${showFilters ? " is-quiet" : ""}`}
         >
           <PlusIcon className="h-4 w-4" />
-          {ocrEnabled ? "Scan package" : "New package"}
+          Scan package
         </Link>
-      )}
+      ) : null}
     </div>
   );
 }

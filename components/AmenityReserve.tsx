@@ -336,7 +336,7 @@ export function AmenityReserve({ amenityId }: { amenityId: number }) {
     router.refresh();
   }
 
-  if (loading) return <ListSkeleton rows={1} height={220} />;
+  if (loading) return <ListSkeleton rows={1} height={220} variant="block" />;
   if (!item) {
     return (
       <EmptyState icon="calendar" subtitle="It may have been removed or the link is old.">

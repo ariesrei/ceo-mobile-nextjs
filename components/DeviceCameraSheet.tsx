@@ -98,10 +98,11 @@ export function DeviceCameraSheet({
   return createPortal(
     <div
       className={open ? "ceo-cam-sheet" : "ceo-cam-sheet ceo-cam-sheet--off"}
-      hidden={!open}
       role="dialog"
       aria-modal={open}
+      aria-hidden={!open}
       aria-label={title}
+      inert={open ? undefined : true}
     >
       <video
         ref={videoRef}

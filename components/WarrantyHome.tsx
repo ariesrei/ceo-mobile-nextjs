@@ -11,6 +11,7 @@ import type { WarrantySummary } from "@/lib/warranties";
 import { BottomNav } from "./BottomNav";
 import { FastLink } from "./FastLink";
 import { ThemeToggle } from "./ThemeToggle";
+import { WarrantyHomeSkeleton } from "./ui/ListState";
 import { splitPropertyName, useWarrantyBrand } from "./WarrantyBrand";
 import {
   ArrowLeftIcon,
@@ -147,17 +148,7 @@ export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
 
       <div className="ceo-warranty-sheet">
         {loading ? (
-          <div
-            className="ceo-warranty-home-skel"
-            role="status"
-            aria-label="Loading warranty home"
-          >
-            <div className="ceo-skel h-[124px] rounded-[1.25rem]" />
-            <div className="ceo-skel h-[52px] rounded-[1.15rem]" />
-            <div className="ceo-skel h-[58px] rounded-2xl" />
-            <div className="ceo-skel h-[58px] rounded-2xl" />
-            <div className="ceo-skel h-[58px] rounded-2xl" />
-          </div>
+          <WarrantyHomeSkeleton />
         ) : (
           <>
             <section className="ceo-warranty-overview">

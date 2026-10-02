@@ -66,7 +66,7 @@ export function ClientWpRecord<
   }, [path, initial]);
 
   if (pending) {
-    return <ListSkeleton rows={3} height={88} />;
+    return <ListSkeleton rows={3} variant="detail" />;
   }
   if (data) {
     const props = { data, ...(extra ?? ({} as E)) } as { data: T } & E;

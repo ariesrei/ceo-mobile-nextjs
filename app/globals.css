@@ -820,6 +820,11 @@ body.ceo-ops-theme {
   display: grid;
   gap: 0.55rem;
   min-height: 7.25rem;
+  contain: layout;
+}
+
+.ceo-pkg-scan--off {
+  display: none;
 }
 
 .ceo-pkg-scan__head p {
@@ -838,6 +843,7 @@ body.ceo-ops-theme {
 
 .ceo-pkg-scan__go {
   width: 100%;
+  min-height: 3.05rem;
   border-radius: 0.9rem;
   background: var(--accent);
   color: #081014;
@@ -852,6 +858,7 @@ body.ceo-ops-theme {
 
 .ceo-pkg-scan__alt {
   width: 100%;
+  min-height: 1.85rem;
   padding: 0.15rem 0 0.1rem;
   background: none;
   color: var(--muted);
@@ -867,6 +874,10 @@ body.ceo-ops-theme {
 .ceo-pkg-photos-edit {
   display: grid;
   gap: 0.55rem;
+}
+
+.ceo-pkg-photos-edit--off {
+  display: none;
 }
 
 .ceo-pkg-hero {
@@ -3292,7 +3303,10 @@ body.ceo-ops-theme {
 }
 
 .ceo-cam-sheet--off {
-  display: none;
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+  z-index: -1;
 }
 
 .ceo-cam-sheet__video {
@@ -3349,6 +3363,7 @@ body.ceo-ops-theme {
 }
 
 .ceo-cam-sheet__text {
+  min-width: 4.25rem;
   min-height: 2.5rem;
   padding: 0;
   border: 0;
@@ -3426,7 +3441,9 @@ body.ceo-ops-theme {
   z-index: 90;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
+  min-width: 9.75rem;
   border-radius: 999px;
   background: var(--accent);
   color: var(--accent-ink) !important;
@@ -3434,6 +3451,11 @@ body.ceo-ops-theme {
   font-size: 0.88rem;
   font-weight: 800;
   box-shadow: 0 10px 24px var(--accent-glow);
+}
+
+.ceo-fab.is-quiet {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .ceo-bottom-nav {
@@ -3753,6 +3775,140 @@ body.ceo-ops-theme {
   );
   background-size: 200% 100%;
   animation: ceo-skel 1.1s ease-in-out infinite;
+}
+
+.ceo-skel-card,
+.ceo-skel-detail,
+.ceo-skel-pref,
+.ceo-skel-profile {
+  --skel-from: var(--surface-2);
+  --skel-mid: color-mix(in srgb, var(--ink) 10%, var(--surface-2));
+}
+
+.ceo-skel-card .ceo-skel,
+.ceo-skel-detail .ceo-skel,
+.ceo-skel-pref .ceo-skel,
+.ceo-skel-profile .ceo-skel,
+.ceo-warranty-overview .ceo-skel,
+.ceo-warranty-menu .ceo-skel,
+.ceo-ops-stat .ceo-skel {
+  background: linear-gradient(
+    90deg,
+    var(--skel-from, var(--surface-2)) 0%,
+    var(--skel-mid, color-mix(in srgb, var(--ink) 10%, var(--surface-2))) 50%,
+    var(--skel-from, var(--surface-2)) 100%
+  );
+  background-size: 200% 100%;
+}
+
+.ceo-skel-line,
+.ceo-skel-avatar,
+.ceo-skel-thumb,
+.ceo-skel-btn,
+.ceo-skel-chip,
+.ceo-skel-toggle {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.ceo-skel-line {
+  height: 0.72rem;
+  border-radius: 999px;
+}
+
+.ceo-skel-line--lg {
+  height: 1.55rem;
+  width: 2.1rem;
+}
+
+.ceo-skel-avatar {
+  border-radius: 999px;
+}
+
+.ceo-skel-thumb {
+  border-radius: 0.7rem;
+}
+
+.ceo-skel-btn {
+  height: 2.15rem;
+  border-radius: 999px;
+}
+
+.ceo-skel-btn--lg {
+  height: 2.7rem;
+}
+
+.ceo-skel-chip {
+  height: 1.2rem;
+  border-radius: 999px;
+}
+
+.ceo-skel-toggle {
+  width: 2.5rem;
+  height: 1.4rem;
+  border-radius: 999px;
+}
+
+.ceo-skel-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.8rem;
+}
+
+.ceo-skel-col {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 0.42rem;
+}
+
+.ceo-skel-aside {
+  display: grid;
+  justify-items: end;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+}
+
+.ceo-skel-detail {
+  display: grid;
+  gap: 0.65rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1rem;
+}
+
+.ceo-skel-pref {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.05rem 0.15rem;
+  border-top: 1px solid var(--border);
+}
+
+.ceo-skel-pref:first-child {
+  border-top: 0;
+}
+
+.ceo-skel-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  padding-top: 0.4rem;
+}
+
+.ceo-skel-profile__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 0.55rem 0 0.15rem;
 }
 
 @keyframes ceo-skel {

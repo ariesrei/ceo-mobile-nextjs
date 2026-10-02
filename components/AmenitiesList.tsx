@@ -64,7 +64,7 @@ export function AmenitiesList() {
       </label>
 
       {pending ? (
-        <ListSkeleton rows={3} height={196} />
+        <ListSkeleton rows={3} height={196} variant="block" />
       ) : (
         <PaginatedList
           items={visible}

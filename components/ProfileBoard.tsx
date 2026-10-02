@@ -6,7 +6,7 @@ import type { Profile } from "@/lib/types";
 import { EditProfileForm } from "./EditProfileForm";
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/Button";
-import { EmptyState, ListSkeleton } from "./ui/ListState";
+import { EmptyState, ProfileSkeleton } from "./ui/ListState";
 
 function Field({ label, value }: { label: string; value?: string }) {
   const text = (value || "").trim();
@@ -51,7 +51,7 @@ export function ProfileBoard() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <ListSkeleton rows={3} height={88} />;
+  if (loading) return <ProfileSkeleton />;
   if (!item) {
     return (
       <EmptyState subtitle="Try again in a moment.">

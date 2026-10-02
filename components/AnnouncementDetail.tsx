@@ -35,7 +35,7 @@ export function AnnouncementDetail({ announcementId }: { announcementId: number 
       .finally(() => setLoading(false));
   }, [announcementId]);
 
-  if (loading) return <ListSkeleton rows={2} height={88} />;
+  if (loading) return <ListSkeleton rows={2} variant="detail" />;
   if (!item) {
     return (
       <EmptyState icon="horn" subtitle="It may have been removed or the link is old.">

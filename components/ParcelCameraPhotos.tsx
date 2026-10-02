@@ -26,9 +26,7 @@ export function ParcelCameraPhotos({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
-  if (hideWhenEmpty && !photos.length) {
-    return null;
-  }
+  const hidden = Boolean(hideWhenEmpty && !photos.length);
 
   async function onCaptured(file: File) {
     if (disabled || uploading) return;
@@ -49,7 +47,10 @@ export function ParcelCameraPhotos({
   }
 
   return (
-    <div className="ceo-pkg-photos-edit">
+    <div
+      className={`ceo-pkg-photos-edit${hidden ? " ceo-pkg-photos-edit--off" : ""}`}
+      hidden={hidden}
+    >
       <ParcelPhotoGallery
         photos={photos}
         disabled={disabled}

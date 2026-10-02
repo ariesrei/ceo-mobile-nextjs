@@ -69,10 +69,6 @@ export function ParcelOcrCapture({
     setOpen(true);
   }, [autoStart, disabled, enabled]);
 
-  if (!enabled) {
-    return null;
-  }
-
   async function uploadPhoto(image: string, replaceId?: number): Promise<void> {
     const uploaded = await uploadParcelJpeg(image, parcelId || 0, {
       replaceLabel: true,
@@ -203,7 +199,8 @@ export function ParcelOcrCapture({
 
   return (
     <div
-      className="ceo-pkg-scan"
+      className={`ceo-pkg-scan${enabled ? "" : " ceo-pkg-scan--off"}`}
+      hidden={!enabled}
       onDragOver={(e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = "copy";
@@ -221,10 +218,11 @@ export function ParcelOcrCapture({
       <button
         type="button"
         disabled={disabled || busy}
+        aria-busy={busy}
         onClick={() => setOpen(true)}
         className="ceo-pkg-scan__go"
       >
-        {busy ? "Reading…" : "Scan label"}
+        Scan label
       </button>
       <button
         type="button"

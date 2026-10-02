@@ -23,7 +23,7 @@ import { AccountMenu } from "./AccountMenu";
 import { BottomNav } from "./BottomNav";
 import { FastLink } from "./FastLink";
 import { ThemeToggle } from "./ThemeToggle";
-import { EmptyState, ListGo, ListSkeleton } from "./ui/ListState";
+import { EmptyState, ListGo, ListSkeleton, SkelAvatar, SkelLine } from "./ui/ListState";
 import { LogoutOverlay, useLogout } from "./ui/LogoutOverlay";
 
 const RESIDENT_HOME_IDS = [
@@ -620,7 +620,11 @@ export function HomeScreen({
               {opsLoading && !homeSummary ? (
                 <div className="ceo-ops-stats">
                   {["balance", "requests", "messages", "events"].map((id) => (
-                    <div key={id} className="ceo-ops-stat ceo-skel h-[132px]" />
+                    <div key={id} className="ceo-ops-stat">
+                      <SkelAvatar size="2.05rem" />
+                      <SkelLine width="72%" />
+                      <SkelLine width="44%" />
+                    </div>
                   ))}
                 </div>
               ) : (

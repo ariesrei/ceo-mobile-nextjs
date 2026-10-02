@@ -97,7 +97,7 @@ export function ParcelDetail({ parcelId }: { parcelId: number }) {
     : false;
   const canEdit = Boolean(item?.can_edit || isStaff);
 
-  if (pending) return <ListSkeleton rows={4} height={72} />;
+  if (pending) return <ListSkeleton rows={4} variant="detail" />;
   if (!item) {
     return (
       <EmptyState icon="inbox" subtitle={error || "It may have been removed."}>

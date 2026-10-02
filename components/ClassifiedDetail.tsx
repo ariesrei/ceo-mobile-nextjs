@@ -26,7 +26,7 @@ export function ClassifiedDetail({ classifiedId }: { classifiedId: number }) {
       .finally(() => setLoading(false));
   }, [classifiedId]);
 
-  if (loading) return <ListSkeleton rows={2} height={88} />;
+  if (loading) return <ListSkeleton rows={2} variant="detail" />;
   if (!item) {
     return (
       <EmptyState icon="tag" subtitle="It may have been removed or the link is old.">

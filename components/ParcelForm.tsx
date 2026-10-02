@@ -160,7 +160,7 @@ export function ParcelForm({
   const [photos, setPhotos] = useState<ParcelPhoto[]>(
     parseParcelPhotos(parcel?.photos)
   );
-  const [ocrEnabled, setOcrEnabled] = useState(false);
+  const [ocrEnabled, setOcrEnabled] = useState(true);
   const [optionsReady, setOptionsReady] = useState(false);
   const [smsEnabled, setSmsEnabled] = useState(false);
   const [error, setError] = useState("");

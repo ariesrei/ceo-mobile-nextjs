@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { WarrantyItem } from "@/lib/warranties";
 import { fetchAllWarrantyItems } from "@/lib/warranty-reports";
 import { FastLink } from "./FastLink";
+import { SkelAvatar, SkelLine } from "./ui/ListState";
 import {
   BuildingIcon,
   ChevronRightIcon,
@@ -87,12 +88,14 @@ export function WarrantyReports() {
 
   if (loading) {
     return (
-      <div className="ceo-warranty-home-skel" role="status" aria-label="Loading reports">
-        <div className="ceo-skel h-[58px] rounded-2xl" />
-        <div className="ceo-skel h-[58px] rounded-2xl" />
-        <div className="ceo-skel h-[58px] rounded-2xl" />
-        <div className="ceo-skel h-[58px] rounded-2xl" />
-      </div>
+      <nav className="ceo-warranty-menu" role="status" aria-label="Loading reports">
+        {["a", "b", "c", "d"].map((id) => (
+          <div key={id} className="ceo-warranty-menu__row ceo-warranty-menu__row--static">
+            <SkelAvatar size="2.1rem" />
+            <SkelLine width="62%" />
+          </div>
+        ))}
+      </nav>
     );
   }
 

@@ -73,7 +73,7 @@ export function PreferencesBoard() {
     else setPrefs(res.item);
   }
 
-  if (pending) return <ListSkeleton rows={6} height={64} />;
+  if (pending) return <ListSkeleton rows={6} variant="pref" />;
   if (!prefs) {
     return (
       <EmptyState subtitle="Try again in a moment.">
