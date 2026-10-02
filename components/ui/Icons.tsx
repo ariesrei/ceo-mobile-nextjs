@@ -280,3 +280,29 @@ export function ArchiveIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function SunIcon({ className }: IconProps) {
+  return (
+    <svg {...svgProps} className={className}>
+      <circle cx="12" cy="12" r="3.6" />
+      <path d="M12 3.2v1.8M12 19v1.8M3.2 12h1.8M19 12h1.8M5.6 5.6l1.3 1.3M17.1 17.1l1.3 1.3M18.4 5.6l-1.3 1.3M6.9 17.1l-1.3 1.3" />
+    </svg>
+  );
+}
+
+export function MoonIcon({ className }: IconProps) {
+  return (
+    <svg {...svgProps} className={className}>
+      <path d="M15.6 4.4A7.8 7.8 0 1 0 19.6 15 6.2 6.2 0 0 1 15.6 4.4Z" />
+    </svg>
+  );
+}
+
+export function DeviceIcon({ className }: IconProps) {
+  return (
+    <svg {...svgProps} className={className}>
+      <rect x="7.5" y="3.5" width="9" height="17" rx="1.8" />
+      <path d="M11 18.2h2" />
+    </svg>
+  );
+}

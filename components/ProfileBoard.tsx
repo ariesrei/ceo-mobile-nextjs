@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { getProfile } from "@/lib/helpers/profile";
 import type { Profile } from "@/lib/types";
 import { EditProfileForm } from "./EditProfileForm";
+import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/Button";
 import { EmptyState, ListSkeleton } from "./ui/ListState";
 
@@ -170,6 +171,8 @@ export function ProfileBoard() {
             <Field label="Email notification" value={onOff(item.opt_email)} />
             <Field label="SMS notification" value={onOff(item.opt_sms)} />
           </Card>
+
+          <ThemeToggle variant="row" className="ceo-theme--card" />
         </>
       )}
     </div>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useConnectSession } from "@/hooks/useConnectSession";
 import type { AppProfile } from "@/lib/app-profile";
 import { brandForProfile, LANDING_BG } from "@/lib/brand";
+import { ThemeToggle } from "../ThemeToggle";
 
 export function AuthScreen({
   fallbackLogo = "",
@@ -112,6 +113,7 @@ export function AuthScreen({
       </section>
 
       <div className="ceo-login__card">{children}</div>
+      <ThemeToggle compact className="ceo-theme--login" />
     </div>
   );
 }

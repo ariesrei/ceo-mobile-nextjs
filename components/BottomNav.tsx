@@ -22,6 +22,7 @@ import {
   type NavRole,
 } from "@/lib/navigation";
 import type { MenuItem, NavigationResponse } from "@/lib/types";
+import { ThemeToggle } from "./ThemeToggle";
 import { LogoutOverlay, useLogout } from "./ui/LogoutOverlay";
 
 const ICONS: Record<string, string> = {
@@ -692,6 +693,9 @@ export function BottomNav({
                   </Link>
                 </li>
               ))}
+              <li>
+                <ThemeToggle variant="row" />
+              </li>
             </ul>
             <button
               type="button"

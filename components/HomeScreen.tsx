@@ -22,6 +22,7 @@ import type { MenuItem, NavigationResponse } from "@/lib/types";
 import { AccountMenu } from "./AccountMenu";
 import { BottomNav } from "./BottomNav";
 import { FastLink } from "./FastLink";
+import { ThemeToggle } from "./ThemeToggle";
 import { EmptyState, ListGo, ListSkeleton } from "./ui/ListState";
 import { LogoutOverlay, useLogout } from "./ui/LogoutOverlay";
 
@@ -452,6 +453,7 @@ export function HomeScreen({
             <p>Earn a $100 credit!</p>
             <span>Invite Now</span>
           </div>
+          <ThemeToggle variant="row" />
           <div className="ceo-ops-rail__tools">
             <FastLink
               href="/account/preferences"

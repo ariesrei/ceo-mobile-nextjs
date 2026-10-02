@@ -10,6 +10,7 @@ import {
   savePrefs,
   type AppPrefs,
 } from "@/lib/helpers/prefs";
+import { ThemeToggle } from "./ThemeToggle";
 import { EmptyState, ListSkeleton } from "./ui/ListState";
 import { useHeldLoading } from "./ui/useLoadMore";
 
@@ -85,6 +86,8 @@ export function PreferencesBoard() {
 
   return (
     <div className="ceo-pref">
+      <ThemeToggle variant="row" />
+
       <section>
         <h2>Notifications</h2>
         <Toggle

@@ -1,4 +1,5 @@
 import { ConnectForm } from "@/components/ConnectForm";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { companyBrand, LANDING_BG } from "@/lib/brand";
 
 const brand = companyBrand();
@@ -32,6 +33,7 @@ export default function ConnectPage() {
         <div className="ceo-login__card">
           <ConnectForm />
         </div>
+        <ThemeToggle compact className="ceo-theme--login" />
       </div>
     </main>
   );
