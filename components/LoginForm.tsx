@@ -21,6 +21,7 @@ import {
 } from "@/lib/browser-wp";
 import { navRoleFromUser } from "@/lib/navigation";
 import { clearConnectConfig } from "@/lib/connect";
+import { clearStaffNotifications } from "@/lib/helpers/notifications";
 import { publicWpErrorMessage } from "@/lib/wp-error";
 import { AuthScreen } from "./auth/AuthScreen";
 import { AuthField } from "./auth/AuthField";
@@ -73,6 +74,7 @@ export function LoginForm({
     setChangingProperty(true);
     clearConnectConfig();
     clearBrowserTokens();
+    clearStaffNotifications();
     try {
       await fetch("/api/connect", { method: "DELETE" });
     } catch {

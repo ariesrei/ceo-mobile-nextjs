@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { clearBrowserTokens } from "@/lib/browser-session";
+import { clearStaffNotifications } from "@/lib/helpers/notifications";
 
 export function useLogout() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export function useLogout() {
     if (loggingOut) return;
     setLoggingOut(true);
     clearBrowserTokens();
+    clearStaffNotifications();
     try {
       await fetch("/api/auth/logout", { method: "POST" });
     } catch {

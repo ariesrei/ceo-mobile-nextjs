@@ -561,6 +561,15 @@ body.ceo-ops-theme {
   color: var(--ink);
 }
 
+.ceo-ops-notes__group li:not(.is-unread) a {
+  background: var(--surface);
+}
+
+.ceo-ops-notes__group li:not(.is-unread) strong {
+  color: var(--muted);
+  font-weight: 550;
+}
+
 .ceo-ops-notes__group a {
   display: grid;
   grid-template-columns: 2.35rem minmax(0, 1fr) auto;
@@ -2361,19 +2370,29 @@ body.ceo-ops-theme {
 }
 
 .ceo-events-row__body b {
-  display: block;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   font-size: 0.98rem;
   font-weight: 700;
 }
 
 .ceo-events-row__body em,
 .ceo-events-row__body small {
-  display: block;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   margin-top: 0.32rem;
   font-style: normal;
   color: var(--muted);
   font-size: 0.78rem;
   line-height: 1.4;
+}
+
+.ceo-events-row__body em {
+  -webkit-line-clamp: 1;
 }
 
 .ceo-events-row__chev {

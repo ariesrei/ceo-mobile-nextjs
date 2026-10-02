@@ -1,6 +1,22 @@
 import { apiGet, queryString } from "./api";
 import { asNumber, asPhotoUrl, asRecord, asString, readListPayload } from "./validate";
 
+function decodeText(value: string): string {
+  const plain = value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  if (!plain.includes("&")) return plain;
+  return plain
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) =>
+      String.fromCharCode(parseInt(code, 16))
+    );
+}
+
 export type CommunityEvent = {
   id: number;
   title: string;
@@ -26,11 +42,11 @@ export function toCommunityEvent(raw: unknown): CommunityEvent | null {
   if (!row || id <= 0) return null;
   return {
     id,
-    title: asString(row.title),
+    title: decodeText(asString(row.title)),
     start: asString(row.start),
     end: asString(row.end),
-    venue: asString(row.venue),
-    excerpt: asString(row.excerpt),
+    venue: decodeText(asString(row.venue)),
+    excerpt: decodeText(asString(row.excerpt)),
     photo: asPhotoUrl(row.photo),
   };
 }

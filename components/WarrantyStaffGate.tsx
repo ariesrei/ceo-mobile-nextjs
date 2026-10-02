@@ -3,7 +3,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { loadWarrantyOptions } from "@/lib/helpers/warranties";
-import { ListSkeleton } from "./ui/ListState";
 
 export function WarrantyStaffGate({
   children,
@@ -33,6 +32,6 @@ export function WarrantyStaffGate({
     };
   }, [confirmed, fallbackHref, router]);
 
-  if (!ok) return <ListSkeleton rows={4} variant="detail" />;
+  if (!ok) return null;
   return children;
 }

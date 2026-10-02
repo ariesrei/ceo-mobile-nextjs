@@ -5,9 +5,12 @@ import { createPortal } from "react-dom";
 import { FastLink } from "./FastLink";
 import {
   ackStaffNotifications,
+  applyNotificationReads,
   loadStaffNotifications,
   peekStaffNotifications,
+  rememberNotificationsRead,
   rememberStaffNotifications,
+  subscribeStaffNotifications,
   type StaffNotifications,
 } from "@/lib/helpers/notifications";
 import {
@@ -71,24 +74,6 @@ function noteHref(href: string): string {
   return `${next.pathname}${next.search}`;
 }
 
-function clearType(
-  current: StaffNotifications,
-  typeId: string,
-  totals?: { total_count: number; has_unread: boolean }
-): StaffNotifications {
-  const types = current.types.map((type) =>
-    type.id === typeId ? { ...type, count: 0 } : type
-  );
-  return {
-    ...current,
-    types,
-    total_count:
-      totals?.total_count ??
-      types.reduce((sum, type) => sum + Math.max(0, type.count), 0),
-    has_unread: totals?.has_unread ?? types.some((type) => type.count > 0),
-  };
-}
-
 export function NotificationsBell({
   className = "",
   expectAvailable = false,
@@ -102,10 +87,25 @@ export function NotificationsBell({
   const [loading, setLoading] = useState(true);
   const [acking, setAcking] = useState(false);
   const acked = useRef(new Set<string>());
+  const bellRef = useRef<HTMLButtonElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+
+  const closeSheet = useCallback(() => {
+    const active = document.activeElement;
+    if (
+      active instanceof HTMLElement &&
+      sheetRef.current?.contains(active)
+    ) {
+      active.blur();
+    }
+    setOpen(false);
+    bellRef.current?.focus();
+  }, []);
 
   const applyData = useCallback((next: StaffNotifications | null) => {
-    setData(next);
-    if (next) rememberStaffNotifications(next);
+    const overlaid = next ? applyNotificationReads(next) : next;
+    setData(overlaid);
+    if (overlaid) rememberStaffNotifications(overlaid);
   }, []);
 
   useEffect(() => {
@@ -128,46 +128,23 @@ export function NotificationsBell({
     };
   }, [applyData]);
 
-  const markType = useCallback(
-    async (typeId: string) => {
-      if (acked.current.has(typeId)) return;
-      acked.current.add(typeId);
-      setData((prev) => {
-        if (!prev) return prev;
-        const next = clearType(prev, typeId);
-        rememberStaffNotifications(next);
-        return next;
-      });
-      const result = await ackStaffNotifications(typeId);
-      if (!result.ok) {
-        acked.current.delete(typeId);
-        applyData(await loadStaffNotifications(true));
-        return;
-      }
-      setData((prev) => {
-        if (!prev) return prev;
-        const next = clearType(prev, typeId, result);
-        rememberStaffNotifications(next);
-        return next;
-      });
-    },
-    [applyData]
-  );
+  useEffect(() => subscribeStaffNotifications(applyData), [applyData]);
 
   const confirmedOff = data !== null && !data.available;
   const showBell = !confirmedOff && (expectAvailable || Boolean(data?.available));
 
   if (!showBell) return null;
 
-  const visible = (data?.types || []).filter(
-    (type) => type.count > 0 && type.items.length > 0
-  );
+  const visible = (data?.types || []).filter((type) => type.items.length > 0);
   const badge = Math.min(99, data?.total_count || 0);
   const pending = loading && !hasRows(data);
 
   async function markAll() {
-    if (acking) return;
+    if (acking || !data || (data.total_count || 0) < 1) return;
     setAcking(true);
+    rememberNotificationsRead(data, "all");
+    data.types.forEach((type) => acked.current.add(type.id));
+    applyData(applyNotificationReads(data));
     try {
       const next = await ackStaffNotifications("all");
       const fresh = await loadStaffNotifications(true);
@@ -175,15 +152,7 @@ export function NotificationsBell({
         applyData(fresh);
         return;
       }
-      const merged = {
-        ...fresh,
-        total_count: next.total_count,
-        has_unread: next.has_unread,
-      };
-      applyData(merged);
-      fresh.types.forEach((type) => {
-        if (type.count < 1) acked.current.add(type.id);
-      });
+      applyData(fresh);
     } finally {
       setAcking(false);
     }
@@ -191,14 +160,14 @@ export function NotificationsBell({
 
   const sheet = (
     <div
+      ref={sheetRef}
       className={open ? "ceo-ops-notes" : "ceo-ops-notes ceo-ops-notes--off"}
       role="dialog"
       aria-modal={open}
-      aria-hidden={!open}
       aria-labelledby="ceo-notes-title"
       inert={open ? undefined : true}
       onClick={(e) => {
-        if (e.target === e.currentTarget) setOpen(false);
+        if (e.target === e.currentTarget) closeSheet();
       }}
     >
       <div className="ceo-ops-notes__sheet">
@@ -229,12 +198,12 @@ export function NotificationsBell({
                   {type.items.map((item) => (
                     <li
                       key={`${type.id}-${item.id}`}
-                      className={type.count > 0 ? "is-unread" : undefined}
+                      className={item.unread ? "is-unread" : undefined}
                       onClick={() => {
-                        setOpen(false);
-                        if (!type.skip_mark_seen && type.count > 0) {
-                          void markType(type.id);
-                        }
+                        closeSheet();
+                        if (!data || !item.unread) return;
+                        rememberNotificationsRead(data, type.id, [item.id]);
+                        applyData(data);
                       }}
                     >
                       <FastLink href={noteHref(item.href)}>
@@ -243,7 +212,7 @@ export function NotificationsBell({
                           <strong>{item.title}</strong>
                           {item.meta ? <small>{item.meta}</small> : null}
                         </span>
-                        {type.count > 0 ? (
+                        {item.unread ? (
                           <i className="ceo-ops-notes__pip" aria-hidden />
                         ) : (
                           <ChevronRightIcon className="ceo-ops-notes__go" />
@@ -260,7 +229,7 @@ export function NotificationsBell({
             <p>You are all caught up.</p>
           </div>
         )}
-        <button type="button" onClick={() => setOpen(false)}>
+        <button type="button" onClick={closeSheet}>
           Close
         </button>
       </div>
@@ -270,6 +239,7 @@ export function NotificationsBell({
   return (
     <>
       <button
+        ref={bellRef}
         type="button"
         className={`ceo-home-bell${className ? ` ${className}` : ""}`}
         aria-label={
