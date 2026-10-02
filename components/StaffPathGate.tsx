@@ -25,5 +25,5 @@ export function StaffPathGate({
   }, [confirmed, ready, staff, fallbackHref, router]);
 
   if (confirmed || (ready && staff)) return children;
-  return <ListSkeleton rows={3} />;
+  return <ListSkeleton rows={4} variant="detail" />;
 }

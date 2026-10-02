@@ -20,7 +20,9 @@ return <ul>{items.map(...)}</ul>;
 ```
 
 - Use `ListSkeleton` + `EmptyState` from `components/ui/ListState.tsx`.
-- First paint uses `ListSkeleton` (avatar/thumb + text lines + chip, not a blank block). `LoadingDots` are only for scroll load-more after data is already on screen.
+- One skeleton language per page, matching that screen: claim `row`, home `news`, amenity `block`, form/detail `detail`, settings `pref`.
+- Never mix a blank shimmer slab with structured rows on the same screen.
+- First paint uses `ListSkeleton` (thumb/avatar + text lines + chip/button as the real UI has). `LoadingDots` are only for scroll load-more after data is already on screen.
 - Never flash the empty sentence during load.
 - Never leave a bordered empty `<ul>` or divider when the list is empty.
 - Applies to Operations and Warranty screens.

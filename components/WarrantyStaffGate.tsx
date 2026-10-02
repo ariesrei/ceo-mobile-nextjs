@@ -33,6 +33,6 @@ export function WarrantyStaffGate({
     };
   }, [confirmed, fallbackHref, router]);
 
-  if (!ok) return <ListSkeleton rows={3} />;
+  if (!ok) return <ListSkeleton rows={4} variant="detail" />;
   return children;
 }

@@ -738,7 +738,15 @@ body.ceo-ops-theme {
 
 .ceo-list-skel {
   display: grid;
-  gap: 0.65rem;
+  gap: 0.6rem;
+}
+
+.ceo-list-skel--news {
+  gap: 0;
+}
+
+.ceo-list-skel--block {
+  gap: 1rem;
 }
 
 .ceo-ops-events:empty,
@@ -1771,6 +1779,13 @@ body.ceo-ops-theme {
   font-weight: 700;
 }
 
+.ceo-profile__hero b .ceo-skel-line,
+.ceo-profile__hero em .ceo-skel-line,
+.ceo-profile__card h2 .ceo-skel-line,
+.ceo-profile-field .ceo-skel-line {
+  max-width: 100%;
+}
+
 .ceo-profile__hero em {
   display: block;
   margin-top: 0.2rem;
@@ -1782,12 +1797,12 @@ body.ceo-ops-theme {
 
 .ceo-profile__card {
   display: grid;
-  gap: 0.15rem;
+  gap: 0;
   margin-top: 0.85rem;
   border-radius: 1rem;
   border: 1px solid var(--border);
   background: var(--surface);
-  padding: 1rem 1rem 0.35rem;
+  padding: 1rem 1rem 0.85rem;
 }
 
 .ceo-profile__card h2 {
@@ -1800,12 +1815,8 @@ body.ceo-ops-theme {
 }
 
 .ceo-profile-field {
-  padding: 0.75rem 0;
-  border-top: 1px solid var(--border);
-}
-
-.ceo-profile__card .ceo-profile-field:first-of-type {
-  border-top: 0;
+  padding: 0.7rem 0 0.75rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .ceo-profile-field small {
@@ -3778,17 +3789,23 @@ body.ceo-ops-theme {
 }
 
 .ceo-skel-card,
+.ceo-skel-news,
 .ceo-skel-detail,
 .ceo-skel-pref,
-.ceo-skel-profile {
+.ceo-skel-profile,
+.ceo-skel-amenity,
+.ceo-skel-field {
   --skel-from: var(--surface-2);
   --skel-mid: color-mix(in srgb, var(--ink) 10%, var(--surface-2));
 }
 
 .ceo-skel-card .ceo-skel,
+.ceo-skel-news .ceo-skel,
 .ceo-skel-detail .ceo-skel,
 .ceo-skel-pref .ceo-skel,
 .ceo-skel-profile .ceo-skel,
+.ceo-skel-amenity .ceo-skel,
+.ceo-profile .ceo-skel,
 .ceo-warranty-overview .ceo-skel,
 .ceo-warranty-menu .ceo-skel,
 .ceo-ops-stat .ceo-skel {
@@ -3851,12 +3868,38 @@ body.ceo-ops-theme {
 
 .ceo-skel-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
   border-radius: 1rem;
   border: 1px solid var(--border);
   background: var(--surface);
   padding: 0.8rem;
+}
+
+.ceo-skel-news {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  padding: 1rem 0.1rem;
+}
+
+.ceo-skel-news + .ceo-skel-news {
+  border-top: 1px solid var(--border);
+}
+
+.ceo-skel-media {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ceo-skel-amenity {
+  min-height: 0;
+}
+
+.ceo-skel-field {
+  display: grid;
+  gap: 0.35rem;
 }
 
 .ceo-skel-col {

@@ -10,7 +10,6 @@ import { useWarrantyStaff } from "@/hooks/useWarrantyStaff";
 import type { WarrantySummary } from "@/lib/warranties";
 import { BottomNav } from "./BottomNav";
 import { FastLink } from "./FastLink";
-import { ThemeToggle } from "./ThemeToggle";
 import { WarrantyHomeSkeleton } from "./ui/ListState";
 import { splitPropertyName, useWarrantyBrand } from "./WarrantyBrand";
 import {
@@ -233,9 +232,6 @@ export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
                 </span>
                 <span className="ceo-warranty-menu__label">Search & Filters</span>
               </FastLink>
-              <div className="ceo-warranty-menu__row ceo-warranty-menu__row--static">
-                <ThemeToggle variant="row" />
-              </div>
             </nav>
           </>
         )}

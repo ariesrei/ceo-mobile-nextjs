@@ -22,7 +22,6 @@ import type { MenuItem, NavigationResponse } from "@/lib/types";
 import { AccountMenu } from "./AccountMenu";
 import { BottomNav } from "./BottomNav";
 import { FastLink } from "./FastLink";
-import { ThemeToggle } from "./ThemeToggle";
 import { EmptyState, ListGo, ListSkeleton, SkelAvatar, SkelLine } from "./ui/ListState";
 import { LogoutOverlay, useLogout } from "./ui/LogoutOverlay";
 
@@ -453,7 +452,6 @@ export function HomeScreen({
             <p>Earn a $100 credit!</p>
             <span>Invite Now</span>
           </div>
-          <ThemeToggle variant="row" />
           <div className="ceo-ops-rail__tools">
             <FastLink
               href="/account/preferences"
@@ -622,8 +620,8 @@ export function HomeScreen({
                   {["balance", "requests", "messages", "events"].map((id) => (
                     <div key={id} className="ceo-ops-stat">
                       <SkelAvatar size="2.05rem" />
-                      <SkelLine width="72%" />
-                      <SkelLine width="44%" />
+                      <SkelLine width="70%" />
+                      <SkelLine width="2.4rem" className="ceo-skel-line--lg" />
                     </div>
                   ))}
                 </div>
@@ -698,7 +696,7 @@ export function HomeScreen({
                     />
                   </div>
                   {boardsLoading ? (
-                    <ListSkeleton rows={3} height={64} />
+                    <ListSkeleton rows={3} variant="news" />
                   ) : announcements.length ? (
                     <ul className="ceo-ops-news">
                       {announcements.map((item) => (
@@ -738,7 +736,7 @@ export function HomeScreen({
                     <SeeAllLink href="/account/events" label="All events" />
                   </div>
                   {boardsLoading ? (
-                    <ListSkeleton rows={3} height={64} />
+                    <ListSkeleton rows={3} variant="news" />
                   ) : events.length ? (
                     <ul className="ceo-ops-events">
                       {events.map((item) => {
