@@ -13,7 +13,14 @@ export function ReservationList({
   emptyMessage?: string;
 }) {
   if (items.length === 0) {
-    return <EmptyState icon="calendar">{emptyMessage}</EmptyState>;
+    return (
+      <EmptyState
+        icon="calendar"
+        subtitle="When you reserve an amenity, it will appear here."
+      >
+        {emptyMessage}
+      </EmptyState>
+    );
   }
 
   return (

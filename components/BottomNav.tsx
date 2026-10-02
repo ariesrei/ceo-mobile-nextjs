@@ -387,9 +387,11 @@ const OPS_ADMIN_MORE_EXTRAS: MenuItem[] = [
 function communityMoreItems(items: MenuItem[], role?: NavRole): MenuItem[] {
   const mapped = items
     .filter((item) =>
-      role === "staff"
+      item.id !== "warranties" &&
+      !(item.path || "").startsWith("/account/warranties") &&
+      (role === "staff"
         ? true
-        : item.id !== "guests" && item.path !== "/account/guests"
+        : item.id !== "guests" && item.path !== "/account/guests")
     )
     .map((item) =>
       item.id === "additional_info"

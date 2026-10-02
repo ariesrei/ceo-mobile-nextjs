@@ -8,17 +8,19 @@ import {
   requireAuth,
 } from "@/lib/server-nav";
 
-type Props = { searchParams?: Promise<{ from?: string }> };
+type Props = { searchParams?: Promise<{ from?: string; user_id?: string }> };
 
 export default async function ProfilePage({ searchParams }: Props) {
   await requireAuth();
   const session = await getAccountAppProfile();
-  const from = (await searchParams)?.from;
+  const params = await searchParams;
+  const from = params?.from;
+  const title = params?.user_id ? "Profile" : "My Profile";
 
   if (keepWarrantyChrome(from, session)) {
     return (
-      <WarrantyShell title="My Profile" backHref="/account/warranties">
-        <ProfileBoard />
+      <WarrantyShell title={title} backHref="/account/warranties">
+        <ProfileBoard userId={params?.user_id} />
       </WarrantyShell>
     );
   }
@@ -26,13 +28,13 @@ export default async function ProfilePage({ searchParams }: Props) {
   const branding = await getServerClientBranding();
   return (
     <AppShell
-      title="My Profile"
+      title={title}
       layout="community"
       clientName={branding.name}
       clientLogo={branding.logo}
       appProfile={session}
     >
-      <ProfileBoard />
+      <ProfileBoard userId={params?.user_id} />
     </AppShell>
   );
 }

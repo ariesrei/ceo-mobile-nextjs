@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export const LIST_LOAD_MS = 3000;
+export const LIST_LOAD_MS = 180;
 
 /** First paint: card skeleton while fetching. Do not hold after the request finishes. */
 export function useHeldLoading(loading: boolean): boolean {

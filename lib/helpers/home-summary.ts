@@ -15,12 +15,18 @@ const EMPTY: HomeSummary = {
   upcoming_events: 0,
 };
 
+let cache: HomeSummary | null = null;
+
+export function peekHomeSummary(): HomeSummary | null {
+  return cache;
+}
+
 export async function loadHomeSummary(): Promise<HomeSummary> {
   const res = await apiGet("/api/wp/home-summary");
-  if (!res.ok) return EMPTY;
+  if (!res.ok) return cache || EMPTY;
   const data = asRecord(res.data);
   const balance = asRecord(data?.balance);
-  return {
+  const next: HomeSummary = {
     balance: {
       amount: asString(balance?.amount) || "$0.00",
       cents: Math.max(0, asNumber(balance?.cents)),
@@ -30,4 +36,6 @@ export async function loadHomeSummary(): Promise<HomeSummary> {
     unread_messages: Math.max(0, asNumber(data?.unread_messages)),
     upcoming_events: Math.max(0, asNumber(data?.upcoming_events)),
   };
+  cache = next;
+  return next;
 }

@@ -35,7 +35,7 @@ export function ClassifiedForm() {
     });
     setBusy(false);
     if (!res.ok) {
-      setError(res.error ? formatAppError(res.error) : "Could not post listing.");
+      setError(res.error ? formatAppError(res.error) : "Could not add listing.");
       return;
     }
     router.push("/account/classifieds");
@@ -79,7 +79,7 @@ export function ClassifiedForm() {
       </label>
       {error ? <p className="ceo-empty-note">{error}</p> : null}
       <Button type="submit" disabled={busy || !title.trim()}>
-        {busy ? "Posting…" : "Post listing"}
+        {busy ? "Adding…" : "Add listing"}
       </Button>
     </form>
   );

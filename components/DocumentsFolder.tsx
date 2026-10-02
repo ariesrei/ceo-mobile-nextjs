@@ -23,7 +23,7 @@ export function DocumentsFolder({ folderId }: { folderId: number }) {
       .finally(() => setLoading(false));
   }, [folderId]);
 
-  if (pending) return <ListSkeleton rows={3} height={72} />;
+  if (pending) return <ListSkeleton rows={3} variant="news" />;
 
   return (
     <PaginatedList
@@ -31,7 +31,7 @@ export function DocumentsFolder({ folderId }: { folderId: number }) {
       listClassName="ceo-docs-list"
       emptyIcon="file"
       emptyMessage="This folder is empty"
-      emptySubtitle="Files added to this folder will show up here."
+      emptySubtitle="When files are added, they will appear here."
       getKey={(item) => item.id}
       renderItem={(item) => (
         <a

@@ -48,37 +48,41 @@ export function ClassifiedsBoard() {
 
   return (
     <div className="ceo-class">
-      <label className="ceo-amenity__search">
-        <span className="sr-only">Search classifieds</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.7" />
-          <path d="M16 16.5 20 20.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-        </svg>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search classifieds"
-        />
-      </label>
+      {pending || items.length > 0 ? (
+        <>
+          <label className="ceo-amenity__search">
+            <span className="sr-only">Search classifieds</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.7" />
+              <path d="M16 16.5 20 20.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+            </svg>
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search classifieds"
+            />
+          </label>
 
-      <div className="ceo-news-tabs" role="tablist" aria-label="Listing type">
-        {TABS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === item.id}
-            className={tab === item.id ? "is-active" : ""}
-            onClick={() => setTab(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+          <div className="ceo-news-tabs" role="tablist" aria-label="Listing type">
+            {TABS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={tab === item.id}
+                className={tab === item.id ? "is-active" : ""}
+                onClick={() => setTab(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : null}
 
       {pending ? (
-        <ListSkeleton rows={4} height={88} />
+        <ListSkeleton rows={4} variant="news" />
       ) : (
         <PaginatedList
           items={visible}
@@ -88,7 +92,12 @@ export function ClassifiedsBoard() {
           emptySubtitle={
             query || tab !== "all"
               ? "Try another search or category."
-              : "Be the first to post something for the community."
+              : "When you add a listing, it will appear here."
+          }
+          emptyAction={
+            query || tab !== "all" ? undefined : (
+              <FastLink href="/account/classifieds/new">Add your first listing</FastLink>
+            )
           }
           getKey={(item) => item.id}
           renderItem={(item) => (
@@ -117,10 +126,12 @@ export function ClassifiedsBoard() {
         />
       )}
 
-      <FastLink href="/account/classifieds/new" className="ceo-class-fab">
-        <span aria-hidden>+</span>
-        Post
-      </FastLink>
+      {!pending && items.length > 0 ? (
+        <FastLink href="/account/classifieds/new" className="ceo-class-fab">
+          <span aria-hidden>+</span>
+          New listing
+        </FastLink>
+      ) : null}
     </div>
   );
 }

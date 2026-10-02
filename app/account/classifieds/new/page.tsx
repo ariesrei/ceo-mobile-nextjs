@@ -8,7 +8,7 @@ export default async function NewClassifiedPage() {
 
   return (
     <AppShell
-      title="Post listing"
+      title="New listing"
       layout="community"
       backHref="/account/classifieds"
       clientName={branding.name}

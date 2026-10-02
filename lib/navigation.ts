@@ -1,5 +1,6 @@
 import {
   getBuildAppProfile,
+  showOpsCommunityUi,
   WARRANTY_MENU_ALLOWLIST,
   type AppProfile,
 } from "./app-profile";
@@ -56,16 +57,30 @@ function isWarrantyAllowed(item: MenuItem): boolean {
   return (WARRANTY_MENU_ALLOWLIST as readonly string[]).includes(item.id);
 }
 
+export function isWarrantyMenuItem(item: Pick<MenuItem, "id" | "path">): boolean {
+  return (
+    item.id === "warranties" ||
+    (item.path || "").startsWith("/account/warranties")
+  );
+}
+
 /** Apply product + temporary module visibility. */
-export function applyMenuVisibility(menus: MenuItem[]): MenuItem[] {
+export function applyMenuVisibility(
+  menus: MenuItem[],
+  profile?: AppProfile | null
+): MenuItem[] {
   // Cookie/site can be "warranty" (Fort Whipple, middleware default) while
   // unlocked :3000 still shows Operations. Only the warranty APK hides ops.
   const warrantyLocked = getBuildAppProfile() === "warranty";
+  const hideWarranty = showOpsCommunityUi(profile);
   return menus.map((m) => {
     if (isHiddenMenu(m)) {
       return { ...m, enabled: false };
     }
     if (warrantyLocked && !isWarrantyAllowed(m)) {
+      return { ...m, enabled: false };
+    }
+    if (hideWarranty && isWarrantyMenuItem(m)) {
       return { ...m, enabled: false };
     }
     return m;
@@ -76,11 +91,10 @@ export function applyNavVisibility(
   nav: NavigationResponse | null | undefined,
   profile?: AppProfile | null
 ): NavigationResponse | null {
-  void profile;
   if (!nav) return null;
   return {
     ...nav,
-    menus: applyMenuVisibility(nav.menus || []),
+    menus: applyMenuVisibility(nav.menus || [], profile),
   };
 }
 

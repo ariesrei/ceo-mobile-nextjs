@@ -16,6 +16,7 @@ type Props<T> = {
   listClassName?: string;
   emptyIcon?: EmptyIcon;
   emptyCompact?: boolean;
+  emptyAction?: ReactNode;
 };
 
 export function PaginatedList<T>({
@@ -28,6 +29,7 @@ export function PaginatedList<T>({
   listClassName = "ceo-list",
   emptyIcon,
   emptyCompact,
+  emptyAction,
 }: Props<T>) {
   const resetKey = items.map((item) => String(getKey(item))).join("|");
   const { visible, hasMore, loadingMore, sentinelRef } = useLoadMore(
@@ -38,7 +40,12 @@ export function PaginatedList<T>({
 
   if (!items.length) {
     return (
-      <EmptyState icon={emptyIcon} subtitle={emptySubtitle} compact={emptyCompact}>
+      <EmptyState
+        icon={emptyIcon}
+        subtitle={emptySubtitle}
+        compact={emptyCompact}
+        action={emptyAction}
+      >
         {emptyMessage}
       </EmptyState>
     );

@@ -80,7 +80,7 @@ function EventRows({
       emptySubtitle={
         compact
           ? "Nothing on this day."
-          : "New events will appear on this calendar."
+          : "When events are added, they will appear here."
       }
       getKey={(item) => item.id}
       renderItem={(item) => {
@@ -230,7 +230,7 @@ export function EventsBoard() {
       </div>
 
       {pending ? (
-        <ListSkeleton rows={5} height={76} />
+        <ListSkeleton rows={5} variant="news" />
       ) : tab === "upcoming" ? (
         <EventRows items={items} />
       ) : (

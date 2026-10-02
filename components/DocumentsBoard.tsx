@@ -55,23 +55,25 @@ export function DocumentsBoard() {
 
   return (
     <div className="ceo-docs">
-      <div className="ceo-news-tabs" role="tablist" aria-label="Document type">
-        {TABS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === item.id}
-            className={tab === item.id ? "is-active" : ""}
-            onClick={() => setTab(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+      {pending || items.length > 0 ? (
+        <div className="ceo-news-tabs" role="tablist" aria-label="Document type">
+          {TABS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={tab === item.id}
+              className={tab === item.id ? "is-active" : ""}
+              onClick={() => setTab(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {pending ? (
-        <ListSkeleton rows={5} height={72} />
+        <ListSkeleton rows={5} variant="news" />
       ) : (
         <PaginatedList
           items={visible}
@@ -84,7 +86,7 @@ export function DocumentsBoard() {
           }
           emptySubtitle={
             tab === "all"
-              ? "Community folders will show up here."
+              ? "When folders are added, they will appear here."
               : `Nothing filed under ${TABS.find((item) => item.id === tab)?.label || "this tab"} yet.`
           }
           getKey={(item) => item.id}

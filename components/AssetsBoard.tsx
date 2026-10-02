@@ -48,6 +48,10 @@ export function AssetsBoard() {
   const [vehicles, setVehicles] = useState<AssetVehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const pending = useHeldLoading(loading);
+  const createHref =
+    tab === "pets" ? "/account/assets/pets/new" : "/account/assets/vehicles/new";
+  const items = tab === "pets" ? pets : vehicles;
+  const showAdd = !pending && items.length > 0;
 
   useEffect(() => {
     loadAssets()
@@ -60,36 +64,51 @@ export function AssetsBoard() {
 
   return (
     <div className="ceo-assets">
-      <div className="ceo-assets-tabs" role="tablist" aria-label="Asset type">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "pets"}
-          className={tab === "pets" ? "is-active" : ""}
-          onClick={() => setTab("pets")}
-        >
-          Pets
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "vehicles"}
-          className={tab === "vehicles" ? "is-active" : ""}
-          onClick={() => setTab("vehicles")}
-        >
-          Vehicles
-        </button>
+      <div className="ceo-assets-head">
+        <div className="ceo-assets-tabs" role="tablist" aria-label="Asset type">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "pets"}
+            className={tab === "pets" ? "is-active" : ""}
+            onClick={() => setTab("pets")}
+          >
+            Pets
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "vehicles"}
+            className={tab === "vehicles" ? "is-active" : ""}
+            onClick={() => setTab("vehicles")}
+          >
+            Vehicles
+          </button>
+        </div>
+        {showAdd ? (
+          <FastLink
+            href={createHref}
+            className="ceo-assets-add"
+            aria-label={tab === "pets" ? "Add pet" : "Add vehicle"}
+          >
+            <PlusIcon />
+            Add
+          </FastLink>
+        ) : null}
       </div>
 
       {pending ? (
-        <ListSkeleton rows={2} height={92} />
+        <ListSkeleton rows={3} />
       ) : tab === "pets" ? (
         <PaginatedList
           items={pets}
           listClassName="ceo-assets-list"
           emptyIcon="pet"
           emptyMessage="No pets yet"
-          emptySubtitle="Add a pet to keep their details on file."
+          emptySubtitle="When you add a pet, they will appear here."
+          emptyAction={
+            <FastLink href="/account/assets/pets/new">Add your first pet</FastLink>
+          }
           getKey={(pet) => pet.id}
           renderItem={(pet) => {
             const name = pet.pet_name || "Pet";
@@ -116,7 +135,10 @@ export function AssetsBoard() {
           listClassName="ceo-assets-list"
           emptyIcon="vehicle"
           emptyMessage="No vehicles yet"
-          emptySubtitle="Add a vehicle to keep its details on file."
+          emptySubtitle="When you add a vehicle, it will appear here."
+          emptyAction={
+            <FastLink href="/account/assets/vehicles/new">Add your first vehicle</FastLink>
+          }
           getKey={(vehicle) => vehicle.id}
           renderItem={(vehicle) => {
             const name =
@@ -140,14 +162,6 @@ export function AssetsBoard() {
           }}
         />
       )}
-
-      <FastLink
-        href={tab === "pets" ? "/account/assets/pets/new" : "/account/assets/vehicles/new"}
-        className="ceo-assets-add"
-      >
-        <PlusIcon />
-        {tab === "pets" ? "Add pet" : "Add vehicle"}
-      </FastLink>
     </div>
   );
 }

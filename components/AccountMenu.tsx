@@ -2,10 +2,51 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, type MouseEvent, type ReactNode } from "react";
 import { menuHref } from "@/lib/navigation";
 import type { MenuItem } from "@/lib/types";
 import { ChevronRightIcon } from "./ui/Icons";
 import { EmptyState } from "./ui/ListState";
+
+function isModifiedClick(event: MouseEvent) {
+  return (
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey ||
+    event.button !== 0
+  );
+}
+
+function ActionNavLink({
+  href,
+  className,
+  tone,
+  children,
+}: {
+  href: string;
+  className: string;
+  tone: string;
+  children: (busy: boolean) => ReactNode;
+}) {
+  const [busy, setBusy] = useState(false);
+
+  return (
+    <Link
+      href={href}
+      prefetch={false}
+      className={`${className}${busy ? " is-busy" : ""}`}
+      data-tone={tone}
+      aria-busy={busy}
+      onClick={(event) => {
+        if (event.defaultPrevented || isModifiedClick(event)) return;
+        setBusy(true);
+      }}
+    >
+      {children(busy)}
+    </Link>
+  );
+}
 
 const ICONS: Record<string, string> = {
   home: "M4 11.5 12 4l8 7.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-8.5Z",
@@ -201,22 +242,26 @@ export function AccountMenu({
     return (
       <nav className="ceo-ops-actions">
         {visible.map((item) => (
-          <Link
+          <ActionNavLink
             key={item.id}
             href={menuHref(item)}
-            prefetch={false}
             className={`ceo-ops-action${SOON_IDS.has(item.id) ? " is-soon" : ""}`}
-            data-tone={ACTION_TONE[item.id] || "teal"}
+            tone={ACTION_TONE[item.id] || "teal"}
           >
-            <span className="ceo-ops-action__icon">
-              <ActionIcon id={item.id} />
-            </span>
-            <span className="ceo-ops-action__label">
-              {actionLabel(item)}
-              {SOON_IDS.has(item.id) ? <small>Under construction</small> : null}
-            </span>
-            <ChevronRightIcon className="ceo-ops-action__chev" />
-          </Link>
+            {(busy) => (
+              <>
+                <span className="ceo-ops-action__icon">
+                  <ActionIcon id={item.id} />
+                  {busy ? <span className="ceo-ops-action__spin" aria-hidden /> : null}
+                </span>
+                <span className="ceo-ops-action__label">
+                  {actionLabel(item)}
+                  {SOON_IDS.has(item.id) ? <small>Under construction</small> : null}
+                </span>
+                <ChevronRightIcon className="ceo-ops-action__chev" />
+              </>
+            )}
+          </ActionNavLink>
         ))}
       </nav>
     );

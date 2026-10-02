@@ -10,6 +10,7 @@ import { useWarrantyStaff } from "@/hooks/useWarrantyStaff";
 import type { WarrantySummary } from "@/lib/warranties";
 import { BottomNav } from "./BottomNav";
 import { FastLink } from "./FastLink";
+import { NotificationsBell } from "./NotificationsBell";
 import { WarrantyHomeSkeleton } from "./ui/ListState";
 import { splitPropertyName, useWarrantyBrand } from "./WarrantyBrand";
 import {
@@ -61,6 +62,10 @@ export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
 
   useEffect(() => {
     setGreeting(greetingLabel());
+    if (getBuildAppProfile() === "operations") {
+      setWarrantyChromeCookie(false);
+      return;
+    }
     setWarrantyChromeCookie(true);
   }, []);
 
@@ -137,6 +142,7 @@ export function WarrantyHome({ isStaff = false }: { isStaff?: boolean }) {
               ) : null}
             </div>
           </div>
+          <NotificationsBell expectAvailable={staff} />
         </header>
 
         <div className="ceo-warranty-hero__greeting">

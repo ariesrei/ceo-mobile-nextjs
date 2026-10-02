@@ -69,7 +69,7 @@ export function CommunityEventsList() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (pending) return <ListSkeleton rows={4} height={72} />;
+  if (pending) return <ListSkeleton rows={3} variant="news" />;
 
   return (
     <section className="ceo-ops-panel">
@@ -77,13 +77,14 @@ export function CommunityEventsList() {
         items={items}
         listClassName="ceo-ops-events"
         emptyIcon="calendar"
+        emptyCompact
         emptyMessage="No upcoming events"
-        emptySubtitle="New events will appear here."
+        emptySubtitle="When events are added, they will appear here."
         getKey={(item) => item.id}
         renderItem={(item) => {
           const date = eventDateParts(item.start);
           return (
-            <FastLink href={`/account/events/${item.id}`}>
+            <FastLink href={`/account/events/${item.id}?from=home`}>
               {item.photo ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={item.photo} alt="" className="ceo-ops-events__photo" />
@@ -119,7 +120,7 @@ export function CommunityAnnouncementsList() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (pending) return <ListSkeleton rows={4} height={72} />;
+  if (pending) return <ListSkeleton rows={3} variant="news" />;
 
   return (
     <section className="ceo-ops-panel">
@@ -127,11 +128,12 @@ export function CommunityAnnouncementsList() {
         items={items}
         listClassName="ceo-ops-news"
         emptyIcon="horn"
+        emptyCompact
         emptyMessage="No announcements yet"
-        emptySubtitle="Community posts will show up here."
+        emptySubtitle="When posts are published, they will appear here."
         getKey={(item) => item.id}
         renderItem={(item) => (
-          <FastLink href={`/account/announcements/${item.id}`}>
+          <FastLink href={`/account/announcements/${item.id}?from=home`}>
             {item.photo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={item.photo} alt="" />

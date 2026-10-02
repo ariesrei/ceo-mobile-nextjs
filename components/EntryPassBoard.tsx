@@ -132,7 +132,7 @@ export function EntryPassBoard() {
         ))}
       </div>
 
-      {tab !== "history" ? (
+      {tab !== "history" && !pending && items.length > 0 ? (
         <FastLink href={createHref} className="ceo-pass-create">
           <span className="ceo-pass-create__plus" aria-hidden>
             +
@@ -142,12 +142,14 @@ export function EntryPassBoard() {
         </FastLink>
       ) : null}
 
-      <h2 className="ceo-pass-heading">
-        {tab === "history" ? "History" : "Active Passes"}
-      </h2>
+      {!pending && items.length > 0 ? (
+        <h2 className="ceo-pass-heading">
+          {tab === "history" ? "History" : "Active Passes"}
+        </h2>
+      ) : null}
 
       {pending ? (
-        <ListSkeleton rows={2} height={84} />
+        <ListSkeleton rows={3} />
       ) : (
         <PaginatedList
           items={items}
@@ -162,10 +164,17 @@ export function EntryPassBoard() {
           }
           emptySubtitle={
             tab === "history"
-              ? "Expired guest and delivery authorizations land here."
+              ? "Expired guest and delivery authorizations will appear here."
               : tab === "deliveries"
-                ? "Food delivery authorizations will show up here."
-                : "Create a pass to let a guest in."
+                ? "When you create a delivery pass, it will appear here."
+                : "When you create a guest pass, it will appear here."
+          }
+          emptyAction={
+            tab === "history" ? undefined : (
+              <FastLink href={createHref}>
+                {tab === "deliveries" ? "Create your first delivery pass" : "Create your first pass"}
+              </FastLink>
+            )
           }
           getKey={(item) => String(item.id)}
           renderItem={(item) => <PassCard item={item} />}

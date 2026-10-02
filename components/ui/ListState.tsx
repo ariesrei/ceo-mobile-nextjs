@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 const ICONS = {
   inbox: (
     <>
@@ -373,11 +375,13 @@ export function EmptyState({
   subtitle,
   icon = "inbox",
   compact = false,
+  action,
 }: {
   children: string;
   subtitle?: string;
   icon?: EmptyIcon;
   compact?: boolean;
+  action?: ReactNode;
 }) {
   return (
     <div className={`ceo-empty${compact ? " ceo-empty--compact" : ""}`}>
@@ -386,6 +390,7 @@ export function EmptyState({
       </span>
       <p className="ceo-empty__title">{children}</p>
       {subtitle ? <p className="ceo-empty__copy">{subtitle}</p> : null}
+      {action ? <div className="ceo-empty__action">{action}</div> : null}
     </div>
   );
 }

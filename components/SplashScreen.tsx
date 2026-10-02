@@ -9,8 +9,11 @@ import {
   LANDING_BG,
 } from "@/lib/brand";
 
-const HOLD_MS = 2000;
-const FADE_MS = 420;
+const HOLD_MS = 320;
+const FADE_MS = 280;
+
+/** Survives SplashGate remounts during client navigations. Resets on refresh. */
+let splashPlayed = false;
 
 /**
  * Read once at module scope: the variant comes from a NEXT_PUBLIC_ env var that
@@ -32,20 +35,27 @@ export function SplashScreen({ connected = false, appProfile = null }: Props) {
     ? brandForProfile(appProfile)
     : companyBrand();
   /**
-   * Shows on every app open, every refresh, and after sign-in (full load).
-   * Starting visible avoids a flash of the page underneath.
+   * Connected workspace is already on screen — don't sit on a loader.
+   * Client navigations remount SplashGate; splashPlayed keeps it from
+   * playing again. Unconnected landing still gets a short brand beat.
    */
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(() => !splashPlayed && !connected);
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
+    if (splashPlayed || connected) {
+      splashPlayed = true;
+      setVisible(false);
+      return;
+    }
+    splashPlayed = true;
     const fade = window.setTimeout(() => setLeaving(true), HOLD_MS);
     const done = window.setTimeout(() => setVisible(false), HOLD_MS + FADE_MS);
     return () => {
       window.clearTimeout(fade);
       window.clearTimeout(done);
     };
-  }, []);
+  }, [connected]);
 
   if (!visible) return null;
 

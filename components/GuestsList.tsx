@@ -195,7 +195,7 @@ export function GuestsList() {
       />
 
       {showFilters ? null : loading ? (
-        <ListSkeleton rows={2} />
+        <ListSkeleton rows={3} />
       ) : error ? (
         <Card>
           <p className="text-sm text-[var(--danger)]">{error}</p>
@@ -216,8 +216,13 @@ export function GuestsList() {
             search || filterCount
               ? "Try another search or filter."
               : status === "checked_in"
-                ? "Active guest passes will show up here."
-                : "Past guests will show up here."
+                ? "When you add a guest, they will appear here."
+                : "When guests check out, they will appear here."
+          }
+          emptyAction={
+            search || filterCount || !canEdit || status !== "checked_in" ? undefined : (
+              <Link href="/account/guests/new">Add your first guest</Link>
+            )
           }
           getKey={(g) => g.id}
           renderItem={(g) => (
@@ -280,7 +285,7 @@ export function GuestsList() {
         />
       )}
 
-      {showFilters || !canEdit ? null : (
+      {showFilters || !canEdit || loading || !items.length ? null : (
         <Link href="/account/guests/new" className="ceo-fab">
           <PlusIcon className="h-4 w-4" />
           New guest

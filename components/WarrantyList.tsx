@@ -314,7 +314,7 @@ export function WarrantyList({
           subtitle={
             search || activeFilterCount
               ? "Try another search or filter."
-              : "New claims will show up here."
+              : "When claims are filed, they will appear here."
           }
         >
           {search || activeFilterCount ? "No matching claims" : "No claims yet"}

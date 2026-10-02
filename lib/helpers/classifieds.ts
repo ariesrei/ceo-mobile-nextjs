@@ -54,8 +54,8 @@ export async function createClassified(input: {
   if (!item) {
     return {
       ok: false as const,
-      error: errorFromStatus(500, "Could not post listing."),
-      message: "Could not post listing.",
+      error: errorFromStatus(500, "Could not add listing."),
+      message: "Could not add listing.",
     };
   }
   return { ok: true as const, item };

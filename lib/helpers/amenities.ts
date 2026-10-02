@@ -36,6 +36,7 @@ export type AmenityItem = {
   hours: string;
   space: AmenitySpace;
   photo: string;
+  photos: string[];
   amenities: AmenityChoice[];
   additionalFields: AmenityExtraField[];
   rules: string;
@@ -112,12 +113,14 @@ export function toAmenityItem(raw: unknown): AmenityItem | null {
   if (!row || id <= 0) return null;
   const space = asString(row.space).toLowerCase() || "indoor";
   const additionalFields = extraFieldList(row);
+  const photos = amenityPhotoList(row);
   return {
     id,
     title: asString(row.title),
     hours: asString(row.hours) || "Open daily",
     space,
-    photo: amenityPhotoUrl(row),
+    photo: photos[0] || "",
+    photos,
     amenities: asArray(row.amenities)
       .map(toAmenityChoice)
       .filter((choice): choice is AmenityChoice => Boolean(choice)),
@@ -135,32 +138,49 @@ export function findReserveAmenity(items: AmenityItem[], amenityId: number) {
 }
 
 export function amenityPhotoUrl(row: Record<string, unknown>): string {
-  const raw =
-    asPhotoUrl(row.photo) ||
-    asPhotoUrl(row.image) ||
-    asPhotoUrl(row.thumbnail) ||
-    asPhotoUrl(row.photo_url) ||
-    asPhotoUrl(row.featured_image);
-  if (!raw) return "";
-  if (/[?&]ceo_media_download=/i.test(raw) && !/^https?:\/\//i.test(raw) && !raw.startsWith("//")) {
+  return amenityPhotoList(row)[0] || "";
+}
+
+export function amenityPhotoList(row: Record<string, unknown>): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const add = (raw: unknown) => {
+    const url = resolveAmenityPhoto(raw);
+    if (!url || seen.has(url)) return;
+    seen.add(url);
+    out.push(url);
+  };
+  asArray(row.photos).forEach(add);
+  add(row.photo);
+  add(row.image);
+  add(row.thumbnail);
+  add(row.photo_url);
+  add(row.featured_image);
+  return out;
+}
+
+function resolveAmenityPhoto(raw: unknown): string {
+  const url = asPhotoUrl(raw);
+  if (!url) return "";
+  if (/[?&]ceo_media_download=/i.test(url) && !/^https?:\/\//i.test(url) && !url.startsWith("//")) {
     const base = (getConnectConfig()?.baseUrl || "").replace(/\/+$/, "");
-    const path = raw.startsWith("/") ? raw : `/${raw}`;
-    return base ? `${base}${path}` : raw;
+    const path = url.startsWith("/") ? url : `/${url}`;
+    return base ? `${base}${path}` : url;
   }
-  if (raw.startsWith("//")) {
+  if (url.startsWith("//")) {
     const scheme =
       typeof window !== "undefined" && window.location.protocol === "https:"
         ? "https"
         : "http";
-    return `${scheme}:${raw}`;
+    return `${scheme}:${url}`;
   }
-  if (/^https?:\/\//i.test(raw)) return raw;
-  if (raw.startsWith("/wp-content/") || raw.includes("/wp-content/uploads/")) {
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith("/wp-content/") || url.includes("/wp-content/uploads/")) {
     const base = (getConnectConfig()?.baseUrl || "").replace(/\/+$/, "");
-    const path = raw.startsWith("/") ? raw : `/${raw}`;
-    return base ? `${base}${path}` : raw;
+    const path = url.startsWith("/") ? url : `/${url}`;
+    return base ? `${base}${path}` : url;
   }
-  return raw;
+  return url;
 }
 
 export async function listAmenities() {

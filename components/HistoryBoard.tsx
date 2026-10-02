@@ -11,15 +11,24 @@ import {
 } from "@/lib/helpers/history";
 import { FastLink } from "./FastLink";
 import { ChevronRightIcon } from "./ui/Icons";
-import { ListSkeleton } from "./ui/ListState";
+import { EmptyState, ListSkeleton, type EmptyIcon } from "./ui/ListState";
 
 const HINT: Record<HistoryTabId, string> = {
-  reservations: "Past amenity bookings will show up here.",
-  parcels: "Claimed packages will show up here.",
-  guests: "Past guest visits will show up here.",
-  activity: "Logged unit activity will show up here.",
-  warranty: "Warranty requests will show up here.",
-  maintenance: "Work orders will show up here.",
+  reservations: "When bookings are completed, they will appear here.",
+  parcels: "When packages are claimed, they will appear here.",
+  guests: "When guests check out, they will appear here.",
+  activity: "When activity is logged, it will appear here.",
+  warranty: "When warranty requests close, they will appear here.",
+  maintenance: "When work orders close, they will appear here.",
+};
+
+const HINT_ICON: Record<HistoryTabId, EmptyIcon> = {
+  reservations: "calendar",
+  parcels: "inbox",
+  guests: "pass",
+  activity: "inbox",
+  warranty: "inbox",
+  maintenance: "inbox",
 };
 
 const TAB_IDS: HistoryTabId[] = [
@@ -79,14 +88,13 @@ export function HistoryBoard({ initialTab }: { initialTab?: string } = {}) {
       .finally(() => setLoading(false));
   }, [requested]);
 
-  if (loading) return <ListSkeleton rows={4} height={88} />;
+  if (loading) return <ListSkeleton rows={4} />;
 
   if (!visible.length) {
     return (
-      <div className="ceo-hist-empty">
-        <p>No history is available.</p>
-        <small>Nothing is turned on for this property.</small>
-      </div>
+      <EmptyState icon="inbox" subtitle="Nothing is turned on for this property.">
+        No history is available
+      </EmptyState>
     );
   }
 
@@ -111,13 +119,12 @@ export function HistoryBoard({ initialTab }: { initialTab?: string } = {}) {
       </div>
 
       {!items.length ? (
-        <div className="ceo-hist-empty">
-          <span className="ceo-hist-card__icon" data-kind={active?.id}>
-            {active ? <TabIcon tab={active.id} /> : null}
-          </span>
-          <p>No history yet</p>
-          <small>{active ? HINT[active.id] : "Nothing to show here yet."}</small>
-        </div>
+        <EmptyState
+          icon={active ? HINT_ICON[active.id] : "inbox"}
+          subtitle={active ? HINT[active.id] : "Nothing to show here yet."}
+        >
+          No history yet
+        </EmptyState>
       ) : (
         <ul className="ceo-hist-list">
           {items.map((item, index) => {

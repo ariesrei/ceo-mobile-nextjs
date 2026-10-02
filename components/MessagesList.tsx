@@ -36,7 +36,7 @@ export function MessagesList() {
   }, []);
 
   if (pending) {
-    return <ListSkeleton rows={4} height={88} />;
+    return <ListSkeleton rows={4} />;
   }
 
   if (error) {
@@ -53,7 +53,7 @@ export function MessagesList() {
       listClassName="space-y-2"
       emptyIcon="chat"
       emptyMessage="No conversations yet"
-      emptySubtitle="Messages with the office will show up here."
+      emptySubtitle="When you start a conversation, it will appear here."
       getKey={(item) => item.id}
       renderItem={(item) => {
         const preview = item.last_message?.body || "No messages yet.";

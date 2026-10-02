@@ -4,12 +4,17 @@ import { getServerClientBranding, requireAuth } from "@/lib/server-nav";
 
 type Props = {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ from?: string }>;
 };
 
-export default async function AnnouncementDetailPage({ params }: Props) {
+export default async function AnnouncementDetailPage({
+  params,
+  searchParams,
+}: Props) {
   await requireAuth();
-  const [{ id }, branding] = await Promise.all([
+  const [{ id }, query, branding] = await Promise.all([
     params,
+    searchParams ?? Promise.resolve({} as { from?: string }),
     getServerClientBranding(),
   ]);
 
@@ -17,11 +22,14 @@ export default async function AnnouncementDetailPage({ params }: Props) {
     <AppShell
       title="Announcement"
       layout="community"
-      backHref="/account/announcements"
+      backHref={query.from === "home" ? "/account" : "/account/announcements"}
       clientName={branding.name}
       clientLogo={branding.logo}
     >
-      <AnnouncementDetail announcementId={Number(id) || 0} />
+      <AnnouncementDetail
+        announcementId={Number(id) || 0}
+        from={query.from}
+      />
     </AppShell>
   );
 }

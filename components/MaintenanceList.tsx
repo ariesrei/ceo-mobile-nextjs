@@ -117,7 +117,7 @@ export function MaintenanceList() {
       </div>
 
       {pending ? (
-        <ListSkeleton rows={3} height={78} />
+        <ListSkeleton rows={3} />
       ) : error ? (
         <Card>
           <p className="text-sm text-[var(--danger)]">
@@ -135,10 +135,16 @@ export function MaintenanceList() {
         </Card>
       ) : !items.length ? (
         <EmptyState
+          icon="inbox"
           subtitle={
             scope === "mine"
-              ? "Submit a request when something needs attention."
-              : "No building work orders yet."
+              ? "When you submit a request, it will appear here."
+              : "When building work orders are added, they will appear here."
+          }
+          action={
+            canCreate ? (
+              <FastLink href="/account/maintenance/new">Submit your first request</FastLink>
+            ) : undefined
           }
         >
           {scope === "mine" ? "No requests yet" : "No work orders yet"}
@@ -187,7 +193,7 @@ export function MaintenanceList() {
         </ul>
       )}
 
-      {canCreate ? (
+      {canCreate && !pending && items.length > 0 ? (
         <FastLink href="/account/maintenance/new" className="ceo-class-fab">
           <span aria-hidden>+</span>
           New Request

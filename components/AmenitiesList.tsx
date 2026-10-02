@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FastLink } from "./FastLink";
 import { listAmenities, type AmenityItem } from "@/lib/helpers/amenities";
 import { ListSkeleton } from "./ui/ListState";
@@ -28,6 +28,60 @@ export function AmenityPhoto({ src, title }: { src: string; title: string }) {
   );
 }
 
+export function AmenityGallery({
+  photos,
+  title,
+}: {
+  photos: string[];
+  title: string;
+}) {
+  const urls = photos.filter(Boolean);
+  const [index, setIndex] = useState(0);
+  const scroller = useRef<HTMLDivElement>(null);
+
+  if (!urls.length) return null;
+  if (urls.length === 1) {
+    return <AmenityPhoto src={urls[0]} title={title} />;
+  }
+
+  return (
+    <div className="ceo-amenity__gallery">
+      <div
+        ref={scroller}
+        className="ceo-amenity__gallery-track"
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          const next = Math.round(el.scrollLeft / Math.max(el.clientWidth, 1));
+          setIndex(next);
+        }}
+      >
+        {urls.map((src, i) => (
+          <div key={`${src}-${i}`} className="ceo-amenity__gallery-slide">
+            <AmenityPhoto src={src} title={`${title} photo ${i + 1}`} />
+          </div>
+        ))}
+      </div>
+      <div className="ceo-amenity__dots" role="tablist" aria-label={`${title} photos`}>
+        {urls.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            className={i === index ? "is-on" : undefined}
+            aria-label={`Photo ${i + 1}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const el = scroller.current;
+              if (!el) return;
+              el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function AmenitiesList() {
   const [items, setItems] = useState<AmenityItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,19 +103,21 @@ export function AmenitiesList() {
 
   return (
     <div className="ceo-amenity">
-      <label className="ceo-amenity__search">
-        <span className="sr-only">Search amenities</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.7" />
-          <path d="M16 16.5 20 20.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-        </svg>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search amenities"
-        />
-      </label>
+      {pending || items.length > 0 ? (
+        <label className="ceo-amenity__search">
+          <span className="sr-only">Search amenities</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.7" />
+            <path d="M16 16.5 20 20.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+          </svg>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search amenities"
+          />
+        </label>
+      ) : null}
 
       {pending ? (
         <ListSkeleton rows={3} height={196} variant="block" />
@@ -74,13 +130,16 @@ export function AmenitiesList() {
           emptySubtitle={
             query.trim()
               ? "Try another search."
-              : "Amenities you can reserve will show up here."
+              : "When amenities are added, they will appear here."
           }
           getKey={(item) => item.id}
           renderItem={(item) => (
             <article className="ceo-amenity__card">
               <div className="ceo-amenity__photo">
-                <AmenityPhoto src={item.photo} title={item.title} />
+                <AmenityGallery
+                  photos={item.photos.length ? item.photos : item.photo ? [item.photo] : []}
+                  title={item.title}
+                />
               </div>
               <div className="ceo-amenity__body">
                 <div>

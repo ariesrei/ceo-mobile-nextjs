@@ -19,6 +19,7 @@ import {
   getBuildAppProfile,
   resolveAccountAppProfile,
   resolveDisplayAppProfile,
+  showOpsCommunityUi,
   type AppProfile,
 } from "./app-profile";
 import {
@@ -187,7 +188,7 @@ function blockedNav(): NavigationResponse {
 export async function getNavigation(): Promise<NavigationResponse | null> {
   const [result, profile] = await Promise.all([
     wpFetchServer<NavigationResponse>("/app/navigation"),
-    getServerAppProfile(),
+    getAccountAppProfile(),
   ]);
   if (isWafBlockedResult(result)) {
     return blockedNav();
@@ -199,12 +200,15 @@ export async function requireMenuPath(path: string) {
   await requireAuth();
   const [result, profile] = await Promise.all([
     wpFetchServer<NavigationResponse>("/app/navigation"),
-    getServerAppProfile(),
+    getAccountAppProfile(),
   ]);
   if (isWafBlockedResult(result)) {
     return blockedNav();
   }
   const nav = applyNavVisibility(result.data || null, profile);
+  if (showOpsCommunityUi(profile) && path.startsWith("/account/warranties")) {
+    redirect("/account");
+  }
   // Unlocked Chrome is one app. Only the Play Store warranty build hides ops.
   if (getBuildAppProfile() === "warranty" && !isPathAllowed(nav, path, profile)) {
     redirect("/account");

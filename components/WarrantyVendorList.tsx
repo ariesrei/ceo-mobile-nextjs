@@ -78,7 +78,7 @@ export function WarrantyVendorList() {
       </div>
 
       {loading ? (
-        <ListSkeleton rows={4} height={60} />
+        <ListSkeleton rows={4} />
       ) : visible.length ? (
         <nav className="ceo-warranty-menu">
           {visible.map((vendor) => {
@@ -112,7 +112,7 @@ export function WarrantyVendorList() {
           subtitle={
             vendors.length
               ? "Try another name."
-              : "Subcontractors will show up here."
+              : "When vendors are added, they will appear here."
           }
         >
           {vendors.length ? "No matching vendors" : "No vendors yet"}

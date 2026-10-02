@@ -37,18 +37,21 @@ function Card({
   );
 }
 
-export function ProfileBoard() {
+export function ProfileBoard({ userId = "" }: { userId?: string }) {
+  const viewingOther = Boolean(userId);
   const [item, setItem] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
-    getProfile()
+    setLoading(true);
+    setEditing(false);
+    getProfile(userId || undefined)
       .then((data) => {
-        if (data.ok) setItem(data.item);
+        setItem(data.ok ? data.item : null);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [userId]);
 
   if (loading) return <ProfileSkeleton />;
   if (!item) {
@@ -111,7 +114,7 @@ export function ProfileBoard() {
 
       <div className="ceo-vendor-tab-head">
         <p className="ceo-section-label">Profile</p>
-        {editing ? (
+        {viewingOther ? null : editing ? (
           <Button
             type="button"
             variant="ghost"

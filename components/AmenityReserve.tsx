@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AmenityPhoto } from "./AmenitiesList";
+import { AmenityGallery } from "./AmenitiesList";
 import {
   findReserveAmenity,
   listAmenities,
@@ -352,7 +352,10 @@ export function AmenityReserve({ amenityId }: { amenityId: number }) {
     <div className="ceo-amenity-reserve">
       <article className="ceo-amenity__card">
         <div className="ceo-amenity__photo">
-          <AmenityPhoto src={item.photo} title={item.title} />
+          <AmenityGallery
+            photos={item.photos.length ? item.photos : item.photo ? [item.photo] : []}
+            title={item.title}
+          />
         </div>
         <div className="ceo-amenity__body">
           <div>

@@ -1,12 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   type AnchorHTMLAttributes,
-  MouseEvent,
   ReactNode,
-  useEffect,
-  useTransition,
 } from "react";
 
 export function FastLink({
@@ -22,38 +19,19 @@ export function FastLink({
   children: ReactNode;
   prefetch?: boolean;
   "aria-label"?: string;
-} & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href" | "className" | "children" | "onClick">) {
-  const router = useRouter();
-  const [pending, start] = useTransition();
-
-  useEffect(() => {
-    if (prefetch) router.prefetch(href);
-  }, [href, prefetch, router]);
-
-  function onClick(e: MouseEvent<HTMLAnchorElement>) {
-    if (
-      e.defaultPrevented ||
-      e.button !== 0 ||
-      e.metaKey ||
-      e.ctrlKey ||
-      e.shiftKey ||
-      e.altKey
-    ) {
-      return;
-    }
-    e.preventDefault();
-    start(() => router.push(href));
-  }
-
+} & Omit<
+  AnchorHTMLAttributes<HTMLAnchorElement>,
+  "href" | "className" | "children"
+>) {
   return (
-    <a
+    <Link
       href={href}
-      className={`${className || ""}${pending ? " is-pending" : ""}`}
+      prefetch={prefetch}
+      className={className}
       aria-label={ariaLabel}
-      onClick={onClick}
       {...rest}
     >
       {children}
-    </a>
+    </Link>
   );
 }

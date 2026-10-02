@@ -214,7 +214,7 @@ export function ParcelsList() {
       />
 
       {showFilters ? null : pending ? (
-        <ListSkeleton rows={3} height={92} />
+        <ListSkeleton rows={3} />
       ) : error ? (
         <Card>
           <p className="text-sm text-[var(--danger)]">{error}</p>
@@ -235,8 +235,15 @@ export function ParcelsList() {
             search || filterCount
               ? "Try another search or filter."
               : activeStatus === "storage"
-                ? "Deliveries waiting for pickup will show up here."
-                : "Claimed packages will show up here."
+                ? "When packages arrive, they will appear here."
+                : "When packages are claimed, they will appear here."
+          }
+          emptyAction={
+            search || filterCount || !(canEdit || isStaff) ? undefined : (
+              <Link href={ocrEnabled ? "/account/parcels/new?ocr=1" : "/account/parcels/new"}>
+                Scan your first package
+              </Link>
+            )
           }
           getKey={(p) => p.id}
           renderItem={(p) => (
@@ -316,7 +323,7 @@ export function ParcelsList() {
         }}
       />
 
-      {canEdit || isStaff ? (
+      {(canEdit || isStaff) && !pending && items.length > 0 ? (
         <Link
           href={ocrEnabled ? "/account/parcels/new?ocr=1" : "/account/parcels/new"}
           className={`ceo-fab${showFilters ? " is-quiet" : ""}`}

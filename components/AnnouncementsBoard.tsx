@@ -48,23 +48,25 @@ export function AnnouncementsBoard() {
 
   return (
     <div className="ceo-news">
-      <div className="ceo-news-tabs" role="tablist" aria-label="Announcement type">
-        {TABS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === item.id}
-            className={tab === item.id ? "is-active" : ""}
-            onClick={() => setTab(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+      {pending || items.length > 0 ? (
+        <div className="ceo-news-tabs" role="tablist" aria-label="Announcement type">
+          {TABS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={tab === item.id}
+              className={tab === item.id ? "is-active" : ""}
+              onClick={() => setTab(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {pending ? (
-        <ListSkeleton rows={4} height={88} />
+        <ListSkeleton rows={4} variant="news" />
       ) : (
         <PaginatedList
           items={visible}
@@ -73,7 +75,7 @@ export function AnnouncementsBoard() {
           emptyMessage={tab === "all" ? "No announcements yet" : "Nothing in this category"}
           emptySubtitle={
             tab === "all"
-              ? "Community posts will show up here."
+              ? "When posts are published, they will appear here."
               : "Nothing in this category right now."
           }
           getKey={(item) => item.id}

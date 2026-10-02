@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import {
   getBuildAppProfile,
   isWarrantyProfile,
@@ -11,7 +10,11 @@ import {
 } from "@/lib/app-profile";
 import { applyNavVisibility } from "@/lib/navigation";
 import { QUICK_ACTION_ITEMS } from "@/lib/helpers/shortcuts";
-import { loadHomeSummary, type HomeSummary } from "@/lib/helpers/home-summary";
+import {
+  loadHomeSummary,
+  peekHomeSummary,
+  type HomeSummary,
+} from "@/lib/helpers/home-summary";
 import {
   listAnnouncements,
   listUpcomingEvents,
@@ -22,7 +25,8 @@ import type { MenuItem, NavigationResponse } from "@/lib/types";
 import { AccountMenu } from "./AccountMenu";
 import { BottomNav } from "./BottomNav";
 import { FastLink } from "./FastLink";
-import { EmptyState, ListGo, ListSkeleton, SkelAvatar, SkelLine } from "./ui/ListState";
+import { NotificationsBell } from "./NotificationsBell";
+import { EmptyState, ListGo, ListSkeleton } from "./ui/ListState";
 import { LogoutOverlay, useLogout } from "./ui/LogoutOverlay";
 
 const RESIDENT_HOME_IDS = [
@@ -107,7 +111,16 @@ const OPS_HOME_ITEMS: MenuItem[] = [
 ];
 
 function homeMenus(menus: MenuItem[], profile?: AppProfile | null): MenuItem[] {
-  const enabled = menus.filter((m) => m.enabled);
+  const enabled = menus.filter((m) => {
+    if (!m.enabled) return false;
+    if (
+      showOpsCommunityUi(profile) &&
+      (m.id === "warranties" || (m.path || "").startsWith("/account/warranties"))
+    ) {
+      return false;
+    }
+    return true;
+  });
   if (getBuildAppProfile() === "warranty" || profile === "warranty") {
     const preferred = WARRANTY_HOME_IDS.map((id) =>
       enabled.find((m) => m.id === id)
@@ -271,12 +284,9 @@ export function HomeScreen({
   appProfile?: AppProfile | null;
 }) {
   const { loggingOut, logout } = useLogout();
-  const [showNotes, setShowNotes] = useState(false);
-  const [notesReady, setNotesReady] = useState(false);
   const [greeting, setGreeting] = useState("Good morning,");
   const [liveMenus, setLiveMenus] = useState(menus);
   const [homeSummary, setHomeSummary] = useState<HomeSummary | null>(null);
-  const [opsLoading, setOpsLoading] = useState(false);
   const [events, setEvents] = useState<CommunityEvent[]>([]);
   const [announcements, setAnnouncements] = useState<CommunityAnnouncement[]>([]);
   const [boardsLoading, setBoardsLoading] = useState(true);
@@ -332,20 +342,13 @@ export function HomeScreen({
   }, [name]);
 
   useEffect(() => {
-    if (!isOpsHome) {
-      setOpsLoading(false);
-      return;
-    }
+    if (!isOpsHome) return;
+    const warm = peekHomeSummary();
+    if (warm) setHomeSummary(warm);
     let cancelled = false;
-    setOpsLoading(true);
-    loadHomeSummary()
-      .then((summary) => {
-        if (cancelled) return;
-        setHomeSummary(summary);
-      })
-      .finally(() => {
-        if (!cancelled) setOpsLoading(false);
-      });
+    loadHomeSummary().then((summary) => {
+      if (!cancelled) setHomeSummary(summary);
+    });
     return () => {
       cancelled = true;
     };
@@ -385,17 +388,18 @@ export function HomeScreen({
     : withOpsProfileItems(
         isStaffHome
           ? visibleMenus.filter(
-              (item) => !OPS_HOME_ITEMS.some((pinned) => pinned.id === item.id)
+              (item) =>
+                item.id !== "warranties" &&
+                !OPS_HOME_ITEMS.some((pinned) => pinned.id === item.id)
             )
           : visibleMenus.filter(
-              (item) => item.id !== "profile" && item.id !== "edit_profile"
+              (item) =>
+                item.id !== "profile" &&
+                item.id !== "edit_profile" &&
+                item.id !== "warranties"
             )
       );
   const initial = (name[0] || "U").toUpperCase();
-
-  useEffect(() => {
-    setNotesReady(true);
-  }, []);
 
   useEffect(() => {
     if (!isOpsHome) return;
@@ -554,27 +558,7 @@ export function HomeScreen({
             )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            className="ceo-home-bell"
-            aria-label="Notifications"
-            onClick={() => setShowNotes(true)}
-          >
-            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none">
-              <path
-                d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M10 18.5a2 2 0 0 0 4 0"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
+            <NotificationsBell expectAvailable={isStaffHome} />
             {isOpsHome ? (
               <span className="ceo-ops-avatar" aria-hidden>
                 {initial}
@@ -615,18 +599,7 @@ export function HomeScreen({
             <AccountMenu menus={visibleMenus} variant="home" />
           ) : (
             <>
-              {opsLoading && !homeSummary ? (
-                <div className="ceo-ops-stats">
-                  {["balance", "requests", "messages", "events"].map((id) => (
-                    <div key={id} className="ceo-ops-stat">
-                      <SkelAvatar size="2.05rem" />
-                      <SkelLine width="70%" />
-                      <SkelLine width="2.4rem" className="ceo-skel-line--lg" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <section className="ceo-ops-stats">
+              <section className="ceo-ops-stats">
                   <FastLink
                     href="/account/pay"
                     prefetch={false}
@@ -676,7 +649,6 @@ export function HomeScreen({
                     <span className="ceo-ops-stat__go">View calendar</span>
                   </FastLink>
                 </section>
-              )}
               {quickMenus.length ? (
                 <section className="ceo-ops-panel ceo-ops-panel--actions">
                   <div className="ceo-ops-panel__head">
@@ -701,7 +673,7 @@ export function HomeScreen({
                     <ul className="ceo-ops-news">
                       {announcements.map((item) => (
                         <li key={item.id}>
-                          <FastLink href={`/account/announcements/${item.id}`}>
+                          <FastLink href={`/account/announcements/${item.id}?from=home`}>
                             {item.photo ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img src={item.photo} alt="" />
@@ -743,7 +715,7 @@ export function HomeScreen({
                         const date = eventDateParts(item.start);
                         return (
                           <li key={item.id}>
-                            <FastLink href={`/account/events/${item.id}`}>
+                            <FastLink href={`/account/events/${item.id}?from=home`}>
                               {item.photo ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
@@ -796,28 +768,6 @@ export function HomeScreen({
         variant={isWarrantyProfile(appProfile) ? "warranty" : "app"}
       />
       <LogoutOverlay show={loggingOut} />
-      {showNotes && notesReady
-        ? createPortal(
-            <div
-              className="ceo-ops-notes"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="ceo-home-notes-title"
-              onClick={(e) => {
-                if (e.target === e.currentTarget) setShowNotes(false);
-              }}
-            >
-              <div className="ceo-ops-notes__sheet">
-                <h2 id="ceo-home-notes-title">Notifications</h2>
-                <p>You have no new notifications.</p>
-                <button type="button" onClick={() => setShowNotes(false)}>
-              Close
-            </button>
-          </div>
-            </div>,
-            document.body
-          )
-        : null}
     </div>
   );
 }

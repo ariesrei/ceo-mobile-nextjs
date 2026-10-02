@@ -11,6 +11,7 @@ import type {
 import { CameraCapturePhotos } from "./CameraCapturePhotos";
 import { Button } from "./ui/Button";
 import { DateField } from "./ui/DateField";
+import { FieldLabel } from "./ui/FieldLabel";
 import { Select } from "./ui/Select";
 
 function toSelectOptions(items: MaintenanceChoice[]) {
@@ -309,13 +310,10 @@ export function MaintenanceForm({
         </div>
       ) : null}
       <label className="block space-y-1.5">
-        <span className="text-sm font-medium text-[var(--muted)]">
-          Description
-        </span>
+        <FieldLabel label="Description" />
         <textarea
           className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 outline-none ring-[var(--accent)] focus:ring-2"
           rows={3}
-          required
           value={form.maintenance_description}
           onChange={(e) =>
             setForm({ ...form, maintenance_description: e.target.value })
@@ -323,9 +321,7 @@ export function MaintenanceForm({
         />
       </label>
       <label className="block space-y-1.5">
-        <span className="text-sm font-medium text-[var(--muted)]">
-          Other notes
-        </span>
+        <FieldLabel label="Other notes" />
         <textarea
           className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 outline-none ring-[var(--accent)] focus:ring-2"
           rows={2}
@@ -459,9 +455,7 @@ export function MaintenanceForm({
             required
           />
           <label className="block space-y-1.5">
-            <span className="text-sm font-medium text-[var(--muted)]">
-              Internal notes
-            </span>
+            <FieldLabel label="Internal notes" required />
             <textarea
               className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3.5 py-3 outline-none ring-[var(--accent)] focus:ring-2"
               rows={3}
