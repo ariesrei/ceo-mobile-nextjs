@@ -176,6 +176,42 @@ function apiWpTarget(input: RequestInfo | URL): { path: string; search: string }
 
 let nativeFetch: typeof fetch | null = null;
 let hydratePromise: Promise<void> | null = null;
+let refreshInFlight: Promise<string> | null = null;
+let lastRefreshFail = 0;
+
+const REFRESH_TIMEOUT_MS = 8000;
+const FAIL_COOLDOWN_MS = 90_000;
+
+function rawFetch(): typeof fetch {
+  return nativeFetch || (typeof window !== "undefined" ? window.fetch.bind(window) : fetch);
+}
+
+function fetchWithTimeout(url: string, init: RequestInit, ms = REFRESH_TIMEOUT_MS): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = window.setTimeout(() => ctrl.abort(), ms);
+  return rawFetch()(url, { ...init, signal: ctrl.signal, cache: "no-store" }).finally(() => {
+    window.clearTimeout(timer);
+  });
+}
+
+function accessExpiresSoon(token: string, withinMs = 10 * 60 * 1000): boolean {
+  try {
+    const part = token.split(".")[1];
+    if (!part) return true;
+    const json = atob(part.replace(/-/g, "+").replace(/_/g, "/"));
+    const exp = (JSON.parse(json) as { exp?: number }).exp;
+    if (!exp) return true;
+    return exp * 1000 - Date.now() < withinMs;
+  } catch {
+    return true;
+  }
+}
+
+export function sessionNeedsRefresh(): boolean {
+  const access = getBrowserAccessToken();
+  if (!access) return true;
+  return accessExpiresSoon(access);
+}
 
 export async function hydrateBrowserSession(): Promise<void> {
   if (!nativeFetch) return;
@@ -208,30 +244,71 @@ export async function hydrateBrowserSession(): Promise<void> {
 
 export async function refreshBrowserSession(baseUrl: string): Promise<string> {
   const refresh = getBrowserRefreshToken();
-  if (!refresh || !nativeFetch) return "";
-  const res = await nativeFetch(wpRestUrl(baseUrl, "/app/auth/refresh"), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({ refresh_token: refresh }),
-  });
-  if (!res.ok) return "";
-  const data = (await res.json().catch(() => ({}))) as AuthTokens;
-  if (!data.access_token) return "";
-  saveBrowserTokens(data.access_token, data.refresh_token || refresh);
-  nativeFetch("/api/auth/session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      access_token: data.access_token,
-      refresh_token: data.refresh_token || refresh,
-      expires_in: data.expires_in,
-      user: data.user,
-    }),
-  }).catch(() => undefined);
-  return data.access_token;
+  if (!refresh) return "";
+  try {
+    const res = await fetchWithTimeout(wpRestUrl(baseUrl, "/app/auth/refresh"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ refresh_token: refresh }),
+    });
+    if (!res.ok) return "";
+    const data = (await res.json().catch(() => ({}))) as AuthTokens;
+    if (!data.access_token) return "";
+    saveBrowserTokens(data.access_token, data.refresh_token || refresh);
+    rawFetch()("/api/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token || refresh,
+        expires_in: data.expires_in,
+        user: data.user,
+      }),
+    }).catch(() => undefined);
+    return data.access_token;
+  } catch {
+    return "";
+  }
+}
+
+/** One refresh at a time. On Vercel, talk to WordPress from the browser (WAF blocks the host). */
+export async function refreshAppSession(): Promise<string> {
+  if (typeof window === "undefined") return "";
+  installWpDirectFetch();
+  if (refreshInFlight) return refreshInFlight;
+  if (Date.now() - lastRefreshFail < FAIL_COOLDOWN_MS) {
+    return getBrowserAccessToken();
+  }
+
+  refreshInFlight = (async () => {
+    try {
+      if (isLocalAppOrigin()) {
+        const res = await fetchWithTimeout("/api/auth/refresh", { method: "POST" });
+        return res.ok ? getBrowserAccessToken() || "ok" : "";
+      }
+      await hydrateBrowserSession();
+      const baseUrl = getConnectConfig()?.baseUrl;
+      if (!baseUrl) return "";
+      if (!getBrowserRefreshToken()) {
+        hydratePromise = null;
+        await hydrateBrowserSession();
+      }
+      return await refreshBrowserSession(baseUrl);
+    } catch {
+      return "";
+    }
+  })();
+
+  try {
+    const token = await refreshInFlight;
+    if (!token) lastRefreshFail = Date.now();
+    return token;
+  } finally {
+    refreshInFlight = null;
+  }
 }
 
 async function fetchWordPress(
@@ -307,7 +384,7 @@ export function installWpDirectFetch() {
       if (!getBrowserRefreshToken()) {
         await hydrateBrowserSession();
       }
-      const nextAccess = await refreshBrowserSession(baseUrl);
+      const nextAccess = await refreshAppSession();
       if (!nextAccess) return res;
       return fetchWordPress(baseUrl, wpPath, nextAccess, input, init);
     } catch {
